@@ -19,10 +19,8 @@ package kr.or.kashi.hde;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -52,6 +50,7 @@ import java.util.TreeMap;
 
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.util.DebugLog;
+import kr.or.kashi.hde.util.LocalPreferences;
 import kr.or.kashi.hde.util.Utils;
 import kr.or.kashi.hde.widget.CheckableListAdapter;
 import kr.or.kashi.hde.widget.CustomLayoutManager;
@@ -65,18 +64,8 @@ import kr.or.kashi.hde.widget.NullRecyclerViewAdapter;
 public class MainFragment extends Fragment {
     private static final String TAG = "HomeTestFragment";
 
-    private static final String PREF_LAST_NETWORK_TYPE_INDEX
-            = "last_network_type_index";
-    private static final String PREF_LAST_NETWORK_NAME_INDEX
-            = "last_network_name_index";
-    private static final String PREF_SELECTED_DEVICE_TYPES
-            = "selected_device_types";
-    private static final String PREF_VERSION = "version";
-    private static final int CURRENT_VERSION = 1;
-
     private final Context mContext;
     private final HomeNetwork mNetwork;
-    private SharedPreferences mSharedPreferences;
     private HomeDevice mSelectedDevice;
 
     private CheckBox mEventLogCheck;
@@ -167,13 +156,6 @@ public class MainFragment extends Fragment {
         super.onCreate(savedInstanceState);
         mNetwork.getDeviceDiscovery().addCallback(mDiscoveryCallback);
 
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-
-        if (mSharedPreferences.getInt(PREF_VERSION, 0) != CURRENT_VERSION) {
-            mSharedPreferences.edit().clear().commit();
-            mSharedPreferences.edit().putInt(PREF_VERSION, CURRENT_VERSION).commit();
-        }
-
         mDeviceToKsIdMap.put("AirConditioner", 0x02);
         mDeviceToKsIdMap.put("BatchSwitch", 0x33);
         mDeviceToKsIdMap.put("Curtain", 0x13);
@@ -185,7 +167,7 @@ public class MainFragment extends Fragment {
         mDeviceToKsIdMap.put("Thermostat", 0x36);
         mDeviceToKsIdMap.put("Ventilation", 0x32);
 
-        mSelectedDeviceTypes = mSharedPreferences.getStringSet(PREF_SELECTED_DEVICE_TYPES, new HashSet<String>());
+        mSelectedDeviceTypes = LocalPreferences.getSelectedDeviceTypes();
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -220,7 +202,7 @@ public class MainFragment extends Fragment {
         final CheckableListAdapter<String> deviceTypeListAdapter = new CheckableListAdapter<>(
                 mContext, new ArrayList(mDeviceToKsIdMap.keySet()), mSelectedDeviceTypes);
         deviceTypeListAdapter.setChangeRunnable(() -> {
-            mSharedPreferences.edit().putStringSet(PREF_SELECTED_DEVICE_TYPES, mSelectedDeviceTypes).commit();
+            LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
         });
         mDeviceTypeListView = (ListView) v.findViewById(R.id.device_types_list);
         mDeviceTypeListView.setAdapter(deviceTypeListAdapter);
@@ -321,7 +303,7 @@ public class MainFragment extends Fragment {
         final CheckableListAdapter<String> deviceTypeListAdapter = new CheckableListAdapter<>(
                 mContext, new ArrayList(mDeviceToKsIdMap.keySet()), mDeviceToKsIdMap.keySet());
         mDeviceTypeListView.setAdapter(deviceTypeListAdapter);
-        mSharedPreferences.edit().putStringSet(PREF_SELECTED_DEVICE_TYPES, mSelectedDeviceTypes).commit();
+        LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
     }
 
     private void deselectAllTypes() {
@@ -329,7 +311,7 @@ public class MainFragment extends Fragment {
         final CheckableListAdapter<String> deviceTypeListAdapter = new CheckableListAdapter<>(
                 mContext, new ArrayList(mDeviceToKsIdMap.keySet()), mSelectedDeviceTypes);
         mDeviceTypeListView.setAdapter(deviceTypeListAdapter);
-        mSharedPreferences.edit().putStringSet(PREF_SELECTED_DEVICE_TYPES, mSelectedDeviceTypes).commit();
+        LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
     }
 
     private void updateLogFilter() {
@@ -375,7 +357,7 @@ public class MainFragment extends Fragment {
             return;
         }
 
-        mSharedPreferences.edit().putStringSet(PREF_SELECTED_DEVICE_TYPES, mSelectedDeviceTypes).commit();
+        LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
     }
 
     private void resetRange() {

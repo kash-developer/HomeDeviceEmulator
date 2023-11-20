@@ -48,6 +48,7 @@ import java.util.List;
 import kr.or.kashi.hde.session.NetworkSession;
 import kr.or.kashi.hde.session.UartSchedSession;
 import kr.or.kashi.hde.session.UsbNetworkSession;
+import kr.or.kashi.hde.util.LocalPreferences;
 import kr.or.kashi.hde.util.Utils;
 
 public class MainActivity extends AppCompatActivity {
@@ -108,22 +109,29 @@ public class MainActivity extends AppCompatActivity {
         portTypes.add(PORT_TYPE_INTERNAL);
         mPortsSpinner = findViewById(R.id.ports_spinner);
         mPortsSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item, portTypes));
+        mPortsSpinner.setSelection(LocalPreferences.getPortIndex());
 
         List<String> protocolTypes = new ArrayList<>();
         protocolTypes.add(PROTOCOL_TYPE_KSX4506);
         mProtocalsSpinner = findViewById(R.id.protocols_spinner);
         mProtocalsSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item, protocolTypes));
+        mProtocalsSpinner.setSelection(LocalPreferences.getProtocolIndex());
 
         List<String> modeTypes = new ArrayList<>();
         modeTypes.add(MODE_TYPE_MASTER);
         modeTypes.add(MODE_TYPE_SLAVE);
         mModesSpinner = findViewById(R.id.modes_spinner);
         mModesSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item, modeTypes));
+        mModesSpinner.setSelection(LocalPreferences.getModeIndex());
 
         mEmptyFragment = new EmptyFragment();
+        setStateText("STOPPED");
+        showFragment(mEmptyFragment);
 
-        stopEmulator();
-        new Handler().postDelayed(this::startEmulator, 100);
+        if (LocalPreferences.wasLastRunning()) {
+            stopEmulator();
+            new Handler().postDelayed(this::startEmulator, 100);
+        }
     }
 
     @Override
@@ -187,6 +195,12 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        // Save user selections before staring the emulator
+        LocalPreferences.putPortIndex(mPortsSpinner.getSelectedItemPosition());
+        LocalPreferences.putProtocolIndex(mProtocalsSpinner.getSelectedItemPosition());
+        LocalPreferences.putModeIndex(mModesSpinner.getSelectedItemPosition());
+        LocalPreferences.putLastRunning(true);
+
         showFragment(new MainFragment(this, mHomeNetwork));
     }
 
@@ -196,6 +210,8 @@ public class MainActivity extends AppCompatActivity {
         if (mHomeNetwork != null) {
             mHomeNetwork.stop();
         }
+
+        LocalPreferences.putLastRunning(false);
 
         showFragment(mEmptyFragment);
     }

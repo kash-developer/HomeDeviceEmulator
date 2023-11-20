@@ -19,6 +19,7 @@ package kr.or.kashi.hde;
 
 import android.app.Application;
 
+import kr.or.kashi.hde.util.LocalPreferences;
 import kr.or.kashi.hde.util.Utils;
 
 public class MainApplication extends Application {
@@ -27,5 +28,6 @@ public class MainApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        LocalPreferences.init(this);
     }
 }
