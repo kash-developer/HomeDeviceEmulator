@@ -32,14 +32,14 @@
 
         <Button
             android:id="@+id/select_all_button"
-            android:layout_height="wrap_content"
             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Select All" />
 
         <Button
             android:id="@+id/deselect_all_button"
-            android:layout_height="wrap_content"
             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Deselect All" />
 
         <Space
@@ -49,14 +49,14 @@
 
         <Button
             android:id="@+id/reset_range_button"
-            android:layout_height="wrap_content"
             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Reset Range" />
 
         <ToggleButton
             android:id="@+id/discovery_toggle"
-            android:layout_height="wrap_content"
             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:checked="false"
             android:textOn="Discovery"
             android:textOff="Discovery" />
@@ -100,7 +100,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingTop="10dp"
-                android:text="Search Range:" />
+                android:text="Device Range:" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -115,11 +115,53 @@
                     android:orientation="horizontal">
 
                     <CheckBox
-                        android:id="@+id/single_id_check"
-                        android:layout_width="85dp"
+                        android:id="@+id/group_id_check"
+                        android:layout_width="75dp"
                         android:layout_height="wrap_content"
                         android:textColor="@color/white"
-                        android:text="Singles:" />
+                        android:text="Group:" />
+
+                    <SeekBar
+                        android:id="@+id/group_id_seek"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/group_id_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=", " />
+
+                    <ToggleButton
+                        android:id="@+id/group_full_toggle"
+                        android:layout_width="30dp"
+                        android:layout_height="35dp"
+                        android:paddingRight="5dp"
+                        android:checked="false"
+                        android:textSize="12sp"
+                        android:textOn="F"
+                        android:textOff="F" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <CheckBox
+                        android:id="@+id/single_id_check"
+                        android:layout_width="75dp"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/white"
+                        android:text="Single:" />
 
                     <SeekBar
                         android:id="@+id/single_id_seek"
@@ -131,37 +173,22 @@
                         android:id="@+id/single_id_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingRight="5dp"
                         android:text="0" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <CheckBox
-                        android:id="@+id/group_id_check"
-                        android:layout_width="85dp"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/white"
-                        android:text="Groups:" />
-
-                    <SeekBar
-                        android:id="@+id/group_id_seek"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:text="XXX"
-                        android:layout_weight="1" />
 
                     <TextView
-                        android:id="@+id/group_id_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:text=", " />
+
+                    <ToggleButton
+                        android:id="@+id/single_full_toggle"
+                        android:layout_width="30dp"
+                        android:layout_height="35dp"
                         android:paddingRight="5dp"
-                        android:text="0" />
+                        android:checked="false"
+                        android:textSize="12sp"
+                        android:textOn="F"
+                        android:textOff="F" />
 
                 </LinearLayout>
 
@@ -176,19 +203,27 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@color/white"
+                        android:visibility="gone"
                         android:text="Single All" />
 
                     <CheckBox
                         android:id="@+id/group_all_check"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:visibility="gone"
                         android:textColor="@color/white"
                         android:text="Group All" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
 
                     <CheckBox
                         android:id="@+id/type_all_check"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:visibility="gone"
                         android:textColor="@color/white"
                         android:text="All" />
 
@@ -224,26 +259,11 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
+                <Button
+                    android:id="@+id/add_selected_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingLeft="10dp"
-                    android:paddingRight="10dp"
-                    android:textColor="@color/white"
-                    android:textSize="16dp"
-                    android:text="ID:" />
-
-                <Spinner
-                    android:id="@+id/manual_id_hex1_spinner"
-                    android:layout_width="80dp"
-                    android:layout_height="wrap_content"
-                    android:textColor="@android:color/white" />
-
-                <Spinner
-                    android:id="@+id/manual_id_hex2_spinner"
-                    android:layout_width="80dp"
-                    android:layout_height="wrap_content"
-                    android:textColor="@android:color/white" />
+                    android:text="Add Selected" />
 
                 <Space
                     android:layout_width="0dp"
@@ -251,10 +271,10 @@
                     android:layout_weight="1" />
 
                 <Button
-                    android:id="@+id/add_device_button"
-                    android:layout_width="50dp"
-                    android:layout_height="40dp"
-                    android:text="+" />
+                    android:id="@+id/add_range_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add Range" />
 
             </LinearLayout>
 

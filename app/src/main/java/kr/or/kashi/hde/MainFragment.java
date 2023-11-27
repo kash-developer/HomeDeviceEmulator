@@ -74,18 +74,18 @@ public class MainFragment extends Fragment {
     private DebugLogView mDebugLogView;
     private ToggleButton mDiscoveryToggle;
     private ListView mDeviceTypeListView;
-    private CheckBox mSingleIdCheckBox;
-    private SeekBar mSingleIdSeekBar;
-    private TextView mSingleIdTextView;
     private CheckBox mGroupIdCheckBox;
     private SeekBar mGroupIdSeekBar;
     private TextView mGroupIdTextView;
+    private ToggleButton mGroupFullToggle;
+    private CheckBox mSingleIdCheckBox;
+    private SeekBar mSingleIdSeekBar;
+    private TextView mSingleIdTextView;
+    private ToggleButton mSingleFullToggle;
     private CheckBox mSingleAllCheckBox;
     private CheckBox mGroupAllCheckBox;
     private CheckBox mTypeAllCheckBox;
     private TextView mRangeTextView;
-    private Spinner mManualIdHex1Spinner;
-    private Spinner mManualIdHex2Spinner;
     private Spinner mPollingIntervalsSpinner;
     private ToggleButton mAutoTestToggle;
     private RecyclerView mDeviceListView;
@@ -213,21 +213,25 @@ public class MainFragment extends Fragment {
             @Override public void onStopTrackingTouch(SeekBar seekBar) { updateRangeText(); }
         };
 
-        mSingleIdCheckBox = (CheckBox) v.findViewById(R.id.single_id_check);
-        mSingleIdCheckBox.setOnClickListener(view -> updateRangeText());
-        mSingleIdSeekBar = (SeekBar) v.findViewById(R.id.single_id_seek);
-        mSingleIdSeekBar.setMin(1);
-        mSingleIdSeekBar.setMax(0xE);
-        mSingleIdSeekBar.setOnSeekBarChangeListener(seekBarListener);
-        mSingleIdTextView = (TextView) v.findViewById(R.id.single_id_text);
-
         mGroupIdCheckBox = (CheckBox) v.findViewById(R.id.group_id_check);
         mGroupIdCheckBox.setOnClickListener(view -> updateRangeText());
         mGroupIdSeekBar = (SeekBar) v.findViewById(R.id.group_id_seek);
-        mGroupIdSeekBar.setMin(1);
+        mGroupIdSeekBar.setMin(0x1);
         mGroupIdSeekBar.setMax(0xE);
         mGroupIdSeekBar.setOnSeekBarChangeListener(seekBarListener);
         mGroupIdTextView = (TextView) v.findViewById(R.id.group_id_text);
+        mGroupFullToggle = (ToggleButton) v.findViewById(R.id.group_full_toggle);
+        mGroupFullToggle.setOnClickListener(view -> updateRangeText());
+
+        mSingleIdCheckBox = (CheckBox) v.findViewById(R.id.single_id_check);
+        mSingleIdCheckBox.setOnClickListener(view -> updateRangeText());
+        mSingleIdSeekBar = (SeekBar) v.findViewById(R.id.single_id_seek);
+        mSingleIdSeekBar.setMin(0x1);
+        mSingleIdSeekBar.setMax(0xE);
+        mSingleIdSeekBar.setOnSeekBarChangeListener(seekBarListener);
+        mSingleIdTextView = (TextView) v.findViewById(R.id.single_id_text);
+        mSingleFullToggle = (ToggleButton) v.findViewById(R.id.single_full_toggle);
+        mSingleFullToggle.setOnClickListener(view -> updateRangeText());
 
         mSingleAllCheckBox = (CheckBox) v.findViewById(R.id.single_all_check);
         mSingleAllCheckBox.setOnClickListener(view -> updateRangeText());
@@ -238,15 +242,8 @@ public class MainFragment extends Fragment {
 
         mRangeTextView = (TextView) v.findViewById(R.id.range_text);
 
-        final List<String> hexDigits = new ArrayList<>();
-        for (int i=0; i<=0xF; i++) {
-            hexDigits.add(String.format("%X", i));
-        }
-        mManualIdHex1Spinner = (Spinner) v.findViewById(R.id.manual_id_hex1_spinner);
-        mManualIdHex1Spinner.setAdapter(new ArrayAdapter<>(mContext, R.layout.spinner_item, hexDigits));
-        mManualIdHex2Spinner = (Spinner) v.findViewById(R.id.manual_id_hex2_spinner);
-        mManualIdHex2Spinner.setAdapter(new ArrayAdapter<>(mContext, R.layout.spinner_item, hexDigits));
-        ((Button)v.findViewById(R.id.add_device_button)).setOnClickListener(view -> addSingleDevices());
+        ((Button)v.findViewById(R.id.add_selected_button)).setOnClickListener(view -> addSelecteddDevice());
+        ((Button)v.findViewById(R.id.add_range_button)).setOnClickListener(view -> addRangeDevice());
 
         ((Button)v.findViewById(R.id.remove_all_button)).setOnClickListener(view -> removeAllDevices());
 
@@ -376,43 +373,30 @@ public class MainFragment extends Fragment {
         int singles = 0;
         int groups = 0;
 
-        if (mSingleIdCheckBox.isChecked()) {
-            singles = mSingleIdSeekBar.getProgress();
-            mSingleIdTextView.setText(String.format("%X", singles));
-        } else {
+        singles = mSingleIdSeekBar.getProgress();
+        mSingleIdTextView.setText(String.format("%X", singles));
 
-        }
-
-        if (mGroupIdCheckBox.isChecked()) {
-            groups = mGroupIdSeekBar.getProgress();
-            mGroupIdTextView.setText(String.format("%X", groups));
-        } else {
-
-        }
+        groups = mGroupIdSeekBar.getProgress();
+        mGroupIdTextView.setText(String.format("%X", groups));
 
         final StringBuilder sb = new StringBuilder();
 
-        if (singles > 0) {
-            sb.append("~" + String.format("?%X", singles));
+        if (mSingleIdCheckBox.isChecked() && singles > 0) {
+            sb.append("~" + String.format("0%X", singles));
         }
 
-        if (mSingleAllCheckBox.isChecked()) {
-            sb.append(", ");
-            sb.append("0F");
-        }
-
-        if (groups > 0) {
-            sb.append(", ");
+        if (mGroupIdCheckBox.isChecked() && groups > 0) {
+            sb.append("  ");
             sb.append("~" + String.format("%X?", groups));
         }
 
-        if (mGroupAllCheckBox.isChecked()) {
-            sb.append(", ");
-            sb.append("?F");
+        if (mSingleFullToggle.isChecked()) {
+            sb.append("  ");
+            sb.append(mGroupFullToggle.isChecked() ? "?F" : "0F");
         }
 
-        if (mTypeAllCheckBox.isChecked()) {
-            sb.append(", ");
+        if (mGroupFullToggle.isChecked() && mSingleFullToggle.isChecked()) {
+            sb.append("  ");
             sb.append("FF");
         }
 
@@ -476,18 +460,76 @@ public class MainFragment extends Fragment {
         }
     }
 
-    private void addSingleDevices() {
+    private void addSelecteddDevice() {
         for (String deviceType: mSelectedDeviceTypes) {
             if (!mDeviceToKsIdMap.containsKey(deviceType)) {
-                debug("No device type for discovery: " + deviceType);
+                debug("No device type: " + deviceType);
                 continue;
             }
 
             int deviceId = mDeviceToKsIdMap.get(deviceType);
-            int groupId = Integer.valueOf(mManualIdHex1Spinner.getSelectedItem().toString(), 16).intValue();
-            int singleId = Integer.valueOf(mManualIdHex2Spinner.getSelectedItem().toString(), 16).intValue();
+            int single = mSingleIdSeekBar.getProgress();
+            int group = mGroupIdSeekBar.getProgress();
 
-            mNetwork.addDevice(createKsDevice(deviceType, deviceId, groupId, singleId));
+            if (mSingleIdCheckBox.isChecked()) {
+                mNetwork.addDevice(createKsDevice(deviceType, deviceId, 0, single));
+            }
+
+            if (mSingleFullToggle.isChecked()) {
+                mNetwork.addDevice(createKsDevice(deviceType, deviceId, 0, 0xF));
+            }
+
+            if (mGroupIdCheckBox.isChecked()) {
+                mNetwork.addDevice(createKsDevice(deviceType, deviceId, group, single));
+
+                if (mSingleFullToggle.isChecked()) {
+                    mNetwork.addDevice(createKsDevice(deviceType, deviceId, group, 0xF));
+                }
+            }
+
+            if (mGroupFullToggle.isChecked() && mSingleFullToggle.isChecked()) {
+                mNetwork.addDevice(createKsDevice(deviceType, deviceId, 0xF, 0xF));
+            }
+        }
+
+        updateDeviceList();
+    }
+
+    private void addRangeDevice() {
+        for (String deviceType: mSelectedDeviceTypes) {
+            if (!mDeviceToKsIdMap.containsKey(deviceType)) {
+                debug("No device type: " + deviceType);
+                continue;
+            }
+
+            int deviceId = mDeviceToKsIdMap.get(deviceType);
+            int singles = mSingleIdSeekBar.getProgress();
+            int groups = mGroupIdSeekBar.getProgress();
+
+            if (mSingleIdCheckBox.isChecked()) {
+                for (int s = 1; s <= singles; s++) {
+                    mNetwork.addDevice(createKsDevice(deviceType, deviceId, 0, s));
+                }
+            }
+
+            if (mSingleFullToggle.isChecked()) {
+                mNetwork.addDevice(createKsDevice(deviceType, deviceId, 0, 0xF));
+            }
+
+            if (mGroupIdCheckBox.isChecked()) {
+                for (int g = 1; g <= groups; g++) {
+                    for (int s = 1; s <= singles; s++) {
+                        mNetwork.addDevice(createKsDevice(deviceType, deviceId, g, s));
+                    }
+                    if (mSingleFullToggle.isChecked()) {
+                        mNetwork.addDevice(createKsDevice(deviceType, deviceId, g, 0xF));
+                    }
+                }
+            }
+
+            if (mGroupFullToggle.isChecked() && mSingleFullToggle.isChecked()) {
+                mNetwork.addDevice(createKsDevice(deviceType, deviceId, 0xF, 0xF));
+            }
         }
 
         updateDeviceList();
