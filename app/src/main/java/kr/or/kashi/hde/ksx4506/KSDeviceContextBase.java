@@ -152,6 +152,11 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
 
     @Override
     public long getUpdateTime() {
+        if (isSlave()) {
+            // In slave mode, the update time is the time when last packed is parsed.
+            return super.getUpdateTime();
+        }
+
         if (mAutoStatusReqSchedule != null && mAutoStatusReqScheduleError == 0) {
             // If auto status request has been scheduled, returns always current
             // time since the status update depends on underlying scheduler.

@@ -97,9 +97,7 @@ public class HomeNetwork {
             polleeList.add(device.dc());
         }
 
-        if (!mIsSlaveMode) {
-            mDeviceStatePoller.start(true /* repeative */, polleeList);
-        }
+        mDeviceStatePoller.start(true /* repeative */, polleeList);
 
         Log.d(TAG, " network has been started");
 
@@ -115,9 +113,7 @@ public class HomeNetwork {
             return;
         }
 
-        if (!mIsSlaveMode) {
-            mDeviceStatePoller.stop();
-        }
+        mDeviceStatePoller.stop();
         mMainContext.detachStream();
         mStreamProcessor.stopStream();
 
@@ -164,7 +160,7 @@ public class HomeNetwork {
     public void addDevice(HomeDevice device) {
         // Append a deivce to the main context and other pollers.
         boolean added = mMainContext.addDevice(device);
-        if (added && !mIsSlaveMode) {
+        if (added) {
             mDeviceStatePoller.addPollee(device.dc());
         }
     }
@@ -172,9 +168,7 @@ public class HomeNetwork {
     public void removeDevice(HomeDevice device) {
         // Remove a device from the main context and so on.
         mMainContext.removeDevice(device);
-        if (!mIsSlaveMode) {
-            mDeviceStatePoller.removePollee(device.dc());
-        }
+        mDeviceStatePoller.removePollee(device.dc());
     }
 
     public DeviceDiscovery getDeviceDiscovery() {
