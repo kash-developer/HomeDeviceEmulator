@@ -234,6 +234,7 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
                 }
                 return res;
             }
+            case CMD_SINGLE_CONTROL_REQ: return parseSingleControlReq(ksPacket, outProps);
             case CMD_SINGLE_CONTROL_RSP: return parseSingleControlRsp(ksPacket, outProps);
         }
 
@@ -321,17 +322,12 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
     }
 
     // Override these methods to parse data that comes from each type of packets.
-    protected @ParseResult int parseStatusRsp(KSPacket packet, PropertyMap outProps) {
-        return PARSE_OK_NONE;
-    }
-
-    protected @ParseResult int parseCharacteristicRsp(KSPacket packet, PropertyMap outProps) {
-        return PARSE_OK_NONE;
-    }
-
-    protected @ParseResult int parseSingleControlRsp(KSPacket packet, PropertyMap outProps) {
-        return PARSE_OK_NONE;
-    }
+    protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) { return PARSE_OK_NONE; }
+    protected @ParseResult int parseStatusRsp(KSPacket packet, PropertyMap outProps) { return PARSE_OK_NONE; }
+    protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) { return PARSE_OK_NONE; }
+    protected @ParseResult int parseCharacteristicRsp(KSPacket packet, PropertyMap outProps) { return PARSE_OK_NONE; }
+    protected @ParseResult int parseSingleControlReq(KSPacket packet, PropertyMap outProps) { return PARSE_OK_NONE; }
+    protected @ParseResult int parseSingleControlRsp(KSPacket packet, PropertyMap outProps) { return PARSE_OK_NONE; }
 
     protected KSPacket makeStatusReq(PropertyMap props) {
         return createPacket(CMD_STATUS_REQ);
@@ -344,15 +340,5 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
     // Override it to make request packet with specific data.
     protected KSPacket makeControlReq(PropertyMap props) {
         return null;
-    }
-
-
-    // for slave
-    protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) {
-        return PARSE_OK_NONE;
-    }
-
-    protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) {
-        return PARSE_OK_NONE;
     }
 }

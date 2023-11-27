@@ -44,6 +44,12 @@ public final class ByteArrayBuffer {
         mLength = newLen;
     }
 
+    public void append(byte[] bytes) {
+        for (byte b: bytes) {
+            append(b);
+        }
+    }
+
     public void append(int b) {
         append((byte)b);
     }

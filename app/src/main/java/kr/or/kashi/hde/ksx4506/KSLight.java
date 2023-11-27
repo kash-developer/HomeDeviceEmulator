@@ -209,6 +209,24 @@ public class KSLight extends KSDeviceContextBase {
         return PARSE_OK_PEER_DETECTED;
     }
 
+    protected @ParseResult int parseSingleControlReq(KSPacket packet, PropertyMap outProps) {
+        parseLightControlData(packet.data, outProps);
+
+        final PropertyMap props = getReadPropertyMap();
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        data.append(0); // error code
+
+        final boolean isOn = (Boolean) props.get(HomeDevice.PROP_ONOFF).getValue();
+        final int dimLevel = (int) props.get(Light.PROP_CUR_DIM_LEVEL).getValue();
+        // TODO: check if the dimLevel is between min and max
+        // TODO: assert if dimLevel is within 0x0 ~ 0xF
+        data.append(makeLightControlData(isOn, dimLevel));
+
+        sendPacket(createPacket(CMD_SINGLE_CONTROL_RSP, data.toArray()));
+
+        return PARSE_OK_ACTION_PERFORMED;
+    }
+
     @Override
     protected @ParseResult int parseSingleControlRsp(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length != 2) {
@@ -284,5 +302,12 @@ public class KSLight extends KSDeviceContextBase {
         byte[] data = new byte[1];
         data[0] = (byte)(((isOn) ? 1 : 0) | ((dimLevel & 0x0F) << 4));
         return data;
+    }
+
+    private void parseLightControlData(byte[] data, PropertyMap outProps) {
+        final boolean isOn = ((data[0] & 0x01) == 1);
+        final int dimLevel = ((data[0] >> 4) & 0x0F);
+        outProps.put(HomeDevice.PROP_ONOFF, isOn);
+        outProps.put(Light.PROP_CUR_DIM_LEVEL, dimLevel);
     }
 }
