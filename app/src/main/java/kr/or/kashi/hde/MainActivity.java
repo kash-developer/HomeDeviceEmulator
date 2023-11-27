@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
         switch (mPortsSpinner.getSelectedItem().toString()) {
             case PORT_TYPE_INTERNAL: {
                 try {
-                    networkSession = new UartSchedSession(this, mHandler, "/dev/ttyS4", 9600);
+                    networkSession = new UartSchedSession(this, mHandler, "/dev/ttyS0", 9600);
                 } catch (RuntimeException e) {
                     setStateText("ERROR: INTERNAL PORT IS NOT SUPPORTED!");
                     break;
