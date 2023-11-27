@@ -74,45 +74,6 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
     }
 
     @Override
-    public void addChild(DeviceContextBase child) {
-        final int childCount = getChildCount();
-        final int childSubId = ((KSDeviceContextBase)child).getDeviceSubId().value();
-        final int childLowId = (childSubId & 0x0F);
-        if (childLowId < 1 || childLowId > 0xE) {
-            throw new IndexOutOfBoundsException("childLowId=" + childLowId);
-        }
-        final int childIndex = childLowId - 1;
-
-        if (childIndex == childCount) {
-            super.addChild(child);          // add last
-        } else if (childIndex < childCount) {
-            setChildAt(childIndex, child);  // replace
-        } else {
-            // [KS X 4506] Need placeholders since device has linear fixed sudb-IDs.
-            for (int i=childCount; i<childIndex; i++) {
-                setChildAt(i, null);        // put null as placehoder
-            }
-            setChildAt(childIndex, child);  // replace
-        }
-    }
-
-    @Override
-    public void removeChild(DeviceContextBase child) {
-        final int childCount = getChildCount();
-        final int childIndex = indexOfChild(child);
-        if (childIndex < 0 || childIndex >= childCount) {
-            return;
-        }
-
-        if (childIndex == childCount - 1) {
-            super.removeChild(child);       // remove last
-        } else {
-            // [KS X 4506] Need placeholders since device has linear fixed sudb-IDs.
-            setChildAt(childIndex, null);   // put null as removed
-        }
-    }
-
-    @Override
     public void onAttachedToStream() {
         super.onAttachedToStream(); // call super
         requestUpdate();

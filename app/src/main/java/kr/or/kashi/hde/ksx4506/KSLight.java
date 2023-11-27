@@ -20,6 +20,7 @@ package kr.or.kashi.hde.ksx4506;
 import android.content.Context;
 import android.util.Log;
 
+import kr.or.kashi.hde.DeviceContextBase;
 import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.MainContext;
@@ -31,6 +32,7 @@ import kr.or.kashi.hde.ksx4506.KSPacket;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,14 +67,8 @@ public class KSLight extends KSDeviceContextBase {
         if (thisSubId.isSingle() || thisSubId.isSingleOfGroup()) {
             data.append(makeSingleLightStateByte(outProps));
         } else if (thisSubId.isFull() || thisSubId.isFullOfGroup()) {
-            int childCount = getChildCount();
-            for (int i=0; i<childCount; i++) {
-                KSLight child = (KSLight) getChildAt(i);
-                if (child != null) {
-                    data.append(makeSingleLightStateByte(child.getReadPropertyMap()));
-                } else {
-                    data.append(0);
-                }
+            for (KSLight child: getChildren(KSLight.class)) {
+                data.append(makeSingleLightStateByte(child.getReadPropertyMap()));
             }
         } else {
             Log.w(TAG, "parse-status-req: should never reach this");
@@ -131,12 +127,11 @@ public class KSLight extends KSDeviceContextBase {
             normalCount = dimSupported ? 0 : 1;
             dimmableCount = dimSupported ? 1 : 0;
         } else if (thisSubId.isFull() || thisSubId.isFullOfGroup()) {
-            int childCount = getChildCount();
-            for (int i=0; i<childCount; i++) {
-                KSLight child = (KSLight) getChildAt(i);
-                if (child != null && child.getReadPropertyMap().get(Light.PROP_DIM_SUPPORTED, Boolean.class)) {
+            for (KSLight child: getChildren(KSLight.class)) {
+                int index = normalCount + dimmableCount;
+                if (child.getReadPropertyMap().get(Light.PROP_DIM_SUPPORTED, Boolean.class)) {
+                    dimmableFlags |= (1 << index);
                     dimmableCount++;
-                    dimmableFlags |= (1 << i);
                 } else {
                     normalCount++;
                 }

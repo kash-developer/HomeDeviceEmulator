@@ -28,8 +28,10 @@ import androidx.annotation.Nullable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import kr.or.kashi.hde.base.BasicPropertyMap;
@@ -90,8 +92,7 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
     private long mLastUpdateTime = 0L;
 
     protected DeviceContextBase mParent;
-    private DeviceContextBase[] mChildren;
-    private int mChildrenCount;
+    private Map<String, DeviceContextBase> mChildren = new TreeMap<>();     // Always sorted.
 
     public DeviceContextBase(MainContext mainContext, Map defaultProps, Class<?> deviceClass) {
         mDeviceClass = deviceClass;
@@ -130,85 +131,39 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
     }
 
     public int getChildCount() {
-        return mChildrenCount;
+        return mChildren.size();
     }
 
-    public int indexOfChild(DeviceContextBase child) {
-        final int count = mChildrenCount;
-        final DeviceContextBase[] children = mChildren;
-        for (int i = 0; i < count; i++) {
-            if (children[i] == child) {
-                return i;
-            }
-        }
-        return -1;
+    public Collection<DeviceContextBase> getChildren() {
+        return mChildren.values();
+    }
+
+    public <E> Collection<E> getChildren(Class<E> clazz) {
+        return (Collection<E>) mChildren.values();
     }
 
     public void addChild(DeviceContextBase child) {
-        setChildAt(mChildrenCount, child);
+        if (child != null) {
+            child.mParent = this;
+            mChildren.put(child.getAddress().getDeviceAddress(), child);
+        }
     }
 
     public void removeChild(DeviceContextBase child) {
-        final int index = indexOfChild(child);
-        final DeviceContextBase[] children = mChildren;
-        final int count = mChildrenCount;
-        if (index == count - 1) {
-            children[--mChildrenCount] = null;
-            child.mParent = null;
-        } else if (index >= 0 && index < count) {
-            System.arraycopy(children, index + 1, children, index, count - index - 1);
-            children[--mChildrenCount] = null;
-            child.mParent = null;
+        if (child != null) {
+            String devAddress = child.getAddress().getDeviceAddress();
+            if (mChildren.containsKey(devAddress)) {
+                mChildren.remove(devAddress);
+                child.mParent = null;
+            }
         }
     }
 
     public void removeAllChildren() {
-        final int count = mChildrenCount;
-        if (count <= 0) {
-            return;
+        for (DeviceContextBase child: mChildren.values()) {
+            child.mParent = null;
         }
-        final DeviceContextBase[] children = mChildren;
-        mChildrenCount = 0;
-        for (int i = count - 1; i >= 0; i--) {
-            children[i].mParent = null;
-            children[i] = null;
-        }
-    }
-
-    public @Nullable DeviceContextBase getChildAt(int index) {
-        if (index < 0 || index >= mChildrenCount) {
-            return null;
-        }
-        return mChildren[index];
-    }
-
-    public void setChildAt(int index, @Nullable DeviceContextBase child) {
-        DeviceContextBase[] children = mChildren;
-        final int count = mChildrenCount;
-        final int size = children.length;
-        if (index == count) {
-            if (size == count) {
-                mChildren = new DeviceContextBase[size + 8];
-                System.arraycopy(children, 0, mChildren, 0, size);
-                children = mChildren;
-            }
-            children[mChildrenCount++] = child;
-            if (child != null) child.mParent = this;
-        } else if (index < count) {
-            if (size == count) {
-                mChildren = new DeviceContextBase[size + 8];
-                System.arraycopy(children, 0, mChildren, 0, index);
-                System.arraycopy(children, index, mChildren, index + 1, count - index);
-                children = mChildren;
-            } else {
-                System.arraycopy(children, index, children, index + 1, count - index);
-            }
-            children[index] = child;
-            mChildrenCount++;
-            if (child != null) child.mParent = this;
-        } else {
-            throw new IndexOutOfBoundsException("index=" + index + " count=" + count);
-        }
+        mChildren.clear();
     }
 
     public Class<?> getDeviceClass() {

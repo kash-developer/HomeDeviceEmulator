@@ -76,13 +76,15 @@ public class KSMainContext extends MainContext {
             final KSDeviceContextBase dc = ((KSDeviceContextBase)device.dc());
             final int devId = dc.getDeviceId();
             final int subId = dc.getDeviceSubId().value();
-            if ((subId & 0x0F) == 0x0F) {
+            final int subIdUpper = (subId & 0xF0);
+            final int subIdLower = (subId & 0x0F);
+            if (subIdLower == 0x0F) {
                 for (int i = 1; i <= 0xE; i++) {
-                    HomeDevice child = getDevice(new KSAddress(devId, (subId | i)).toAddressString());
+                    HomeDevice child = getDevice(new KSAddress(devId, (subIdUpper | i)).toAddressString());
                     if (child != null) device.dc().addChild(child.dc());
                 }
             } else {
-                HomeDevice parent = getDevice(new KSAddress(devId, (subId | 0x0F)).toAddressString());
+                HomeDevice parent = getDevice(new KSAddress(devId, (subIdUpper | 0x0F)).toAddressString());
                 if (parent != null) {
                     parent.dc().addChild(device.dc());
                 }
