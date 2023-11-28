@@ -36,24 +36,17 @@
             android:layout_width="wrap_content"
             android:text="Remove All" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <Button
+            android:id="@+id/load_button"
             android:layout_height="wrap_content"
-            android:paddingLeft="10dp"
-            android:paddingRight="2dp"
-            android:textSize="16dp"
-            android:text="Polling Interval:" />
+            android:layout_width="wrap_content"
+            android:text="Load" />
 
-        <Spinner
-            android:id="@+id/polling_intervals_spinner"
-            android:layout_width="wrap_content"
+        <Button
+            android:id="@+id/save_button"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white" />
-
-        <TextView
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="(ms)" />
+            android:text="Save" />
 
         <Space
             android:layout_width="0dp"
@@ -70,11 +63,48 @@
 
     </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
         android:layout_height="wrap_content"
-        android:paddingTop="10dp"
-        android:text="Staging Devices:" />
+        android:layout_width="match_parent"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:text="Staging Devices:" />
+
+        <TextView
+            android:id="@+id/device_count_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="2dp"
+            android:text="Polling Interval:" />
+
+        <Spinner
+            android:id="@+id/polling_intervals_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingRight="2dp"
+            android:text="(ms)" />
+
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"

@@ -41,6 +41,9 @@ import android.widget.ToggleButton;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -63,6 +66,7 @@ import kr.or.kashi.hde.widget.NullRecyclerViewAdapter;
 
 public class MainFragment extends Fragment {
     private static final String TAG = "HomeTestFragment";
+    private static final String SAVED_DEVICES_FILENAME = "saved_devices";
 
     private final Context mContext;
     private final HomeNetwork mNetwork;
@@ -85,6 +89,7 @@ public class MainFragment extends Fragment {
     private TextView mRangeTextView;
     private Spinner mPollingIntervalsSpinner;
     private ToggleButton mAutoTestToggle;
+    private TextView mDeviceCountText;
     private RecyclerView mDeviceListView;
     private ProgressBar mDiscoveryProgress;
     private ViewGroup mDeviceDetailPart;
@@ -235,6 +240,8 @@ public class MainFragment extends Fragment {
         ((Button)v.findViewById(R.id.add_selected_button)).setOnClickListener(view -> addSelecteddDevice());
         ((Button)v.findViewById(R.id.add_range_button)).setOnClickListener(view -> addRangeDevice());
         ((Button)v.findViewById(R.id.remove_all_button)).setOnClickListener(view -> removeAllDevices());
+        ((Button)v.findViewById(R.id.load_button)).setOnClickListener(view -> loadDeviceList());
+        ((Button)v.findViewById(R.id.save_button)).setOnClickListener(view -> saveDeviceList());
 
         final List<String> intervalTexts = new ArrayList<>();
         intervalTexts.add("0");
@@ -243,8 +250,9 @@ public class MainFragment extends Fragment {
         intervalTexts.add("2000");
         intervalTexts.add("5000");
         mPollingIntervalsSpinner = (Spinner) v.findViewById(R.id.polling_intervals_spinner);
+        mPollingIntervalsSpinner.setEnabled(!mNetwork.isSlaveMode());
         mPollingIntervalsSpinner.setAdapter(new ArrayAdapter<>(mContext, R.layout.spinner_item, intervalTexts));
-        mPollingIntervalsSpinner.setSelection(3);
+        mPollingIntervalsSpinner.setSelection(mNetwork.isSlaveMode() ? 0 : 3);
         mPollingIntervalsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -260,6 +268,8 @@ public class MainFragment extends Fragment {
         mAutoTestToggle = (ToggleButton) v.findViewById(R.id.auto_test_toggle);
         mAutoTestToggle.setEnabled(!mNetwork.isSlaveMode());
         mAutoTestToggle.setOnClickListener(view -> setAutoTestOn(((Checkable)view).isChecked()));
+
+        mDeviceCountText = v.findViewById(R.id.device_count_text);
 
         mDeviceListView = (RecyclerView) v.findViewById(R.id.device_list);
         mDeviceListView.setLayoutManager(new CustomLayoutManager(mContext));
@@ -550,12 +560,41 @@ public class MainFragment extends Fragment {
         if (mNetwork == null) {
             return;
         }
+        mNetwork.removeAllDevices();
+        updateDeviceList();
+    }
 
-        for (HomeDevice device: mNetwork.getAllDevices()) {
-            mNetwork.removeDevice(device);
+    private void loadDeviceList() {
+        FileInputStream fis = null;
+        try {
+            fis = mContext.openFileInput(SAVED_DEVICES_FILENAME);
+        } catch (FileNotFoundException e) {
+            debug("No saved list");
+            return;
         }
 
-        updateDeviceList();
+        if (mNetwork.loadDevicesFrom(fis)) {
+            debug("Device list has been loaded successfully");
+            updateDeviceList();
+        } else {
+            debug("Can't load the saved device list");
+        }
+    }
+
+    private void saveDeviceList() {
+        FileOutputStream fos = null;
+        try {
+            fos = mContext.openFileOutput(SAVED_DEVICES_FILENAME, Context.MODE_PRIVATE);
+        } catch (FileNotFoundException e) {
+            debug("Can't open file to save");
+            return;
+        }
+
+        if (mNetwork.saveDevicesTo(fos)) {
+            debug("Device list has benn saved successfully");
+        } else {
+            debug("Can't save the device list");
+        }
     }
 
     private String createKsAddress(int deviceId, int groupId, int singleId) {
@@ -597,6 +636,7 @@ public class MainFragment extends Fragment {
             }
         });
 
+        mDeviceCountText.setText(" " + adapter.getItemCount());
         mDeviceListView.setAdapter(adapter);
     }
 

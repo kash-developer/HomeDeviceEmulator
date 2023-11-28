@@ -20,13 +20,14 @@ package kr.or.kashi.hde.base;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 
 /**
  * Stores value of a property.
  */
-public final class PropertyValue<T> implements Parcelable {
+public final class PropertyValue<T> implements Parcelable, Serializable {
     private final String mName;
     private final T mValue;
     private final byte[] mExtraData;

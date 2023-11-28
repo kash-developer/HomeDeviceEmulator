@@ -21,11 +21,19 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import kr.or.kashi.hde.base.BasicPropertyMap;
 import kr.or.kashi.hde.base.PropertyMap;
+import kr.or.kashi.hde.base.PropertyValue;
 import kr.or.kashi.hde.session.NetworkSession;
 import kr.or.kashi.hde.ksx4506_kd.KDMainContext;
 import kr.or.kashi.hde.stream.StreamProcessor;
@@ -67,6 +75,10 @@ public class HomeNetwork {
 
     public boolean isRunning() {
         return mStreamProcessor.isRunning();
+    }
+
+    public boolean isSlaveMode() {
+        return mIsSlaveMode;
     }
 
     public DeviceStatePoller getDeviceStatePoller() {
@@ -169,6 +181,55 @@ public class HomeNetwork {
         // Remove a device from the main context and so on.
         mMainContext.removeDevice(device);
         mDeviceStatePoller.removePollee(device.dc());
+    }
+
+    public void removeAllDevices() {
+        for (HomeDevice device: getAllDevices()) {
+            removeDevice(device);
+        }
+    }
+
+    public boolean loadDevicesFrom(InputStream is) {
+        try {
+            ObjectInputStream ois = new ObjectInputStream(is);
+            List<List<PropertyValue>> propsList = (List) ois.readObject();
+            if (propsList == null || propsList.isEmpty()) {
+                return false;
+            }
+
+            removeAllDevices();
+            for (List<PropertyValue> props: propsList) {
+                PropertyMap propMap = new BasicPropertyMap();
+                propMap.putAll(props);
+                addDevice(createDevice(propMap));
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean saveDevicesTo(OutputStream os) {
+        List<HomeDevice> devices = mMainContext.getAllDevices();
+        if (devices.isEmpty()) return false;
+
+        List<List<PropertyValue>> propsList = new ArrayList<>(devices.size());
+        for (HomeDevice d: devices) {
+            List<PropertyValue> props = d.dc().getReadPropertyMap().getAll();
+            propsList.add(props);
+        }
+
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(os);
+            oos.writeObject(propsList);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
     }
 
     public DeviceDiscovery getDeviceDiscovery() {
