@@ -192,43 +192,6 @@
 
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <CheckBox
-                        android:id="@+id/single_all_check"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/white"
-                        android:visibility="gone"
-                        android:text="Single All" />
-
-                    <CheckBox
-                        android:id="@+id/group_all_check"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:visibility="gone"
-                        android:textColor="@color/white"
-                        android:text="Group All" />
-
-                    <Space
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1" />
-
-                    <CheckBox
-                        android:id="@+id/type_all_check"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:visibility="gone"
-                        android:textColor="@color/white"
-                        android:text="All" />
-
-                </LinearLayout>
-
             </LinearLayout>
 
             <TextView

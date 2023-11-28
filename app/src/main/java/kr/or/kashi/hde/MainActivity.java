@@ -36,6 +36,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 
@@ -66,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
     private InputMethodManager mInputMethodManager;
     private EmptyFragment mEmptyFragment;
 
+    private Button mStartButton;
+    private Button mStopButton;
     private Spinner mPortsSpinner;
     private Spinner mProtocalsSpinner;
     private Spinner mModesSpinner;
@@ -101,8 +104,12 @@ public class MainActivity extends AppCompatActivity {
         mHandler = new Handler(Looper.getMainLooper());
         mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
-        findViewById(R.id.start_button).setOnClickListener(v -> startEmulator());
-        findViewById(R.id.stop_button).setOnClickListener(v -> stopEmulator());
+        mStartButton = findViewById(R.id.start_button);
+        mStartButton.setOnClickListener(v -> startEmulator());
+        mStartButton.setEnabled(true);
+        mStopButton = findViewById(R.id.stop_button);
+        mStopButton.setOnClickListener(v -> stopEmulator());
+        mStopButton.setEnabled(false);
 
         List<String> portTypes = new ArrayList<>();
         portTypes.add(PORT_TYPE_USB);
@@ -201,6 +208,12 @@ public class MainActivity extends AppCompatActivity {
         LocalPreferences.putModeIndex(mModesSpinner.getSelectedItemPosition());
         LocalPreferences.putLastRunning(true);
 
+        mPortsSpinner.setEnabled(false);
+        mProtocalsSpinner.setEnabled(false);
+        mModesSpinner.setEnabled(false);
+        mStartButton.setEnabled(false);
+        mStopButton.setEnabled(true);
+
         showFragment(new MainFragment(this, mHomeNetwork));
     }
 
@@ -212,6 +225,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         LocalPreferences.putLastRunning(false);
+
+        mPortsSpinner.setEnabled(true);
+        mProtocalsSpinner.setEnabled(true);
+        mModesSpinner.setEnabled(true);
+        mStartButton.setEnabled(true);
+        mStopButton.setEnabled(false);
 
         showFragment(mEmptyFragment);
     }
