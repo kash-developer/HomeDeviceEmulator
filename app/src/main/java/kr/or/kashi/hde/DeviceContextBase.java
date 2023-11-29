@@ -85,7 +85,7 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
 
     private boolean mIsSlave = false;
     private HomeAddress mAddress;
-    private String mLogPrefix;
+    protected String mLogPrefix;
 
     protected int mPollPhase = DeviceStatePollee.Phase.INITIAL;
     protected long mPollInterval = 0L;

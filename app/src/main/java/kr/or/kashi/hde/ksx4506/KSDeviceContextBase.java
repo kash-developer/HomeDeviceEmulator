@@ -56,6 +56,7 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
     private final MainContext mMainContext;
 
     private boolean mCharacteristicRetrieved = false;
+    private PacketSchedule mAutoCharacReqSchedule = null;
     private PacketSchedule mAutoStatusReqSchedule = null;
     private int mAutoStatusReqScheduleError = 0;
 
@@ -82,10 +83,7 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
     @Override
     public void onDetachedFromStream() {
         mCharacteristicRetrieved = false;
-        if (mAutoStatusReqSchedule != null) {
-            cancelSchedule(mAutoStatusReqSchedule);
-            mAutoStatusReqSchedule = null;
-        }
+        cancelAllAutoSchedules();
         mAutoStatusReqScheduleError = 0;
         super.onDetachedFromStream(); // call super
     }
@@ -100,11 +98,21 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
                 // Clear flag to re-reterive the characteristics of device when
                 // returning to working state.
                 mCharacteristicRetrieved = false;
+
+                cancelAllAutoSchedules();
             }
 
             // Update connection state.
             boolean connected = (newPhase == DeviceStatePollee.Phase.WORKING);
+
+            if (getDeviceSubId().isAll()) {
+                // Can't retreive the status from the device if it's of full range,
+                // so no way to treat it as connected.
+                connected = false;
+            }
+
             mRxPropertyMap.put(HomeDevice.PROP_CONNECTED, connected);
+
             commitPropertyChanges(mRxPropertyMap);
         }
 
@@ -124,31 +132,61 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
             return SystemClock.uptimeMillis();
         }
 
+        if (getDeviceSubId().isAll()) {
+            // Can't retreive the status from the device if it's of full range,
+            // so returns always current time as if the status is up-to-date.
+            return SystemClock.uptimeMillis();
+        }
+
         return super.getUpdateTime();
     }
 
     @Override
     public void requestUpdate(PropertyMap props) {
+        if (getDeviceSubId().isAll()) {
+            // Can't retreive the status from the device if it's of full range.
+            return;
+        }
+
         if (!mCharacteristicRetrieved) {
-            HomePacket packet = makeCharacteristicReq();
+            if (mAutoCharacReqSchedule != null) {
+                return;
+            }
+
+            final HomePacket packet = makeCharacteristicReq();
+
             if (mPollPhase == DeviceStatePollee.Phase.NAPPING) {
-                // HACK: Wrap the packet within special container to suppress
-                // verbose log in napping phase.
-                HomePacket.WithMeta metaPacket = new HomePacket.WithMeta(packet);
-                metaPacket.suppressLog = false; // false for emulator
-                mMainContext.sendPacket(this, metaPacket);
+                // Distribute each intervals not to use port at the same time.
+                long distributedIntervalMs = mPollInterval + (long) (Math.random() * ((double)mPollInterval / 2.0));
+
+                PacketSchedule schedule = new PacketSchedule.Builder(packet)
+                        .setExitCallback(this::onScheduleExit)
+                        .setErrorCallback(this::onScheduleError)
+                        .setRepeatCount(0 /* infinity */)
+                        .setRepeatInterval(distributedIntervalMs)
+                        .setAllowSameRx(true) // To wakeup from napping when device is detected.
+                        .build();
+
+                // Try to schedule repeative sending of status request.
+                if (schedulePacket(schedule)) {
+                    mAutoCharacReqSchedule = schedule;
+                } else {
+                    // HACK: Wrap the packet within special container to suppress
+                    // verbose log in napping phase.
+                    HomePacket.WithMeta metaPacket = new HomePacket.WithMeta(packet);
+                    metaPacket.suppressLog = true;
+                    mMainContext.sendPacket(this, metaPacket);
+                }
             } else {
                 mMainContext.sendPacket(this, packet);
             }
+
             return; // TODO: What if device doesn't respond for the characteristic request.
         }
 
-        KSPacket statusReqPacket = makeStatusReq(props);
+        cancelAllAutoSchedules();
 
-        if (mAutoStatusReqSchedule != null) {
-            cancelSchedule(mAutoStatusReqSchedule);
-            mAutoStatusReqSchedule = null;
-        }
+        final KSPacket statusReqPacket = makeStatusReq(props);
 
         PacketSchedule schedule = new PacketSchedule.Builder(statusReqPacket)
                 .setExitCallback(this::onScheduleExit)
@@ -165,7 +203,23 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
         }
     }
 
+    private void cancelAllAutoSchedules() {
+        if (mAutoCharacReqSchedule != null) {
+            cancelSchedule(mAutoCharacReqSchedule);
+            mAutoCharacReqSchedule = null;
+        }
+
+        if (mAutoStatusReqSchedule != null) {
+            cancelSchedule(mAutoStatusReqSchedule);
+            mAutoStatusReqSchedule = null;
+        }
+    }
+
     private void onScheduleExit(PacketSchedule schedule) {
+        if (schedule == mAutoCharacReqSchedule) {
+            mAutoCharacReqSchedule = null;
+        }
+
         if (schedule == mAutoStatusReqSchedule) {
             mAutoStatusReqSchedule = null;
         }
