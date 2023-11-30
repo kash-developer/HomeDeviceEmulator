@@ -243,7 +243,6 @@ public class MainFragment extends Fragment {
         mSingleFullToggle = (ToggleButton) v.findViewById(R.id.single_full_toggle);
         mSingleFullToggle.setOnClickListener(view -> onRangeChanged(true));
         mRangeTextView = (TextView) v.findViewById(R.id.range_text);
-
         ((Button)v.findViewById(R.id.add_selected_button)).setOnClickListener(view -> addSelectedDevices());
         ((Button)v.findViewById(R.id.add_range_button)).setOnClickListener(view -> addAllDevicesInRange());
         ((Button)v.findViewById(R.id.remove_all_button)).setOnClickListener(view -> removeAllDevices());
@@ -255,11 +254,11 @@ public class MainFragment extends Fragment {
         intervalTexts.add("500");
         intervalTexts.add("1000");
         intervalTexts.add("2000");
-        intervalTexts.add("5000");
+        intervalTexts.add("3000");
         mPollingIntervalsSpinner = (Spinner) v.findViewById(R.id.polling_intervals_spinner);
         mPollingIntervalsSpinner.setEnabled(!mNetwork.isSlaveMode());
         mPollingIntervalsSpinner.setAdapter(new ArrayAdapter<>(mContext, R.layout.spinner_item, intervalTexts));
-        mPollingIntervalsSpinner.setSelection(LocalPreferences.getInt(Pref.POLLING_INTERVAL_INDEX, 3));
+        mPollingIntervalsSpinner.setSelection(LocalPreferences.getInt(Pref.POLLING_INTERVAL_INDEX, 2));
         mPollingIntervalsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -471,18 +470,35 @@ public class MainFragment extends Fragment {
     }
 
     private void setAutoTestOn(boolean testOn) {
+        mAutoTestToggle.setChecked(testOn);
         if (testOn) {
-            mDeviceDetailPart.setVisibility(View.GONE);
+            final Button closeButton = mDeviceTestPart.findViewById(R.id.close_button);
+            closeButton.setOnClickListener(view -> setAutoTestOn(false));
             mDeviceTestPart.setVisibility(View.VISIBLE);
             mDeviceTestPart.startTest(getCurrentDevices());
         } else {
-            mDeviceDetailPart.setVisibility(View.VISIBLE);
             mDeviceTestPart.setVisibility(View.GONE);
             mDeviceTestPart.stopTest();
         }
     }
 
     private void addSelectedDevices() {
+        for (HomeDevice device: createSelectedDevices()) {
+            mNetwork.addDevice(device);
+        }
+        updateDeviceList();
+    }
+
+    private void addAllDevicesInRange() {
+        for (HomeDevice device: createDevicesInRange()) {
+            mNetwork.addDevice(device);
+        }
+        updateDeviceList();
+    }
+
+    private List<HomeDevice> createSelectedDevices() {
+        List<HomeDevice> devices = new ArrayList<>();
+
         for (String deviceType: mSelectedDeviceTypes) {
             if (!mDeviceToKsIdMap.containsKey(deviceType)) {
                 debug("No device type: " + deviceType);
@@ -494,34 +510,27 @@ public class MainFragment extends Fragment {
             int group = mGroupIdSeekBar.getProgress();
 
             if (mSingleIdCheckBox.isChecked()) {
-                mNetwork.addDevice(createKsDevice(deviceType, deviceId, 0, single));
+                devices.add(createKsDevice(deviceType, deviceId, 0, single));
             }
 
             if (mSingleFullToggle.isChecked() && mSingleIdCheckBox.isChecked()) {
-                mNetwork.addDevice(createKsDevice(deviceType, deviceId, 0, 0xF));
+                devices.add(createKsDevice(deviceType, deviceId, 0, 0xF));
             }
 
             if (mGroupIdCheckBox.isChecked()) {
-                mNetwork.addDevice(createKsDevice(deviceType, deviceId, group, single));
+                devices.add(createKsDevice(deviceType, deviceId, group, single));
 
                 if (mSingleFullToggle.isChecked() && mGroupIdCheckBox.isChecked()) {
-                    mNetwork.addDevice(createKsDevice(deviceType, deviceId, group, 0xF));
+                    devices.add(createKsDevice(deviceType, deviceId, group, 0xF));
                 }
             }
 
             if (mGroupFullToggle.isChecked() && mSingleFullToggle.isChecked()) {
-                mNetwork.addDevice(createKsDevice(deviceType, deviceId, 0xF, 0xF));
+                devices.add(createKsDevice(deviceType, deviceId, 0xF, 0xF));
             }
         }
 
-        updateDeviceList();
-    }
-
-    private void addAllDevicesInRange() {
-        for (HomeDevice device: createDevicesInRange()) {
-            mNetwork.addDevice(device);
-        }
-        updateDeviceList();
+        return devices;
     }
 
     private List<HomeDevice> createDevicesInRange() {
@@ -550,7 +559,7 @@ public class MainFragment extends Fragment {
             if (mGroupIdCheckBox.isChecked()) {
                 for (int gi = 1; gi <= maxGroupId; gi++) {
                     for (int si = 1; si <= maxSingleId; si++) {
-                        mNetwork.addDevice(createKsDevice(deviceType, deviceId, gi, si));
+                        devices.add(createKsDevice(deviceType, deviceId, gi, si));
                     }
                     if (mSingleFullToggle.isChecked()) {
                         devices.add(createKsDevice(deviceType, deviceId, gi, 0xF));
