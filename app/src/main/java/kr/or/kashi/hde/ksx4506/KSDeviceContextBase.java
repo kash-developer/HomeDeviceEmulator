@@ -143,6 +143,11 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
 
     @Override
     public void requestUpdate(PropertyMap props) {
+        if (isSlave()) {
+            // In slave mode, don't need to request state but wait for packet.
+            return;
+        }
+
         if (getDeviceSubId().isAll()) {
             // Can't retreive the status from the device if it's of full range.
             return;
