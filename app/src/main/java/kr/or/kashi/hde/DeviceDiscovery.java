@@ -20,6 +20,7 @@ package kr.or.kashi.hde;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.util.Log;
 
 import java.lang.Math;
 import java.util.ArrayDeque;
@@ -36,6 +37,7 @@ public class DeviceDiscovery implements Runnable {
     private final List<Callback> mCallbacks = new ArrayList<>();
     private final Map<HomeAddress, HomeDevice> mDeviceMap = new ConcurrentHashMap<>();
     private final ArrayDeque<HomeDevice> mStagingQueue = new ArrayDeque<>();
+    private boolean mIsRunning = false;
     private boolean mStartedEventFired = false;
     protected long mStopTime = 0;
     protected HomeAddress mLastPollAddress;
@@ -58,6 +60,10 @@ public class DeviceDiscovery implements Runnable {
     }
 
     public boolean isRunning() {
+        return mIsRunning;
+    }
+
+    public boolean shouldRunning() {
         if (mStagingQueue.isEmpty() || mDeviceMap.isEmpty()) return false;
         if (mStopTime > SystemClock.uptimeMillis()) return false;
         return true;
@@ -106,11 +112,13 @@ public class DeviceDiscovery implements Runnable {
             }
         }
 
-        if (isRunning()) {
+        if (shouldRunning()) {
             reschedule();
         } else {
             // Clean up all the state of progress.
-            cleanUp();
+            new Handler().postDelayed(()-> {
+                cleanUp();
+            }, 1000);
         }
     }
 
@@ -141,6 +149,8 @@ public class DeviceDiscovery implements Runnable {
         mLastPollAddress = null;
 
         reschedule();
+
+        mIsRunning = true;
 
         return true;
     }
@@ -176,5 +186,7 @@ public class DeviceDiscovery implements Runnable {
             onDiscoveryFinished();
             mStartedEventFired = false;
         }
+
+        mIsRunning = false;
     }
 }
