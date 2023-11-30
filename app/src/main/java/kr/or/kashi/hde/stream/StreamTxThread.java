@@ -63,8 +63,8 @@ public class StreamTxThread extends Thread {
     public void run() {
         if (DBG) Log.d(TAG, getName() + " thread started...");
 
-        ByteBuffer byteBuffer = ByteBuffer.allocate(64);
-        byte[] buf = new byte[64];
+        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+        byte[] buf = new byte[1024];
 
         while (mRun) {
             synchronized (mPacketQueue) {

@@ -246,6 +246,15 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
     public @ParseResult int parsePayload(HomePacket packet, PropertyMap outProps) {
         KSPacket ksPacket = (KSPacket) packet;
 
+        // In slave mode, each single device doesn't need to parse its part from combined packet.
+        if (isSlave()) {
+            final int pktSubId = ksPacket.deviceSubId;
+            final int devSubId = getDeviceSubId().value();
+            if (KSAddress.toDeviceSubId(pktSubId).hasFull() && pktSubId != devSubId) {
+                return PARSE_OK_NONE;
+            }
+        }
+
         mAutoStatusReqScheduleError = 0; // Clear last error code
 
         switch (ksPacket.commandType) {

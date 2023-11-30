@@ -48,7 +48,7 @@ public class StreamRxThread extends Thread {
     public void run() {
         if (DBG) Log.d(TAG, getName() + " thread started...");
 
-        byte[] buf = new byte[64];
+        byte[] buf = new byte[1024];
 
         try {
             while (mRun) {

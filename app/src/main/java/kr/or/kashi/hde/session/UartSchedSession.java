@@ -36,7 +36,7 @@ import kr.or.kashi.hde.PacketSchedule;
 public class UartSchedSession extends NetworkSessionAdapter {
     private static final String TAG = "UartSchedSession";
     private static final boolean DBG = true;
-    private static final int BUFFER_SIZE = 256;
+    private static final int BUFFER_SIZE = 1024;
 
     private final Context mContext;
     private final Handler mHandler;

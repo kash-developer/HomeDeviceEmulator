@@ -82,6 +82,11 @@ public class DeviceStatePoller implements Runnable {
             }
         }
         synchronized (mPolleeQueue) {
+            for (int i=0; i<mPolleeQueue.size(); i++) {
+                final PollInfo info = mPolleeQueue.poll();
+                info.phase = DeviceStatePollee.Phase.INITIAL;
+                mPolleeQueue.add(info);
+            }
             mPolleeQueue.notifyAll();
         }
     }
@@ -173,15 +178,15 @@ public class DeviceStatePoller implements Runnable {
             break;
 
         case DeviceStatePollee.Phase.WAITING:
-            info.interval = PHASE_WAITING_INTERVAL;
+            info.interval = Math.max(PHASE_WAITING_INTERVAL, getPollIntervalMs());
             break;
 
         case DeviceStatePollee.Phase.WORKING:
-            info.interval = PHASE_WORKING_INTERVAL;
+            info.interval = Math.max(PHASE_WORKING_INTERVAL, getPollIntervalMs());
             break;
 
         case DeviceStatePollee.Phase.NAPPING:
-            info.interval = PHASE_NAPPING_INTERVAL;
+            info.interval = Math.max(PHASE_NAPPING_INTERVAL, getPollIntervalMs());
             break;
         }
 
