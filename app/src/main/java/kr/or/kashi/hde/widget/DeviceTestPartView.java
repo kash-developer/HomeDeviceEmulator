@@ -22,7 +22,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.View;
-import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -86,13 +85,14 @@ public class DeviceTestPartView extends LinearLayout implements DeviceTestCallba
     }
 
     private void onReportClicked() {
-//        mReportDialog.show("<html><body>TEST</body></html>");
         mReportDialog.show();
     }
 
     @Override
     public void onTestRunnerStarted() {
         DebugLog.printEvent("onTestRunnerStarted");
+        mReportButton.setEnabled(false);
+        mReportButton.setTextColor(0xFF888888);
         mTestResultView.clear();
         mTestStateText.setText("RUNNING");
         mTestProgressText.setText("0%");
@@ -101,6 +101,8 @@ public class DeviceTestPartView extends LinearLayout implements DeviceTestCallba
     @Override
     public void onTestRunnerFinished() {
         DebugLog.printEvent("onTestRunnerFinished");
+        mReportButton.setEnabled(true);
+        mReportButton.setTextColor(0xFF000000);
         mTestStateText.setText("STOPPED");
         mTestProgressText.setText("100%");
     }

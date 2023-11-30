@@ -16,19 +16,11 @@
 
 package kr.or.kashi.hde.widget;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Html;
-import android.text.SpannableStringBuilder;
 import android.text.method.ScrollingMovementMethod;
-import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.ScrollView;
@@ -41,11 +33,11 @@ import junit.framework.TestCase;
 import junit.framework.TestFailure;
 import junit.framework.TestResult;
 
+import java.util.Collections;
+
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.test.DeviceTestCallback;
-import kr.or.kashi.hde.util.DebugLog;
-
 
 public class TestResultView extends ScrollView implements DeviceTestCallback  {
     private static final String TAG = TestResultView.class.getSimpleName();
@@ -74,6 +66,7 @@ public class TestResultView extends ScrollView implements DeviceTestCallback  {
 
     @Override
     public void onTestRunnerFinished() {
+        triggerAutoScrollIf();
     }
 
     @Override
