@@ -17,20 +17,16 @@
 
 package kr.or.kashi.hde;
 
-import static android.os.Build.VERSION.SDK_INT;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
-import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -43,6 +39,7 @@ import android.widget.Spinner;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +47,7 @@ import kr.or.kashi.hde.session.NetworkSession;
 import kr.or.kashi.hde.session.UartSchedSession;
 import kr.or.kashi.hde.session.UsbNetworkSession;
 import kr.or.kashi.hde.util.LocalPreferences;
+import kr.or.kashi.hde.util.LocalPreferences.Pref;
 import kr.or.kashi.hde.util.Utils;
 
 public class MainActivity extends AppCompatActivity {
@@ -116,26 +114,26 @@ public class MainActivity extends AppCompatActivity {
         portTypes.add(PORT_TYPE_INTERNAL);
         mPortsSpinner = findViewById(R.id.ports_spinner);
         mPortsSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item, portTypes));
-        mPortsSpinner.setSelection(LocalPreferences.getPortIndex());
+        mPortsSpinner.setSelection(LocalPreferences.getInt(Pref.PORT_INDEX));
 
         List<String> protocolTypes = new ArrayList<>();
         protocolTypes.add(PROTOCOL_TYPE_KSX4506);
         mProtocalsSpinner = findViewById(R.id.protocols_spinner);
         mProtocalsSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item, protocolTypes));
-        mProtocalsSpinner.setSelection(LocalPreferences.getProtocolIndex());
+        mProtocalsSpinner.setSelection(LocalPreferences.getInt(Pref.PROTOCOL_INDEX));
 
         List<String> modeTypes = new ArrayList<>();
         modeTypes.add(MODE_TYPE_MASTER);
         modeTypes.add(MODE_TYPE_SLAVE);
         mModesSpinner = findViewById(R.id.modes_spinner);
         mModesSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item, modeTypes));
-        mModesSpinner.setSelection(LocalPreferences.getModeIndex());
+        mModesSpinner.setSelection(LocalPreferences.getInt(Pref.MODE_INDEX));
 
         mEmptyFragment = new EmptyFragment();
         setStateText("STOPPED");
         showFragment(mEmptyFragment);
 
-        if (LocalPreferences.wasLastRunning()) {
+        if (LocalPreferences.getBoolean(Pref.LAST_RUNNING)) {
             stopEmulator();
             new Handler().postDelayed(this::startEmulator, 100);
         }
@@ -154,6 +152,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private String findInternalSerialPort() {
+        if (Build.MANUFACTURER.length() > 7 && !Build.MANUFACTURER.substring(3,5).equals("AV")) {
+            Log.e(TAG, "Internal port is not supported for manufacturer:" + Build.MANUFACTURER);
+            return null;
+        }
+
+        String portPath = "/dev/ttyS0";
+        if (Build.MODEL.length() == 15 && Build.MODEL.substring(6,15).equals("NS-SAMPLE")) {
+            portPath = "/dev/ttyS4";
+        }
+
+        if (!new File(portPath).exists()) {
+            Log.e(TAG, portPath + " is does not exist");
+            return null;
+        }
+
+        return portPath;
+    }
+
     private void startEmulator() {
         setStateText("STARTING...");
 
@@ -161,12 +178,18 @@ public class MainActivity extends AppCompatActivity {
 
         switch (mPortsSpinner.getSelectedItem().toString()) {
             case PORT_TYPE_INTERNAL: {
-                try {
-                    networkSession = new UartSchedSession(this, mHandler, "/dev/ttyS0", 9600);
-                } catch (RuntimeException e) {
-                    setStateText("ERROR: INTERNAL PORT IS NOT SUPPORTED!");
+                final String portPath = findInternalSerialPort();
+                if (portPath == null) {
+                    setStateText("ERROR: NO INTERNAL PORT!");
                     break;
                 }
+
+                try {
+                    networkSession = new UartSchedSession(this, mHandler, portPath, 9600);
+                } catch (RuntimeException e) {
+                    setStateText("ERROR: PORT IS NOT SUPPORTED!");
+                }
+                Log.d(TAG, "Internal network session created! port:" + portPath);
                 break;
             }
 
@@ -185,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 networkSession = new UsbNetworkSession(this);
+                Log.d(TAG, "USB network session created! dev:" + usbDevices.get(0));
                 break;
             }
         }
@@ -203,10 +227,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Save user selections before staring the emulator
-        LocalPreferences.putPortIndex(mPortsSpinner.getSelectedItemPosition());
-        LocalPreferences.putProtocolIndex(mProtocalsSpinner.getSelectedItemPosition());
-        LocalPreferences.putModeIndex(mModesSpinner.getSelectedItemPosition());
-        LocalPreferences.putLastRunning(true);
+        LocalPreferences.putInt(Pref.PORT_INDEX, mPortsSpinner.getSelectedItemPosition());
+        LocalPreferences.putInt(Pref.PROTOCOL_INDEX, mProtocalsSpinner.getSelectedItemPosition());
+        LocalPreferences.putInt(Pref.MODE_INDEX, mModesSpinner.getSelectedItemPosition());
+        LocalPreferences.putBoolean(Pref.LAST_RUNNING, true);
 
         mPortsSpinner.setEnabled(false);
         mProtocalsSpinner.setEnabled(false);
@@ -224,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
             mHomeNetwork.stop();
         }
 
-        LocalPreferences.putLastRunning(false);
+        LocalPreferences.putBoolean(Pref.LAST_RUNNING, false);
 
         mPortsSpinner.setEnabled(true);
         mProtocalsSpinner.setEnabled(true);

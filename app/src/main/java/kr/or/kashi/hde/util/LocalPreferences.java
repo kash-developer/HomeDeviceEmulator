@@ -29,12 +29,23 @@ import java.util.Set;
 public class LocalPreferences {
     private static final int CURRENT_VERSION = 1;
 
-    private static final String PREF_VERSION = "version";
-    private static final String PREF_LAST_RUNNING = "last_running";
-    private static final String PREF_PORT_INDEX = "port_index";
-    private static final String PREF_PROTOCOL_INDEX = "protocol_index";
-    private static final String PREF_MODE_INDEX = "mode_index";
-    private static final String PREF_SELECTED_DEVICE_TYPES = "selected_device_types";
+    public class Pref {
+        public static final String VERSION = "version";
+        public static final String LAST_RUNNING = "last_running";
+        public static final String PORT_INDEX = "port_index";
+        public static final String PROTOCOL_INDEX = "protocol_index";
+        public static final String MODE_INDEX = "mode_index";
+        public static final String SELECTED_DEVICE_TYPES = "selected_device_types";
+        public static final String RANGE_GROUP_CHECKED = "range_group_checked";
+        public static final String RANGE_GROUP_LAST_ID = "range_group_last_id";
+        public static final String RANGE_GROUP_FULL_CHECKED = "range_group_full_CHECKED";
+        public static final String RANGE_SINGLE_CHECKED = "range_single_checked";
+        public static final String RANGE_SINGLE_LAST_ID = "range_single_last_id";
+        public static final String RANGE_SINGLE_FULL_CHECKED = "range_single_full_checked";
+        public static final String DEBUG_LOG_EVENT_ENABLED = "debug_log_event_enabled";
+        public static final String DEBUG_LOG_TXRX_ENABLED = "debug_log_txrx_enabled";
+        public static final String POLLING_INTERVAL_INDEX = "polling_interval_index";
+    };
 
     private static SharedPreferences sSharedPreferences = null;
     private static SharedPreferences.Editor sCurrentEditor = null;
@@ -47,9 +58,9 @@ public class LocalPreferences {
 
     public static void init(Context context) {
         sSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        if (sSharedPreferences.getInt(PREF_VERSION, 0) != CURRENT_VERSION) {
+        if (sSharedPreferences.getInt(Pref.VERSION, 0) != CURRENT_VERSION) {
             sSharedPreferences.edit().clear().commit();
-            sSharedPreferences.edit().putInt(PREF_VERSION, CURRENT_VERSION).commit();
+            sSharedPreferences.edit().putInt(Pref.VERSION, CURRENT_VERSION).commit();
         }
     }
 
@@ -67,43 +78,35 @@ public class LocalPreferences {
         return sCurrentEditor;
     }
 
-    public static boolean wasLastRunning() {
-        return prefs().getBoolean(PREF_LAST_RUNNING, false);
+    public static boolean getBoolean(String key) {
+        return getBoolean(key, false);
     }
 
-    public static void putLastRunning(boolean running) {
-        edit().putBoolean(PREF_LAST_RUNNING, running);
+    public static boolean getBoolean(String key, boolean defValue) {
+        return prefs().getBoolean(key, defValue);
     }
 
-    public static int getPortIndex() {
-        return prefs().getInt(PREF_PORT_INDEX, 0);
+    public static void putBoolean(String key, boolean value) {
+        edit().putBoolean(key, value);
     }
 
-    public static void putPortIndex(int index) {
-        edit().putInt(PREF_PORT_INDEX, index);
+    public static int getInt(String key) {
+        return getInt(key, 0);
     }
 
-    public static int getProtocolIndex() {
-        return prefs().getInt(PREF_PROTOCOL_INDEX, 0);
+    public static int getInt(String key, int defValue) {
+        return prefs().getInt(key, defValue);
     }
 
-    public static void putProtocolIndex(int index) {
-        edit().putInt(PREF_PROTOCOL_INDEX, index);
-    }
-
-    public static int getModeIndex() {
-        return prefs().getInt(PREF_MODE_INDEX, 0);
-    }
-
-    public static void putModeIndex(int index) {
-        edit().putInt(PREF_MODE_INDEX, index);
+    public static void putInt(String key, int value) {
+        edit().putInt(key, value);
     }
 
     public static Set<String> getSelectedDeviceTypes() {
-        return new HashSet<>(prefs().getStringSet(PREF_SELECTED_DEVICE_TYPES, new HashSet<>()));
+        return new HashSet<>(prefs().getStringSet(Pref.SELECTED_DEVICE_TYPES, new HashSet<>()));
     }
 
     public static void putSelectedDeviceTypes(Set<String> types) {
-        edit().putStringSet(PREF_SELECTED_DEVICE_TYPES, types);
+        edit().putStringSet(Pref.SELECTED_DEVICE_TYPES, types);
     }
 }
