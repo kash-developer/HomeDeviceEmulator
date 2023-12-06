@@ -21,6 +21,8 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
+import kr.or.kashi.hde.base.BasicPropertyMap;
+import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyValue;
 import kr.or.kashi.hde.DeviceContextBase;
 import kr.or.kashi.hde.DeviceDiscovery;
@@ -35,6 +37,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * [KS X 4506] The implementation of main context
@@ -45,6 +48,7 @@ public class KSMainContext extends MainContext {
 
     protected final Map<Integer, Class<?>> mAddressToClassMap = new HashMap<>();
     private DeviceDiscovery mDiscovery = null;
+    private final Map<String, HomeDevice> mVirtualDeviceMap = new ConcurrentHashMap<>();
 
     public static int getDeviceIdFromProps(Map props) {
         PropertyValue propAddr = (PropertyValue) props.get(HomeDevice.PROP_ADDR);
@@ -71,44 +75,77 @@ public class KSMainContext extends MainContext {
 
     @Override
     public boolean addDevice(HomeDevice device) {
-        boolean added = super.addDevice(device);
-        if (added) {
-            final KSDeviceContextBase dc = ((KSDeviceContextBase)device.dc());
-            final int devId = dc.getDeviceId();
-            final int subId = dc.getDeviceSubId().value();
-            final int subIdUpper = (subId & 0xF0);
-            final int subIdLower = (subId & 0x0F);
-            if (subIdLower == 0x0F) {
-                for (int i = 1; i <= 0xE; i++) {
-                    HomeDevice child = getDevice(new KSAddress(devId, (subIdUpper | i)).toAddressString());
-                    if (child != null) device.dc().addChild(child.dc());
-                }
-            } else {
-                HomeDevice parent = getDevice(new KSAddress(devId, (subIdUpper | 0x0F)).toAddressString());
-                if (parent != null) {
-                    parent.dc().addChild(device.dc());
+        final String address = device.getAddress();
+
+        if (mVirtualDeviceMap.containsKey(address)) {
+            // Remove virtual device if it's real.
+            mVirtualDeviceMap.remove(address);
+        }
+
+        boolean added = super.addDevice(device); // Call super
+        if (!added) {
+            return false;
+        }
+
+        final KSDeviceContextBase dc = ((KSDeviceContextBase)device.dc());
+        final int devId = dc.getDeviceId();
+        final int subId = dc.getDeviceSubId().value();
+        final int subIdUpper = (subId & 0xF0);
+        final int subIdLower = (subId & 0x0F);
+        if (subIdLower == 0x0F) {
+            for (int i = 1; i <= 0xE; i++) {
+                String childAddr = new KSAddress(devId, (subIdUpper | i)).toAddressString();
+                HomeDevice child = getDevice(childAddr);
+                if (child != null) device.dc().addChild(child.dc());
+            }
+        } else {
+            String parentAddr = new KSAddress(devId, (subIdUpper | 0x0F)).toAddressString();
+            HomeDevice parent = getDevice(parentAddr);
+            if (parent == null) {
+                parent = mVirtualDeviceMap.get(parentAddr);
+                if (parent == null) {
+                    PropertyMap props = new BasicPropertyMap();
+                    props.put(HomeDevice.PROP_ADDR, parentAddr);
+                    props.put(HomeDevice.PROP_AREA, HomeDevice.Area.UNKNOWN);
+                    props.put(HomeDevice.PROP_NAME, "Virtual " + parentAddr);
+
+                    // Create new virutal device as parent.
+                    parent = createDevice(props.toMap());
+                    mVirtualDeviceMap.put(parentAddr, parent);
                 }
             }
+            parent.dc().addChild(device.dc());
         }
+
         return added;
     }
 
     @Override
     public void removeDevice(HomeDevice device) {
-        if (getDevice(device.getAddress()) != null) {
-            final KSDeviceContextBase dc = ((KSDeviceContextBase)device.dc());
-            final int devId = dc.getDeviceId();
-            final int subId = dc.getDeviceSubId().value();
-            if ((subId & 0x0F) == 0x0F) {
-                device.dc().removeAllChildren();
-            } else {
-                HomeDevice parent = getDevice(new KSAddress(devId, (subId | 0x0F)).toAddressString());
-                if (parent != null) {
-                    parent.dc().removeChild(device.dc());
-                }
-            }
-            super.removeDevice(device);
+        final String address = device.getAddress();
+
+        if (!containsDevice(device) && !mVirtualDeviceMap.containsKey(address)) {
+            return;
         }
+
+        final KSDeviceContextBase dc = ((KSDeviceContextBase)device.dc());
+        final int devId = dc.getDeviceId();
+        final int subId = dc.getDeviceSubId().value();
+        if ((subId & 0x0F) == 0x0F) {
+            device.dc().removeAllChildren();
+        } else {
+            String parentAddr = new KSAddress(devId, (subId | 0x0F)).toAddressString();
+            HomeDevice parent = getDevice(parentAddr);
+            if (parent != null) {
+                parent.dc().removeChild(device.dc());
+            }
+        }
+
+        if (mVirtualDeviceMap.containsKey(address)) {
+            mVirtualDeviceMap.remove(address);
+        }
+
+        super.removeDevice(device); // Call super
     }
 
     @Override
@@ -190,13 +227,31 @@ public class KSMainContext extends MainContext {
         packet.toBuffer(byteBuffer);
         DebugLog.printTxRx("RX: " + Utils.toHexString(byteBuffer));
 
+        // Parse packet for discovery if running.
+        parsePacketInDiscovery(packet);
+
+        // Parse packet in device contexts.
+        parsePacketInDeviceContexts(packet);
+
+        return true;
+    }
+
+    private void parsePacketInDiscovery(KSPacket packet) {
+        if (mDiscovery == null || !mDiscovery.isRunning()) {
+            return;
+        }
+
+        if (packet.commandType != KSDeviceContextBase.CMD_CHARACTERISTIC_RSP) {
+            return;
+        }
+
         // Parse in the exact context of the id of device.
-        parsePacketIfMatched(packet, packet.deviceId, packet.deviceSubId);
+        mDiscovery.onParsePacket(new KSAddress(packet.deviceId, packet.deviceSubId), packet);
 
         // Parse in each single contexts if this packet is for all single devices.
         if (packet.deviceSubId == 0x0F) {
             for (int i = 1; i < 0x0F; i++) {
-                parsePacketIfMatched(packet, packet.deviceId, i);
+                mDiscovery.onParsePacket(new KSAddress(packet.deviceId, i), packet);
             }
         }
 
@@ -204,23 +259,25 @@ public class KSMainContext extends MainContext {
         if ((packet.deviceSubId & 0x0F) == 0x0F) {
             int groupId = (packet.deviceSubId & 0xF0);
             for (int i = 1; i < 0x0F; i++) {
-                parsePacketIfMatched(packet, packet.deviceId, (groupId | i));
+                mDiscovery.onParsePacket(new KSAddress(packet.deviceId, (groupId | i)), packet);
             }
         }
-
-        return true;
     }
 
-    private void parsePacketIfMatched(KSPacket packet, int deviceId, int deviceSubId) {
-        KSAddress address = new KSAddress(deviceId, deviceSubId);
-        if (mDiscovery != null && mDiscovery.isRunning()) {
-            if (packet.commandType == KSDeviceContextBase.CMD_CHARACTERISTIC_RSP) {
-                mDiscovery.onParsePacket(address, packet);
-            }
-        } else {
-            HomeDevice device = getDevice(address.getDeviceAddress());
-            if (device != null) {
-                device.dc().parsePacket(packet);
+    private void parsePacketInDeviceContexts(KSPacket packet) {
+        final KSAddress address = new KSAddress(packet.deviceId, packet.deviceSubId);
+        final String devAddr = address.getDeviceAddress();
+        HomeDevice device = getDevice(devAddr);
+        if (device == null) {
+            // No device found, try to get from virtual.
+            device = mVirtualDeviceMap.get(devAddr);
+        }
+        if (device != null) {
+            device.dc().parsePacket(packet);
+
+            // TODO: Consider if doing by parent is more efficient.
+            for (DeviceContextBase child: device.dc().getChildren()) {
+                child.parsePacket(packet);
             }
         }
     }

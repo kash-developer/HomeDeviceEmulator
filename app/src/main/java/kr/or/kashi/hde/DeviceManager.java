@@ -88,6 +88,10 @@ public class DeviceManager {
         mDeviceMap.clear();
     }
 
+    public boolean containsDevice(HomeDevice device) {
+        return mDeviceMap.containsKey(device.getAddress());
+    }
+
     public HomeDevice getDevice(String address) {
         return mDeviceMap.get(address);
     }
