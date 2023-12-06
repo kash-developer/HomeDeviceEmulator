@@ -36,6 +36,7 @@ import com.hoho.android.usbserial.util.SerialInputOutputManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class UsbNetworkSession extends NetworkSessionAdapter
@@ -49,6 +50,11 @@ public class UsbNetworkSession extends NetworkSessionAdapter
     private final UsbManager mUsbManager;
     private UsbSerialPort mUsbSerialPort;
     private SerialInputOutputManager mUsbIoManager;
+
+    private byte[] testPacketBytes = new byte[] {
+        (byte)0xF1, (byte)0xF2, (byte)0xF3, (byte)0xF4, (byte)0xF5, (byte)0xF6, (byte)0xF7, (byte)0xF8,
+        (byte)0xF9, (byte)0xFA, (byte)0xFB, (byte)0xFC,
+    };
 
     public static List<UsbDevice> getAvailableDevices(Context context) {
         UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
@@ -145,6 +151,7 @@ public class UsbNetworkSession extends NetworkSessionAdapter
     @Override
     public void onWrite(byte[] b) {
         try {
+            Thread.sleep(10); // HACK: Put some delay to avoid overwritten or splitted packet.
             mUsbSerialPort.write(b, 100 /* timeout */);
         } catch (Exception e) {
             e.printStackTrace();
