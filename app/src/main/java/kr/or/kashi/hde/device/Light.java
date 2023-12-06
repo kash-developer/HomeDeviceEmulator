@@ -62,10 +62,10 @@ public class Light extends HomeDevice {
     public static final String PROP_DIM_SUPPORTED   = PROP_PREFIX + "dim_supported";
 
     /** Property: Minimum level of dimming */
-    @PropertyDef(valueClass=Integer.class, defValueI=0x0)
+    @PropertyDef(valueClass=Integer.class, defValueI=0x1)
     public static final String PROP_MIN_DIM_LEVEL   = PROP_PREFIX + "min_dim_level";
 
-    /** Property: Miximum level of dimming */
+    /** Property: Maximum level of dimming */
     @PropertyDef(valueClass=Integer.class, defValueI=0xf)
     public static final String PROP_MAX_DIM_LEVEL   = PROP_PREFIX + "max_dim_level";
 
@@ -78,11 +78,11 @@ public class Light extends HomeDevice {
     public static final String PROP_TONE_SUPPORTED  = PROP_PREFIX + "tone_supported";
 
     /** Property: Minimum level of color tone */
-    @PropertyDef(valueClass=Integer.class)
+    @PropertyDef(valueClass=Integer.class, defValueI=0x1)
     public static final String PROP_MIN_TONE_LEVEL  = PROP_PREFIX + "min_tone_level";
 
     /** Property: Maximum level of color tone */
-    @PropertyDef(valueClass=Integer.class)
+    @PropertyDef(valueClass=Integer.class, defValueI=0xf)
     public static final String PROP_MAX_TONE_LEVEL  = PROP_PREFIX + "max_tone_level";
 
     /** Property: Current level of color tone */

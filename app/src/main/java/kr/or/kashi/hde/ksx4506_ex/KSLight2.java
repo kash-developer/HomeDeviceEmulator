@@ -18,7 +18,9 @@
 package kr.or.kashi.hde.ksx4506_ex;
 
 import android.util.Log;
+import android.widget.SeekBar;
 
+import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyTask;
 import kr.or.kashi.hde.HomePacket;
@@ -45,14 +47,16 @@ public class KSLight2 extends KSLight {
     public KSLight2(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps);
 
-        setPropertyTask(Light.PROP_CUR_TONE_LEVEL, mSingleToneControlTask);
+        if (!isSlave()) { // TODO:
+            setPropertyTask(Light.PROP_CUR_TONE_LEVEL, mSingleToneControlTask);
+        }
     }
 
     protected PropertyTask mSingleToneControlTask = new PropertyTask() {
         @Override
         public boolean execTask(PropertyMap newProps, PropertyMap outProps) {
             sendPacket(makeToneControlReq(newProps));
-            sendPacket(makeStatusReq(newProps));
+            //sendPacket(makeStatusReq(newProps));
             return true;
         }
     };
@@ -61,11 +65,51 @@ public class KSLight2 extends KSLight {
         KSPacket ksPacket = (KSPacket) packet;
 
         switch (ksPacket.commandType) {
-            case CMD_SINGLE_TONE_CONTROL_RSP:
-                return parseSingleToneControlRsp(ksPacket, outProps);
+            case CMD_SINGLE_TONE_CONTROL_REQ: return parseSingleToneControlReq(ksPacket, outProps);
+            case CMD_SINGLE_TONE_CONTROL_RSP: return parseSingleToneControlRsp(ksPacket, outProps);
         }
 
         return super.parsePayload(packet, outProps);
+    }
+
+    @Override
+    protected int makeStatusRsp(KSPacket reqPacket, PropertyMap outProps, ByteArrayBuffer outData) {
+        @ParseResult int res = super.makeStatusRsp(reqPacket, outProps, outData);
+        if (res <= PARSE_ERROR_UNKNOWN) {
+            return res;
+        }
+
+        if (getDeviceSubId().isFull() || getDeviceSubId().isFullOfGroup()) {
+            for (KSLight2 child: getChildren(KSLight2.class)) {
+                int toneData = makeSingleColorToneByte(child.getReadPropertyMap());
+                if (toneData > 0) outData.append(toneData);
+            }
+        }
+
+        return PARSE_OK_NONE;
+    }
+
+    private int makeSingleColorToneByte(PropertyMap props) {
+        boolean toneSupported = props.get(Light.PROP_TONE_SUPPORTED, Boolean.class);
+        if (toneSupported) {
+            KSAddress address = new KSAddress(props.get(HomeDevice.PROP_ADDR, String.class));
+            final int subId = address.getDeviceSubId().value() & 0x0F;
+            final int level = props.get(Light.PROP_CUR_TONE_LEVEL, Integer.class) & 0x0F;
+Log.e(TAG, "makeSingleColorToneByte GET PROP_CUR_TONE_LEVEL " + level);
+            return ((level << 4) | subId);
+        }
+        return 0;
+    }
+
+    private void parseSingleColorToneByte(int state, PropertyMap outProps) {
+        final int subId = state & 0x0F;
+        final int level = (state >> 4) & 0x0F;
+
+        if (subId == getDeviceSubId().singleId()) {
+            outProps.put(Light.PROP_TONE_SUPPORTED, true);
+Log.e(TAG, "parseSingleColorToneByte PROP_CUR_TONE_LEVEL " + level);
+            outProps.put(Light.PROP_CUR_TONE_LEVEL, level);
+        }
     }
 
     @Override
@@ -78,27 +122,63 @@ public class KSLight2 extends KSLight {
         int toneStateOffset = 1 + mTotalCountInGroup;
         int toneStateCount = packet.data.length - toneStateOffset;
 
-        if (toneStateCount > 0) {
-            if (KSAddress.toDeviceSubId(packet.deviceSubId).isSingle()) {
-                final int state = packet.data[toneStateOffset] & 0xFF;
-                final int subId = state & 0x0F; // TODO: Need to check?
-                final int toneValue = (state >> 4) & 0x0F;
-                outProps.put(Light.PROP_CUR_TONE_LEVEL, toneValue);
-            } else {
-                KSAddress address = (KSAddress)getAddress();
-                int thisSubId = address.getDeviceSubId().value() & 0x0F;
-                for (int i=0; i<toneStateCount; i++) {
-                    final int state = packet.data[toneStateOffset + i] & 0xFF;
-                    final int subId = state & 0x0F;
-                    final int toneValue = (state >> 4) & 0x0F;
-                    if (subId == thisSubId) {
-                        outProps.put(Light.PROP_CUR_TONE_LEVEL, toneValue);
-                    }
-                }
+        if (KSAddress.toDeviceSubId(packet.deviceSubId).hasFull()) {
+            for (int i=0; i<toneStateCount; i++) {
+                final int state = packet.data[toneStateOffset + i] & 0xFF;
+                parseSingleColorToneByte(state, outProps);
             }
         }
 
         return PARSE_OK_STATE_UPDATED;
+    }
+
+    @Override
+    protected int makeCharacteristicRsp(KSPacket reqPacket, PropertyMap outProps, ByteArrayBuffer outData) {
+        @ParseResult int res = super.makeCharacteristicRsp(reqPacket, outProps, outData);
+        if (res <= PARSE_ERROR_UNKNOWN) {
+            return res;
+        }
+
+        int threeWaySubId = 0;
+        int maxDimLevel = 0;
+        int maxToneLevel = 0;
+        int toneFlags = 0;
+
+        if (getDeviceSubId().isSingle() || getDeviceSubId().isSingleOfGroup()) {
+            final PropertyMap thisProps = getReadPropertyMap();
+            if (thisProps.get(Light.PROP_IS_3WAY_SWITCH, Boolean.class)) {
+                threeWaySubId = getDeviceSubId().value();
+            }
+            if (thisProps.get(Light.PROP_DIM_SUPPORTED, Boolean.class)) {
+                maxDimLevel = thisProps.get(Light.PROP_MAX_DIM_LEVEL, Integer.class);
+            }
+            if (thisProps.get(Light.PROP_TONE_SUPPORTED, Boolean.class)) {
+                maxToneLevel = thisProps.get(Light.PROP_MAX_TONE_LEVEL, Integer.class);
+            }
+        } else if (getDeviceSubId().isFull() || getDeviceSubId().isFullOfGroup()) {
+            for (KSLight2 child: getChildren(KSLight2.class)) {
+                final PropertyMap childProps = child.getReadPropertyMap();
+                if (childProps.get(Light.PROP_IS_3WAY_SWITCH, Boolean.class)) {
+                    threeWaySubId = child.getDeviceSubId().singleId();
+                }
+                if (childProps.get(Light.PROP_DIM_SUPPORTED, Boolean.class)) {
+                    maxDimLevel = Math.max(maxDimLevel, childProps.get(Light.PROP_MAX_DIM_LEVEL, Integer.class));
+                }
+                if (childProps.get(Light.PROP_TONE_SUPPORTED, Boolean.class)) {
+                    maxToneLevel = Math.max(maxToneLevel, childProps.get(Light.PROP_MAX_TONE_LEVEL, Integer.class));
+                    int index = child.getDeviceSubId().singleId() - 1; // TODO: Check range (1~14)
+                    toneFlags |= (1 << index);
+                }
+            }
+        }
+
+        outData.append(threeWaySubId);  // DATA 5
+        outData.append(maxDimLevel);    // DATA 6
+        outData.append(maxToneLevel);   // DATA 7
+        outData.append((toneFlags >> 0) & 0xFF);    // DATA 8
+        outData.append((toneFlags >> 8) & 0xFF);    // DATA 9
+
+        return PARSE_OK_NONE;
     }
 
     @Override
@@ -170,13 +250,34 @@ public class KSLight2 extends KSLight {
     }
 
     private KSPacket makeToneControlReq(PropertyMap props) {
-        final int toneLevel = (int) props.get(Light.PROP_CUR_TONE_LEVEL).getValue();
+        final int toneLevel = props.get(Light.PROP_CUR_TONE_LEVEL, Integer.class);
+Log.e(TAG, "makeToneControlReq GET PROP_CUR_TONE_LEVEL " + toneLevel);
 
         KSPacket packet = createPacket(CMD_SINGLE_TONE_CONTROL_REQ);
         packet.data = new byte[1];
         packet.data[0] = (byte)(toneLevel & 0x0F);
 
         return packet;
+    }
+
+    private @ParseResult int parseSingleToneControlReq(KSPacket packet, PropertyMap outProps) {
+        if (packet.data.length != 1) {
+            if (DBG) Log.w(TAG, "parse-tone-ctrl-req: wrong size of data " + packet.data.length);
+            return PARSE_ERROR_MALFORMED_PACKET;
+        }
+
+        final int toneLevel = packet.data[0] & 0xFF;
+Log.e(TAG, "parseSingleToneControlReq PROP_CUR_TONE_LEVEL " + toneLevel);
+        outProps.put(Light.PROP_CUR_TONE_LEVEL, toneLevel);
+
+        // Just reflect the request level to response.
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        data.append(0); // error code
+        data.append(toneLevel);
+
+        sendPacket(createPacket(CMD_SINGLE_TONE_CONTROL_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
     }
 
     private @ParseResult int parseSingleToneControlRsp(KSPacket packet, PropertyMap outProps) {
@@ -193,6 +294,7 @@ public class KSLight2 extends KSLight {
         }
 
         final int toneLevel = packet.data[1] & 0xFF;
+Log.e(TAG, "parseSingleToneControlRsp PROP_CUR_TONE_LEVEL " + toneLevel);
         outProps.put(Light.PROP_CUR_TONE_LEVEL, toneLevel);
 
         return PARSE_OK_STATE_UPDATED;

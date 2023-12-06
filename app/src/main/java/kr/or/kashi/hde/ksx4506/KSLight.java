@@ -63,20 +63,26 @@ public class KSLight extends KSDeviceContextBase {
         ByteArrayBuffer data = new ByteArrayBuffer();
         data.append(0); // error code
 
+        @ParseResult int res = makeStatusRsp(packet, outProps, data);
+        if (res < PARSE_OK_NONE) return res;
+
+        sendPacket(createPacket(CMD_STATUS_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected int makeStatusRsp(KSPacket reqPacket, PropertyMap outProps, ByteArrayBuffer outData) {
         final KSAddress.DeviceSubId thisSubId = ((KSAddress)getAddress()).getDeviceSubId();
         if (thisSubId.isSingle() || thisSubId.isSingleOfGroup()) {
-            data.append(makeSingleLightStateByte(outProps));
+            outData.append(makeSingleLightStateByte(outProps));
         } else if (thisSubId.isFull() || thisSubId.isFullOfGroup()) {
             for (KSLight child: getChildren(KSLight.class)) {
-                data.append(makeSingleLightStateByte(child.getReadPropertyMap()));
+                outData.append(makeSingleLightStateByte(child.getReadPropertyMap()));
             }
         } else {
             Log.w(TAG, "parse-status-req: should never reach this");
         }
-
-        sendPacket(createPacket(CMD_STATUS_RSP, data.toArray()));
-
-        return PARSE_OK_NONE;
+        return PARSE_OK_STATE_UPDATED;
     }
 
     @Override
@@ -113,9 +119,19 @@ public class KSLight extends KSDeviceContextBase {
 
     @Override
     protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) {
-        final PropertyMap props = getReadPropertyMap();
         final ByteArrayBuffer data = new ByteArrayBuffer();
         data.append(0); // error code
+
+        @ParseResult int res = makeCharacteristicRsp(packet, outProps, data);
+        if (res < PARSE_OK_NONE) return res;
+
+        sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected int makeCharacteristicRsp(KSPacket reqPacket, PropertyMap outProps, ByteArrayBuffer outData) {
+        final PropertyMap props = getReadPropertyMap();
 
         int normalCount = 0;
         int dimmableCount = 0;
@@ -138,14 +154,12 @@ public class KSLight extends KSDeviceContextBase {
             }
         }
 
-        data.append(normalCount);
-        data.append(dimmableCount);
-        data.append((dimmableFlags >> 0) & 0xFF);
-        data.append((dimmableFlags >> 8) & 0xFF);
+        outData.append(normalCount);
+        outData.append(dimmableCount);
+        outData.append((dimmableFlags >> 0) & 0xFF);
+        outData.append((dimmableFlags >> 8) & 0xFF);
 
-        sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
-
-        return PARSE_OK_NONE;
+        return PARSE_OK_STATE_UPDATED;
     }
 
     @Override
@@ -207,15 +221,14 @@ public class KSLight extends KSDeviceContextBase {
     protected @ParseResult int parseSingleControlReq(KSPacket packet, PropertyMap outProps) {
         parseLightControlData(packet.data, outProps);
 
-        final PropertyMap props = getReadPropertyMap();
+        // NOTE: Just use the output props for reading because uncommitted changes that is produced
+        // by previous parsing could be staging in the output props and that should be reflect by
+        // consecutive response packet to the peer.
+        final PropertyMap props = outProps;
+
         final ByteArrayBuffer data = new ByteArrayBuffer();
         data.append(0); // error code
-
-        final boolean isOn = (Boolean) props.get(HomeDevice.PROP_ONOFF).getValue();
-        final int dimLevel = (int) props.get(Light.PROP_CUR_DIM_LEVEL).getValue();
-        // TODO: check if the dimLevel is between min and max
-        // TODO: assert if dimLevel is within 0x0 ~ 0xF
-        data.append(makeLightControlData(isOn, dimLevel));
+        data.append(makeSingleLightStateByte(props));
 
         sendPacket(createPacket(CMD_SINGLE_CONTROL_RSP, data.toArray()));
 

@@ -242,7 +242,6 @@ public class DeviceTestRunner implements Runnable {
 
     private static DeviceTestCase createTestByMethod(Class<?> testClass, Method testMethod) {
         if (!isTestMethod(testMethod)) {
-            Log.e(TAG, "Method " + testMethod.getName() + " is not public");
             return null;
         }
         return createTest(testClass, testMethod.getName());

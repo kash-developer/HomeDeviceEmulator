@@ -80,7 +80,8 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
     private Listener mListener;
 
     protected final PropertyMap mBasePropertyMap = new BasicPropertyMap();
-    protected final StageablePropertyMap mRxPropertyMap;
+    protected final PropertyMap mReadOnlyPropertyMap = new ReadOnlyPropertyMap(mBasePropertyMap, true);
+    protected final StageablePropertyMap mRxPropertyMap = new StageablePropertyMap(mBasePropertyMap);
     private final Map<String, PropertyTask> mPropTaskMap = new ConcurrentHashMap<>();
 
     private boolean mIsSlave = false;
@@ -97,7 +98,6 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
     public DeviceContextBase(MainContext mainContext, Map defaultProps, Class<?> deviceClass) {
         mDeviceClass = deviceClass;
         mHandler = new Handler(Looper.getMainLooper());
-        mRxPropertyMap = new StageablePropertyMap(mBasePropertyMap);
         mRxPropertyMap.putAll(PropertyInflater.inflate(deviceClass));       // Put all default properties as base
         mRxPropertyMap.putAll((Map<String, PropertyValue>)defaultProps);    // Overwrite initial properties
         mRxPropertyMap.commit();
@@ -136,6 +136,10 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
 
     public Collection<DeviceContextBase> getChildren() {
         return mChildren.values();
+    }
+
+    public <E> E getChild(Class<E> clazz, String address) {
+        return (E) mChildren.get(address);
     }
 
     public <E> Collection<E> getChildren(Class<E> clazz) {
@@ -183,7 +187,7 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
     }
 
     public PropertyMap getReadPropertyMap() {
-        return new ReadOnlyPropertyMap(mBasePropertyMap, true);
+        return mReadOnlyPropertyMap;
     }
 
     public void setListener(Listener listener) {

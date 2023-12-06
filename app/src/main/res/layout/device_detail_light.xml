@@ -31,11 +31,10 @@
         android:gravity="left|center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:text="State" />
+        <CheckBox
+            android:id="@+id/light_state_check"
+            android:text="State"
+            style="@style/TitleCheckStyle" />
 
         <RadioGroup
             android:layout_width="wrap_content"
@@ -64,11 +63,10 @@
         android:gravity="left|center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:text="Dimming" />
+        <CheckBox
+            android:id="@+id/light_dimming_check"
+            android:text="Dimming"
+            style="@style/TitleCheckStyle" />
 
         <SeekBar
             android:id="@+id/light_dimming_seekbar"
@@ -84,11 +82,10 @@
         android:gravity="left|center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:text="Color" />
+        <CheckBox
+            android:id="@+id/light_color_check"
+            android:text="Color"
+            style="@style/TitleCheckStyle" />
 
         <SeekBar
             android:id="@+id/light_color_seekbar"

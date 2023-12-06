@@ -90,6 +90,14 @@ public class KSAddress extends HomeAddress {
             return mId;
         }
 
+        public int singleId() {
+            return mId & 0x0F;
+        }
+
+        public int groupId() {
+            return (mId >> 4) & 0x0F;
+        }
+
         public boolean hasSingle() {
             return (mId & 0x0F) != 0 && !hasFull();
         }

@@ -25,15 +25,22 @@ import androidx.annotation.Nullable;
 
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.base.PropertyMap;
+import kr.or.kashi.hde.util.LocalPreferences;
 
 public class HomeDeviceView<T extends HomeDevice> extends LinearLayout implements HomeDevice.Callback {
     private static final String TAG = HomeDeviceView.class.getSimpleName();
     private final Context mContext;
     protected T mDevice;
+    protected boolean mIsSlave;
 
     public HomeDeviceView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
+        mIsSlave = (LocalPreferences.getInt(LocalPreferences.Pref.MODE_INDEX) == 1);
+    }
+
+    public boolean isSlave() {
+        return mIsSlave;
     }
 
     @Override
@@ -47,7 +54,8 @@ public class HomeDeviceView<T extends HomeDevice> extends LinearLayout implement
 
         if (mDevice != null) {
             mDevice.addCallback(this);
-            onUpdateProperty(mDevice.getReadPropertyMap());
+            final PropertyMap props = mDevice.getReadPropertyMap();
+            onUpdateProperty(props, props);
         }
     }
 
@@ -62,7 +70,7 @@ public class HomeDeviceView<T extends HomeDevice> extends LinearLayout implement
 
     @Override
     public void onPropertyChanged(HomeDevice device, PropertyMap props) {
-        onUpdateProperty(props);
+        onUpdateProperty(mDevice.getReadPropertyMap(), props);
     }
 
     @Override
@@ -70,7 +78,7 @@ public class HomeDeviceView<T extends HomeDevice> extends LinearLayout implement
         // No operation
     }
 
-    public void onUpdateProperty(PropertyMap props) {
+    public void onUpdateProperty(PropertyMap props, PropertyMap changed) {
         // Override it
     }
 
