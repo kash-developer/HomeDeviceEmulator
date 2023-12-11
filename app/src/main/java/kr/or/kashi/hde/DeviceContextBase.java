@@ -23,8 +23,6 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
@@ -41,7 +39,6 @@ import kr.or.kashi.hde.base.StageablePropertyMap;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyTask;
 import kr.or.kashi.hde.base.PropertyValue;
-import kr.or.kashi.hde.device.AirConditioner;
 
 /*
  * The base implementation of device context.

@@ -117,24 +117,24 @@ public class KSAirConditioner extends KSDeviceContextBase {
         return super.parsePayload(packet, outProps);
     }
 
-   @Override
-   protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) {
+    @Override
+    protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) {
         sendStatusOrControlRsp(CMD_STATUS_RSP);
         return PARSE_OK_STATE_UPDATED;
-   }
+    }
 
-   private void sendStatusOrControlRsp(int rspCmd) {
-       ByteArrayBuffer data = new ByteArrayBuffer();
-       final KSAddress.DeviceSubId thisSubId = ((KSAddress)getAddress()).getDeviceSubId();
-       if (isSingleDevice()) {
-           makeDeviceStateBytes(getReadPropertyMap(), data);
-       } else {
-           for (DeviceContextBase child: getChildren()) {
-               makeDeviceStateBytes(child.getReadPropertyMap(), data);
-           }
-       }
-       sendPacket(createPacket(rspCmd, data.toArray()));
-   }
+    private void sendStatusOrControlRsp(int rspCmd) {
+        ByteArrayBuffer data = new ByteArrayBuffer();
+        final KSAddress.DeviceSubId thisSubId = ((KSAddress)getAddress()).getDeviceSubId();
+        if (isSingleDevice()) {
+            makeDeviceStateBytes(getReadPropertyMap(), data);
+        } else {
+            for (DeviceContextBase child: getChildren()) {
+                makeDeviceStateBytes(child.getReadPropertyMap(), data);
+            }
+        }
+        sendPacket(createPacket(rspCmd, data.toArray()));
+    }
 
     @Override
     protected @ParseResult int parseStatusRsp(KSPacket packet, PropertyMap outProps) {
@@ -172,47 +172,47 @@ public class KSAirConditioner extends KSDeviceContextBase {
         return PARSE_OK_NONE;
     }
 
-   private void makeDeviceStateBytes(PropertyMap props, ByteArrayBuffer outData) {
-       outData.append(0); // error code
+    private void makeDeviceStateBytes(PropertyMap props, ByteArrayBuffer outData) {
+        outData.append(0); // error code
 
-       int outOpData = 0;
-       if (props.get(HomeDevice.PROP_ONOFF, Boolean.class)) {
-           outOpData |= (1 << 4);
-       }
+        int outOpData = 0;
+        if (props.get(HomeDevice.PROP_ONOFF, Boolean.class)) {
+            outOpData |= (1 << 4);
+        }
 
-       switch (props.get(AirConditioner.PROP_OPERATION_MODE, Integer.class)) {
-           case AirConditioner.OpMode.AUTO:     outOpData |= 0; break;
-           case AirConditioner.OpMode.COOLING:  outOpData |= 1; break;
-           case AirConditioner.OpMode.DEHUMID:  outOpData |= 2; break;
-           case AirConditioner.OpMode.BLOWING:  outOpData |= 3; break;
-           case AirConditioner.OpMode.HEATING:  outOpData |= 4; break;
-           case AirConditioner.OpMode.RESERVED: outOpData |= 5; break;
-       }
+        switch (props.get(AirConditioner.PROP_OPERATION_MODE, Integer.class)) {
+            case AirConditioner.OpMode.AUTO:     outOpData |= 0; break;
+            case AirConditioner.OpMode.COOLING:  outOpData |= 1; break;
+            case AirConditioner.OpMode.DEHUMID:  outOpData |= 2; break;
+            case AirConditioner.OpMode.BLOWING:  outOpData |= 3; break;
+            case AirConditioner.OpMode.HEATING:  outOpData |= 4; break;
+            case AirConditioner.OpMode.RESERVED: outOpData |= 5; break;
+        }
 
-       outData.append(outOpData);
+        outData.append(outOpData);
 
-       int outFanSpeed = 0;
-       int curFanMode = props.get(AirConditioner.PROP_FAN_MODE, Integer.class);
-       if (curFanMode == AirConditioner.FanMode.AUTO) outFanSpeed = 0x0;
-       else if (curFanMode == AirConditioner.FanMode.NATURAL) outFanSpeed = 0xF;
-       else outFanSpeed = props.get(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class);
+        int outFanSpeed = 0;
+        int curFanMode = props.get(AirConditioner.PROP_FAN_MODE, Integer.class);
+        if (curFanMode == AirConditioner.FanMode.AUTO) outFanSpeed = 0x0;
+        else if (curFanMode == AirConditioner.FanMode.NATURAL) outFanSpeed = 0xF;
+        else outFanSpeed = props.get(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class);
 
-       int outFlowDir = 0;
-       int curFlowDir = props.get(AirConditioner.PROP_FLOW_DIRECTION, Integer.class);
-       if (curFlowDir == AirConditioner.FlowDir.MANUAL) outFlowDir = 0x0;
-       if (curFlowDir == AirConditioner.FlowDir.AUTO) outFlowDir = 0x1;
+        int outFlowDir = 0;
+        int curFlowDir = props.get(AirConditioner.PROP_FLOW_DIRECTION, Integer.class);
+        if (curFlowDir == AirConditioner.FlowDir.MANUAL) outFlowDir = 0x0;
+        if (curFlowDir == AirConditioner.FlowDir.AUTO) outFlowDir = 0x1;
 
-       outData.append(((outFlowDir << 4) & 0xF0) | (outFanSpeed & 0x0F));
+        outData.append(((outFlowDir << 4) & 0xF0) | (outFanSpeed & 0x0F));
 
-       final float tempRes = props.get(AirConditioner.PROP_TEMP_RESOLUTION, Float.class);
-       final float minTemp = props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class);
-       final float maxTemp = props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class);
-       final float reqTemp = props.get(AirConditioner.PROP_REQ_TEMPERATURE, Float.class);
-       final float curTemp = props.get(AirConditioner.PROP_CUR_TEMPERATURE, Float.class);
+        final float tempRes = props.get(AirConditioner.PROP_TEMP_RESOLUTION, Float.class);
+        final float minTemp = props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class);
+        final float maxTemp = props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class);
+        final float reqTemp = props.get(AirConditioner.PROP_REQ_TEMPERATURE, Float.class);
+        final float curTemp = props.get(AirConditioner.PROP_CUR_TEMPERATURE, Float.class);
 
-       outData.append(KSUtils.makeTemperatureByte(reqTemp, minTemp, maxTemp, tempRes));
-       outData.append(KSUtils.makeTemperatureByte(curTemp, minTemp, maxTemp, tempRes));
-   }
+        outData.append(KSUtils.makeTemperatureByte(reqTemp, minTemp, maxTemp, tempRes));
+        outData.append(KSUtils.makeTemperatureByte(curTemp, minTemp, maxTemp, tempRes));
+    }
 
     private @ParseResult int parseDeviceStateBytes(byte[] data, int offset, PropertyMap outProps) {
         int stateSize = Math.min(DEVICE_STATE_BYTES, data.length-offset);
@@ -280,8 +280,8 @@ public class KSAirConditioner extends KSDeviceContextBase {
         return PARSE_OK_STATE_UPDATED;
     }
 
-   @Override
-   protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) {
+    @Override
+    protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) {
         // No data to parse from request packet.
 
         final PropertyMap props = getReadPropertyMap();
@@ -323,11 +323,11 @@ public class KSAirConditioner extends KSDeviceContextBase {
         data.append(mMaxFanSpeed);
         data.append(mNumberOfDevices);
 
-       // Send response packet.
-       sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
+        // Send response packet.
+        sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
 
-       return PARSE_OK_STATE_UPDATED;
-   }
+        return PARSE_OK_STATE_UPDATED;
+    }
 
     @Override
     protected @ParseResult int parseCharacteristicRsp(KSPacket packet, PropertyMap outProps) {
