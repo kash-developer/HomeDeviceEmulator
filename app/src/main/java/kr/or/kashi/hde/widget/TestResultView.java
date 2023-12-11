@@ -98,7 +98,7 @@ public class TestResultView extends ScrollView implements DeviceTestCallback  {
             text.appendColored("PASS", Color.BLUE);
         } else  {
             if (hasUnsupportedOperationException(test, result)) {
-                text.appendColored("UNSUPPORTED", Color.GRAY);
+                text.appendColored("N/A", Color.GRAY);
             } else {
                 text.appendColored("FAIL", Color.RED);
             }

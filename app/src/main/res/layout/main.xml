@@ -22,6 +22,7 @@
     android:layout_height="match_parent"
     android:layout_width="match_parent"
     android:weightSum="100"
+    android:keepScreenOn="true"
     android:orientation="vertical">
 
     <LinearLayout

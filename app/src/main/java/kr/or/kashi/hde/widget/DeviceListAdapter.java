@@ -143,7 +143,6 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Ho
         public void updateStates() {
             final String text =
                     this.device.getAddress() + ", " +
-                    this.device.getClass().getSimpleName() + ", " +
                     this.device.getName();
             this.deviceText.setText(text);
 

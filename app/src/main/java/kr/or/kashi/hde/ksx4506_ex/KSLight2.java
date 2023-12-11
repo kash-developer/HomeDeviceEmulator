@@ -56,7 +56,6 @@ public class KSLight2 extends KSLight {
         @Override
         public boolean execTask(PropertyMap newProps, PropertyMap outProps) {
             sendPacket(makeToneControlReq(newProps));
-            //sendPacket(makeStatusReq(newProps));
             return true;
         }
     };
@@ -95,7 +94,6 @@ public class KSLight2 extends KSLight {
             KSAddress address = new KSAddress(props.get(HomeDevice.PROP_ADDR, String.class));
             final int subId = address.getDeviceSubId().value() & 0x0F;
             final int level = props.get(Light.PROP_CUR_TONE_LEVEL, Integer.class) & 0x0F;
-Log.e(TAG, "makeSingleColorToneByte GET PROP_CUR_TONE_LEVEL " + level);
             return ((level << 4) | subId);
         }
         return 0;
@@ -107,7 +105,6 @@ Log.e(TAG, "makeSingleColorToneByte GET PROP_CUR_TONE_LEVEL " + level);
 
         if (subId == getDeviceSubId().singleId()) {
             outProps.put(Light.PROP_TONE_SUPPORTED, true);
-Log.e(TAG, "parseSingleColorToneByte PROP_CUR_TONE_LEVEL " + level);
             outProps.put(Light.PROP_CUR_TONE_LEVEL, level);
         }
     }
@@ -251,7 +248,6 @@ Log.e(TAG, "parseSingleColorToneByte PROP_CUR_TONE_LEVEL " + level);
 
     private KSPacket makeToneControlReq(PropertyMap props) {
         final int toneLevel = props.get(Light.PROP_CUR_TONE_LEVEL, Integer.class);
-Log.e(TAG, "makeToneControlReq GET PROP_CUR_TONE_LEVEL " + toneLevel);
 
         KSPacket packet = createPacket(CMD_SINGLE_TONE_CONTROL_REQ);
         packet.data = new byte[1];
@@ -267,7 +263,6 @@ Log.e(TAG, "makeToneControlReq GET PROP_CUR_TONE_LEVEL " + toneLevel);
         }
 
         final int toneLevel = packet.data[0] & 0xFF;
-Log.e(TAG, "parseSingleToneControlReq PROP_CUR_TONE_LEVEL " + toneLevel);
         outProps.put(Light.PROP_CUR_TONE_LEVEL, toneLevel);
 
         // Just reflect the request level to response.
@@ -294,7 +289,6 @@ Log.e(TAG, "parseSingleToneControlReq PROP_CUR_TONE_LEVEL " + toneLevel);
         }
 
         final int toneLevel = packet.data[1] & 0xFF;
-Log.e(TAG, "parseSingleToneControlRsp PROP_CUR_TONE_LEVEL " + toneLevel);
         outProps.put(Light.PROP_CUR_TONE_LEVEL, toneLevel);
 
         return PARSE_OK_STATE_UPDATED;

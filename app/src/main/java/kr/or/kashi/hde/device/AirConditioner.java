@@ -94,15 +94,15 @@ public class AirConditioner extends HomeDevice {
     public static final String PROP_FAN_MODE        = PROP_PREFIX + "fan_mode";
 
     /** Property: Minimum level of fan speed */
-    @PropertyDef(valueClass=Integer.class)
+    @PropertyDef(valueClass=Integer.class, defValueI=1)
     public static final String PROP_MIN_FAN_SPEED   = PROP_PREFIX + "fan_speed.minimum";
 
     /** Property: Maximum level of fan speed */
-    @PropertyDef(valueClass=Integer.class)
+    @PropertyDef(valueClass=Integer.class, defValueI=5)
     public static final String PROP_MAX_FAN_SPEED   = PROP_PREFIX + "fan_speed.maximum";
 
     /** Property: Current level of fan speed */
-    @PropertyDef(valueClass=Integer.class)
+    @PropertyDef(valueClass=Integer.class, defValueI=1)
     public static final String PROP_CUR_FAN_SPEED   = PROP_PREFIX + "fan_speed.current";
 
     /** Property: Resolution of temperature (defaut: 1.0) */
@@ -114,7 +114,7 @@ public class AirConditioner extends HomeDevice {
     public static final String PROP_MIN_TEMPERATURE = PROP_PREFIX + "temperature.minimum";
 
     /** Property: Highest temperature */
-    @PropertyDef(valueClass=Float.class)
+    @PropertyDef(valueClass=Float.class, defValueF=100.0f)
     public static final String PROP_MAX_TEMPERATURE = PROP_PREFIX + "temperature.maximum";
 
     /** Property: Last temperature that is requested */
@@ -130,6 +130,11 @@ public class AirConditioner extends HomeDevice {
      */
     public AirConditioner(DeviceContextBase deviceContext) {
         super(deviceContext);
+    }
+
+    /** @hide */
+    public @Type int getType() {
+        return Type.AIRCONDITIONER;
     }
 
     /**

@@ -368,7 +368,7 @@ public class MainFragment extends Fragment {
         mGroupFullToggle.setChecked(false);
         mSingleIdCheckBox.setChecked(false);
         mSingleIdSeekBar.setProgress(4);
-        mSingleFullToggle.setChecked(true);
+        mSingleFullToggle.setChecked(false);
         updateRangeText();
     }
 

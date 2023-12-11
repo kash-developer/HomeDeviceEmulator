@@ -19,11 +19,15 @@ package kr.or.kashi.hde.ksx4506;
 
 import android.util.Log;
 
+import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
+import kr.or.kashi.hde.DeviceContextBase;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.base.ReadOnlyPropertyMap;
 import kr.or.kashi.hde.device.AirConditioner;
+import kr.or.kashi.hde.device.Light;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
 import kr.or.kashi.hde.ksx4506.KSPacket;
@@ -74,13 +78,15 @@ public class KSAirConditioner extends KSDeviceContextBase {
     public KSAirConditioner(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps, AirConditioner.class);
 
-        // Register the tasks to be performed when specific property changes.
-        setPropertyTask(HomeDevice.PROP_ONOFF, this::onPowerControlTask);
-        setPropertyTask(AirConditioner.PROP_OPERATION_MODE, this::onOperationControlTask);
-        setPropertyTask(AirConditioner.PROP_REQ_TEMPERATURE, this::onTemperatureControlTask);
-        setPropertyTask(AirConditioner.PROP_FLOW_DIRECTION, this::onFlowDirectionControlTask);
-        setPropertyTask(AirConditioner.PROP_FAN_MODE, this::onFanSpeedControlTask);
-        setPropertyTask(AirConditioner.PROP_CUR_FAN_SPEED, this::onFanSpeedControlTask);
+        if (isMaster()) {
+            // Register the tasks to be performed when specific property changes.
+            setPropertyTask(HomeDevice.PROP_ONOFF, this::onPowerControlTask);
+            setPropertyTask(AirConditioner.PROP_OPERATION_MODE, this::onOperationControlTask);
+            setPropertyTask(AirConditioner.PROP_REQ_TEMPERATURE, this::onTemperatureControlTask);
+            setPropertyTask(AirConditioner.PROP_FLOW_DIRECTION, this::onFlowDirectionControlTask);
+            setPropertyTask(AirConditioner.PROP_FAN_MODE, this::onFanSpeedControlTask);
+            setPropertyTask(AirConditioner.PROP_CUR_FAN_SPEED, this::onFanSpeedControlTask);
+        }
     }
 
     @Override
@@ -88,6 +94,12 @@ public class KSAirConditioner extends KSDeviceContextBase {
         KSPacket ksPacket = (KSPacket) packet;
 
         switch (ksPacket.commandType) {
+            case CMD_OPERATION_STATE_REQ: return parseOperationStateReq(ksPacket, outProps);
+            case CMD_TEMPERATURE_SETTING_REQ: return parseTemperatureSettingReq(ksPacket, outProps);
+            case CMD_OPERATION_MODE_REQ: return parseOperationModeReq(ksPacket, outProps);
+            case CMD_FLOW_DIRECTION_REQ: return parseFlowDirectionReq(ksPacket, outProps);
+            case CMD_FAN_SPEED_REQ: return parseFanSpeedReq(ksPacket, outProps);
+
             case CMD_OPERATION_STATE_RSP:
             case CMD_TEMPERATURE_SETTING_RSP:
             case CMD_OPERATION_MODE_RSP:
@@ -105,6 +117,26 @@ public class KSAirConditioner extends KSDeviceContextBase {
         return super.parsePayload(packet, outProps);
     }
 
+   @Override
+   protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) {
+        sendStatusOrControlRsp(CMD_STATUS_RSP);
+        return PARSE_OK_STATE_UPDATED;
+   }
+
+   private void sendStatusOrControlRsp(int rspCmd) {
+       ByteArrayBuffer data = new ByteArrayBuffer();
+       final KSAddress.DeviceSubId thisSubId = ((KSAddress)getAddress()).getDeviceSubId();
+       if (isSingleDevice()) {
+           makeDeviceStateBytes(getReadPropertyMap(), data);
+       } else {
+           for (DeviceContextBase child: getChildren()) {
+               makeDeviceStateBytes(child.getReadPropertyMap(), data);
+           }
+       }
+       sendPacket(createPacket(rspCmd, data.toArray()));
+   }
+
+    @Override
     protected @ParseResult int parseStatusRsp(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length < 5) {
             if (DBG) Log.w(TAG, "parse-status-rsp: wrong size of data " + packet.data.length);
@@ -140,6 +172,48 @@ public class KSAirConditioner extends KSDeviceContextBase {
         return PARSE_OK_NONE;
     }
 
+   private void makeDeviceStateBytes(PropertyMap props, ByteArrayBuffer outData) {
+       outData.append(0); // error code
+
+       int outOpData = 0;
+       if (props.get(HomeDevice.PROP_ONOFF, Boolean.class)) {
+           outOpData |= (1 << 4);
+       }
+
+       switch (props.get(AirConditioner.PROP_OPERATION_MODE, Integer.class)) {
+           case AirConditioner.OpMode.AUTO:     outOpData |= 0; break;
+           case AirConditioner.OpMode.COOLING:  outOpData |= 1; break;
+           case AirConditioner.OpMode.DEHUMID:  outOpData |= 2; break;
+           case AirConditioner.OpMode.BLOWING:  outOpData |= 3; break;
+           case AirConditioner.OpMode.HEATING:  outOpData |= 4; break;
+           case AirConditioner.OpMode.RESERVED: outOpData |= 5; break;
+       }
+
+       outData.append(outOpData);
+
+       int outFanSpeed = 0;
+       int curFanMode = props.get(AirConditioner.PROP_FAN_MODE, Integer.class);
+       if (curFanMode == AirConditioner.FanMode.AUTO) outFanSpeed = 0x0;
+       else if (curFanMode == AirConditioner.FanMode.NATURAL) outFanSpeed = 0xF;
+       else outFanSpeed = props.get(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class);
+
+       int outFlowDir = 0;
+       int curFlowDir = props.get(AirConditioner.PROP_FLOW_DIRECTION, Integer.class);
+       if (curFlowDir == AirConditioner.FlowDir.MANUAL) outFlowDir = 0x0;
+       if (curFlowDir == AirConditioner.FlowDir.AUTO) outFlowDir = 0x1;
+
+       outData.append(((outFlowDir << 4) & 0xF0) | (outFanSpeed & 0x0F));
+
+       final float tempRes = props.get(AirConditioner.PROP_TEMP_RESOLUTION, Float.class);
+       final float minTemp = props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class);
+       final float maxTemp = props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class);
+       final float reqTemp = props.get(AirConditioner.PROP_REQ_TEMPERATURE, Float.class);
+       final float curTemp = props.get(AirConditioner.PROP_CUR_TEMPERATURE, Float.class);
+
+       outData.append(KSUtils.makeTemperatureByte(reqTemp, minTemp, maxTemp, tempRes));
+       outData.append(KSUtils.makeTemperatureByte(curTemp, minTemp, maxTemp, tempRes));
+   }
+
     private @ParseResult int parseDeviceStateBytes(byte[] data, int offset, PropertyMap outProps) {
         int stateSize = Math.min(DEVICE_STATE_BYTES, data.length-offset);
         if (stateSize < DEVICE_STATE_BYTES) {
@@ -172,7 +246,7 @@ public class KSAirConditioner extends KSDeviceContextBase {
         final byte data2 = data[offset + 2];
         final int fanSpeed = data2 & 0x0F;
 
-        int newFanSpeed = 1; // minimum
+        int newFanSpeed = outProps.get(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class);
         int newFanMode = AirConditioner.FanMode.MANUAL;
         if (fanSpeed == 0x0) newFanMode = AirConditioner.FanMode.AUTO;
         else if (fanSpeed == 0xF) newFanMode = AirConditioner.FanMode.NATURAL;
@@ -206,6 +280,56 @@ public class KSAirConditioner extends KSDeviceContextBase {
         return PARSE_OK_STATE_UPDATED;
     }
 
+   @Override
+   protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) {
+        // No data to parse from request packet.
+
+        final PropertyMap props = getReadPropertyMap();
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+
+        data.append(0); // no error
+
+        final int supportedModes = props.get(AirConditioner.PROP_SUPPORTED_MODES, Integer.class);
+        mSupportsCooling = (supportedModes | AirConditioner.OpMode.COOLING) != 0;
+        mSupportsHeating = (supportedModes | AirConditioner.OpMode.HEATING) != 0;
+        mSupportsReservedMode = (supportedModes | AirConditioner.OpMode.RESERVED) != 0;
+
+        int data1 = 0;
+        if (mSupportsNaturalWind)   data1 |= (1 << 0);
+        if (mSupportsCooling)       data1 |= (1 << 1);
+        if (mSupportsHeating)       data1 |= (1 << 2);
+        if (mSupportsReservedMode)  data1 |= (1 << 3);
+        if (mSupportsHalfDegree)    data1 |= (1 << 4);
+        if (mSupportsFlowDirControl)data1 |= (1 << 5);
+        if (mSupportsReservedBit6)  data1 |= (1 << 6);
+        if (mSupportsReservedBit7)  data1 |= (1 << 7);
+
+        data.append(data1);
+
+        final float maxTemp = props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class);
+        final float minTemp = props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class);
+        final float tempRes = props.get(AirConditioner.PROP_TEMP_RESOLUTION, Float.class);
+        final byte maxTempByte = KSUtils.makeTemperatureByte(maxTemp, maxTemp, maxTemp, tempRes);
+        final byte minTempByte = KSUtils.makeTemperatureByte(minTemp, minTemp, minTemp, tempRes);
+        mMaxCoolingTemp = mMaxHeatingTemp = maxTemp; // TODO:
+        mMinCoolingTemp = mMinHeatingTemp = minTemp; // TODO:
+        mMaxFanSpeed = props.get(AirConditioner.PROP_MAX_FAN_SPEED, Integer.class);
+        mNumberOfDevices = (hasChild()) ? (getChildCount()) : (1);
+
+        data.append(maxTempByte);
+        data.append(minTempByte);
+        data.append(maxTempByte);
+        data.append(minTempByte);
+        data.append(mMaxFanSpeed);
+        data.append(mNumberOfDevices);
+
+       // Send response packet.
+       sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
+
+       return PARSE_OK_STATE_UPDATED;
+   }
+
+    @Override
     protected @ParseResult int parseCharacteristicRsp(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length < 2) {
             if (DBG) Log.w(TAG, "parse-chr-rsp: wrong size of data " + packet.data.length);
@@ -257,7 +381,112 @@ public class KSAirConditioner extends KSDeviceContextBase {
         outProps.put(AirConditioner.PROP_MIN_FAN_SPEED, minFanSpeed);
         outProps.put(AirConditioner.PROP_MAX_FAN_SPEED, maxFanSpeed);
 
-        return PARSE_OK_PEER_DETECTED;
+        final KSAddress.DeviceSubId ctxSubId = getDeviceSubId();
+        if (ctxSubId.isSingle() || ctxSubId.isSingleOfGroup()) {
+            int singleIndex = ctxSubId.singleId() - 1;
+            if (singleIndex >= 0 && singleIndex < mNumberOfDevices) {
+                return PARSE_OK_PEER_DETECTED;
+            }
+        }
+
+        return PARSE_OK_NONE;
+    }
+
+    protected @ParseResult int parseOperationStateReq(KSPacket packet, PropertyMap outProps) {
+        if (packet.data.length < 1) {
+            if (DBG) Log.w(TAG, "parse-op-state-req: wrong size of data " + packet.data.length);
+            return PARSE_ERROR_MALFORMED_PACKET;
+        }
+
+        int opState = packet.data[0] & 0xFF;
+        outProps.put(Light.PROP_ONOFF, (opState != 0));
+        // TODO: Change also children states if this is parent of.
+
+        sendStatusOrControlRsp(CMD_OPERATION_STATE_RSP);
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseTemperatureSettingReq(KSPacket packet, PropertyMap outProps) {
+        if (packet.data.length < 1) {
+            if (DBG) Log.w(TAG, "parse-temp-set-req: wrong size of data " + packet.data.length);
+            return PARSE_ERROR_MALFORMED_PACKET;
+        }
+
+        float curTemp = KSUtils.parseTemperatureByte(packet.data[0]);
+        outProps.put(AirConditioner.PROP_REQ_TEMPERATURE, curTemp);
+        outProps.put(AirConditioner.PROP_CUR_TEMPERATURE, curTemp);
+        // TODO: Change also children states if this is parent of.
+
+        sendStatusOrControlRsp(CMD_TEMPERATURE_SETTING_RSP);
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseOperationModeReq(KSPacket packet, PropertyMap outProps) {
+        if (packet.data.length < 1) {
+            if (DBG) Log.w(TAG, "parse-op-mode-req: wrong size of data " + packet.data.length);
+            return PARSE_ERROR_MALFORMED_PACKET;
+        }
+
+        int opMode = AirConditioner.OpMode.AUTO;
+        switch (packet.data[0] & 0xFF) {
+            case 0x00: opMode = AirConditioner.OpMode.AUTO; break;
+            case 0x01: opMode = AirConditioner.OpMode.COOLING; break;
+            case 0x04: opMode = AirConditioner.OpMode.HEATING; break;
+            case 0x03: opMode = AirConditioner.OpMode.BLOWING; break;
+            case 0x02: opMode = AirConditioner.OpMode.DEHUMID; break;
+            case 0x05: opMode = AirConditioner.OpMode.RESERVED; break;
+        }
+        outProps.put(AirConditioner.PROP_OPERATION_MODE, opMode);
+        // TODO: Change also children states if this is parent of.
+
+        sendStatusOrControlRsp(CMD_OPERATION_MODE_RSP);
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseFlowDirectionReq(KSPacket packet, PropertyMap outProps) {
+        if (packet.data.length < 1) {
+            if (DBG) Log.w(TAG, "parse-flow-dir-req: wrong size of data " + packet.data.length);
+            return PARSE_ERROR_MALFORMED_PACKET;
+        }
+
+        int flowDir = AirConditioner.FlowDir.MANUAL;
+        final int dirByte = packet.data[0] & 0xFF;
+        if (dirByte == 0x00) flowDir = AirConditioner.FlowDir.MANUAL;
+        else if (dirByte == 0x01) flowDir = AirConditioner.FlowDir.AUTO;
+        outProps.put(AirConditioner.PROP_FLOW_DIRECTION, flowDir);
+        // TODO: Change also children states if this is parent of.
+
+        sendStatusOrControlRsp(CMD_FLOW_DIRECTION_RSP);
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseFanSpeedReq(KSPacket packet, PropertyMap outProps) {
+        if (packet.data.length < 1) {
+            if (DBG) Log.w(TAG, "parse-fan-speed-req: wrong size of data " + packet.data.length);
+            return PARSE_ERROR_MALFORMED_PACKET;
+        }
+
+        int fanMode = AirConditioner.FanMode.MANUAL;
+        int fanSpeed = outProps.get(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class);
+        int fanSpeedByte = packet.data[0] & 0xFF;
+        if (fanSpeedByte == 0x00) {
+            fanMode = AirConditioner.FanMode.AUTO;
+        } else if (fanSpeedByte == 0x0F) {
+            fanMode = AirConditioner.FanMode.NATURAL;
+        } else {
+            fanSpeed = fanSpeedByte;
+        }
+        outProps.put(AirConditioner.PROP_FAN_MODE, fanMode);
+        outProps.put(AirConditioner.PROP_CUR_FAN_SPEED, fanSpeed);
+        // TODO: Change also children states if this is parent of.
+
+        sendStatusOrControlRsp(CMD_FAN_SPEED_RSP);
+
+        return PARSE_OK_STATE_UPDATED;
     }
 
     protected boolean onPowerControlTask(PropertyMap reqProps, PropertyMap outProps) {
@@ -342,8 +571,8 @@ public class KSAirConditioner extends KSDeviceContextBase {
         }
 
         byte fanSpeedByte = 0x00;
-        if (reqFanMode != AirConditioner.FanMode.AUTO) fanSpeedByte = 0x00;
-        else if (reqFanMode != AirConditioner.FanMode.NATURAL) fanSpeedByte = 0x0F;
+        if (reqFanMode == AirConditioner.FanMode.AUTO) fanSpeedByte = 0x00;
+        else if (reqFanMode == AirConditioner.FanMode.NATURAL) fanSpeedByte = 0x0F;
         else fanSpeedByte = (byte) reqFanSpeed;
         sendControlData(CMD_FAN_SPEED_REQ, fanSpeedByte);
 

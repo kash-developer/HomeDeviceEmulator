@@ -188,7 +188,7 @@ public class DeviceTestReportDialog extends Dialog implements DeviceTestCallback
             mHtmlBuilder.append("<p style='color:blue;'>PASS</p>");
         } else  {
             if (hasUnsupportedOperationException(test, result)) {
-                mHtmlBuilder.append("<p style='color:gray;'>UNSUPPORTED</p>");
+                mHtmlBuilder.append("<p style='color:gray;'>N/A</p>");
             } else {
                 mHtmlBuilder.append("<p style='color:red;'>FAIL</p>");
             }

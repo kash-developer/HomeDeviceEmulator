@@ -177,14 +177,20 @@ public class KSMainContext extends MainContext {
 
                 protected void pingDevice(HomeDevice device) {
                     final KSAddress address = (KSAddress) device.dc().getAddress();
+                    int thisDevId = address.getDeviceId();
                     int thisGroup = address.getDeviceSubId().value() & 0xF0;
+
+                    int lastDevId = 0;
                     int lastGroup = 0;
                     if (mLastPollAddress != null) {
+                        lastDevId = ((KSAddress)mLastPollAddress).getDeviceId();
                         lastGroup = ((KSAddress)mLastPollAddress).getDeviceSubId().value() & 0xF0;
                     }
 
                     // Ping only if device is single or not pinged as group.
-                    final boolean doPing = (!address.getDeviceSubId().hasGroup()) ||
+                    final boolean doPing =
+                            (thisDevId != lastDevId) ||
+                            (!address.getDeviceSubId().hasGroup()) ||
                             (address.getDeviceSubId().hasGroup() && thisGroup != lastGroup);
                     if (doPing) {
                         super.pingDevice(device);
@@ -275,9 +281,11 @@ public class KSMainContext extends MainContext {
         if (device != null) {
             device.dc().parsePacket(packet);
 
-            // TODO: Consider if doing by parent is more efficient.
-            for (DeviceContextBase child: device.dc().getChildren()) {
-                child.parsePacket(packet);
+            if (device.dc().isMaster()) {
+                // TODO: Consider if doing by parent is more efficient.
+                for (DeviceContextBase child: device.dc().getChildren()) {
+                    child.parsePacket(packet);
+                }
             }
         }
     }

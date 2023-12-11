@@ -21,7 +21,7 @@ import kr.or.kashi.hde.test.DeviceTestCase;
 
 public class LightTest extends DeviceTestCase {
     public void test_Dimming() throws Exception {
-        final Light light = (Light) getDevice();
+        final Light light = (Light) device();
         if (!light.isDimSupported()) {
             throw new UnsupportedOperationException();
         }
@@ -31,7 +31,7 @@ public class LightTest extends DeviceTestCase {
     }
 
     public void test_ColorTemperature() throws Exception {
-        final Light light = (Light) getDevice();
+        final Light light = (Light) device();
         if (!light.isToneSupported()) {
             throw new UnsupportedOperationException();
         }

@@ -52,7 +52,7 @@ public class DeviceInfoView extends LinearLayout {
 
     public void setDevice(HomeDevice device) {
         if (device != null) {
-            mDeviceTypeText.setText("[" + device.getClass().getSimpleName() + "]");
+            mDeviceTypeText.setText("[" + HomeDevice.typeToString(device.getType()) + "]");
             mDeviceIdText.setText(device.getAddress().substring(2, 4));
             mDeviceSubIdText.setText(device.getAddress().substring(4, 6));
             setVisibility(View.VISIBLE);

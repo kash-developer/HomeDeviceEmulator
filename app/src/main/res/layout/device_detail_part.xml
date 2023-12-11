@@ -45,12 +45,12 @@
         android:paddingTop="10dp"
         android:text="Device Controls:" />
 
-    <FrameLayout
+    <ScrollView
         android:id="@+id/device_control_area"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/white">
 
-    </FrameLayout>
+    </ScrollView>
 
 </LinearLayout>
