@@ -41,6 +41,7 @@ import kr.or.kashi.hde.base.StageablePropertyMap;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyTask;
 import kr.or.kashi.hde.base.PropertyValue;
+import kr.or.kashi.hde.device.AirConditioner;
 
 /*
  * The base implementation of device context.
@@ -80,8 +81,8 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
     private Listener mListener;
 
     protected final PropertyMap mBasePropertyMap = new BasicPropertyMap();
-    protected final PropertyMap mReadOnlyPropertyMap = new ReadOnlyPropertyMap(mBasePropertyMap, true);
     protected final StageablePropertyMap mRxPropertyMap = new StageablePropertyMap(mBasePropertyMap);
+    protected final PropertyMap mReadOnlyPropertyMap = new ReadOnlyPropertyMap(mRxPropertyMap, true);
     private final Map<String, PropertyTask> mPropTaskMap = new ConcurrentHashMap<>();
 
     private boolean mIsSlave = false;
@@ -122,12 +123,20 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
         }
     }
 
+    public boolean isMaster() {
+        return !mIsSlave;
+    }
+
     public boolean isSlave() {
         return mIsSlave;
     }
 
     public DeviceContextBase getParent() {
         return mParent;
+    }
+
+    public boolean hasChild() {
+        return mChildren.size() > 0;
     }
 
     public int getChildCount() {

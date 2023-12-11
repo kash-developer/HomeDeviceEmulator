@@ -30,7 +30,7 @@ public class DeviceTestCase<T> extends TestCase implements HomeDevice.Callback {
         mDevice = device;
     }
 
-    public HomeDevice getDevice() {
+    public HomeDevice device() {
         return mDevice;
     }
 
@@ -80,6 +80,12 @@ public class DeviceTestCase<T> extends TestCase implements HomeDevice.Callback {
     private void wait_() throws Exception {
         synchronized (mDevice) {
             mDevice.wait(2000);
+        }
+    }
+
+    protected void waitFor(long timeout) throws Exception {
+        synchronized (mDevice) {
+            mDevice.wait(timeout);
         }
     }
 

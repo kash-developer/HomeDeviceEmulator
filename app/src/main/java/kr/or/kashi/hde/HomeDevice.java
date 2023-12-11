@@ -53,7 +53,7 @@ public class HomeDevice {
         /**
          * Called when property has been changed
          * @param device {@link HomeDevice} object that some state has been changed.
-         * @param propNames {@link List} object that contains properties.
+         * @param props {@link List} object that contains properties.
          */
         default void onPropertyChanged(HomeDevice device, PropertyMap props) {}
 

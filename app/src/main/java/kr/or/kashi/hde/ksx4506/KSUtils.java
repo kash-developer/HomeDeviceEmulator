@@ -33,7 +33,10 @@ public class KSUtils {
 
     public static byte makeTemperatureByte(float temp, float min, float max, boolean canHaveHalf) {
         final float resolution = canHaveHalf ? 0.5f : 1.0f;
+        return makeTemperatureByte(temp, min, max, resolution);
+    }
 
+    public static byte makeTemperatureByte(float temp, float min, float max, float resolution) {
         // Round value by resolution
         temp = roundByUnit(temp, resolution);
 
@@ -45,7 +48,7 @@ public class KSUtils {
         byte tempByte = (byte)temp;
 
         // Set half-degree field if has
-        if (canHaveHalf) {
+        if (!floatEquals(resolution, 1.0f)) { // TODO:
             float rest = temp - (float)tempByte;
             if (floatEquals(rest, 0.5f)) {
                 tempByte |= (byte)(1 << 7);

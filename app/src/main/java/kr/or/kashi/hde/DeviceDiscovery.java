@@ -103,7 +103,6 @@ public class DeviceDiscovery implements Runnable {
         if (device != null) {
             boolean isDetected = (device.dc().getUpdateTime() != 0);
             if (mDeviceMap.containsKey(device.dc().getAddress()) && !isDetected) {
-
                 pingDevice(device);
 
                 if (mStopTime != 0) { // 0 is meaning of one loop of list.
