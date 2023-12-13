@@ -51,7 +51,12 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
     public static final int CMD_CHARACTERISTIC_RSP = 0x8F;
     public static final int CMD_SINGLE_CONTROL_REQ = 0x41;
     public static final int CMD_SINGLE_CONTROL_RSP = 0xC1;
-    public static final int CMD_GROUP_CONTROL_REQ = 0x42;
+    public static final int CMD_GROUP_CONTROL_REQ  = 0x42;
+
+    public static final int CAP_STATUS_SINGLE   = (1 << 0);
+    public static final int CAP_STATUS_MULTI    = (1 << 1);
+    public static final int CAP_CHARAC_SINGLE   = (1 << 2);
+    public static final int CAP_CHARAC_MULTI    = (1 << 3);
 
     private final MainContext mMainContext;
 
@@ -72,6 +77,14 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
     public KSDeviceContextBase(MainContext mainContext, Map defaultProps, Class<?> deviceClass) {
         super(mainContext, defaultProps, deviceClass);
         mMainContext = mainContext;
+    }
+
+    protected int getCapabilities() {
+        return CAP_STATUS_SINGLE | CAP_STATUS_MULTI | CAP_CHARAC_SINGLE | CAP_CHARAC_MULTI;
+    }
+
+    protected boolean isCapableOf(int caps) {
+        return (getCapabilities() & caps) == caps;
     }
 
     @Override
@@ -158,6 +171,12 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
                 return;
             }
 
+            // Skip query of status if the device is not capable of.
+            if (getDeviceSubId().hasSingle() && !isCapableOf(CAP_CHARAC_SINGLE))
+                return;
+            if (getDeviceSubId().hasFull() && !isCapableOf(CAP_CHARAC_MULTI))
+                return;
+
             final HomePacket packet = makeCharacteristicReq();
 
             if (mPollPhase == DeviceStatePollee.Phase.NAPPING) {
@@ -190,6 +209,15 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
         }
 
         cancelAllAutoSchedules();
+
+        // Skip query of status if the device is not capable of.
+        if ((getDeviceSubId().hasSingle() && !isCapableOf(CAP_STATUS_SINGLE)))
+            return;
+        if (getDeviceSubId().hasFull() && !isCapableOf(CAP_STATUS_MULTI)) {
+            final KSDeviceContextBase firstChild = getChildAt(KSDeviceContextBase.class, 0);
+            if (firstChild != null) mLastUpdateTime = firstChild.getUpdateTime();
+            return;
+        }
 
         final KSPacket statusReqPacket = makeStatusReq(props);
 

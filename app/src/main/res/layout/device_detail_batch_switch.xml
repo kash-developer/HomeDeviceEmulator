@@ -18,7 +18,7 @@
  */
 -->
 
-<kr.or.kashi.hde.device.BoilerView
+<kr.or.kashi.hde.device.BatchSwitchView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -27,16 +27,74 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:gravity="left|center_vertical"
+        android:layout_height="wrap_content"
+        android:gravity="left|top|center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="120dp"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:text="BATCH SWITCH" />
+            android:orientation="vertical">
+
+            <CheckBox
+                android:id="@+id/switches_check"
+                android:text="Switches"
+                style="@style/TitleCheckStyle" />
+
+            <Button
+                android:id="@+id/apply_switches_button"
+                android:layout_width="70dp"
+                android:layout_height="60dp"
+                android:layout_marginLeft="30dp"
+                android:textSize="13sp"
+                android:text="Apply" />
+
+        </LinearLayout>
+
+        <kr.or.kashi.hde.widget.FlowLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+
+            <CheckBox
+                android:id="@+id/gas_locking_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GAS_LOCKING" />
+
+            <CheckBox
+                android:id="@+id/outing_setting_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OUTING_SETTING" />
+
+            <CheckBox
+                android:id="@+id/batch_light_off_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BATCH_LIGHT_OFF" />
+
+            <CheckBox
+                android:id="@+id/power_saving_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="POWER_SAVING" />
+
+            <CheckBox
+                android:id="@+id/elevator_up_call_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ELEVATOR_UP_CALL" />
+
+            <CheckBox
+                android:id="@+id/elevator_down_call_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ELEVATOR_DOWN_CALL" />
+
+        </kr.or.kashi.hde.widget.FlowLayout>
 
     </LinearLayout>
 
-</kr.or.kashi.hde.device.BoilerView>
+</kr.or.kashi.hde.device.BatchSwitchView>

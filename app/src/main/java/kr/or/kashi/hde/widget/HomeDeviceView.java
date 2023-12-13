@@ -39,6 +39,10 @@ public class HomeDeviceView<T extends HomeDevice> extends LinearLayout implement
         mIsSlave = (LocalPreferences.getInt(LocalPreferences.Pref.MODE_INDEX) == 1);
     }
 
+    public boolean isMaster() {
+        return !isSlave();
+    }
+
     public boolean isSlave() {
         return mIsSlave;
     }

@@ -34,7 +34,7 @@ public class DeviceStatePoller implements Runnable {
     private static final long POLL_DURATION_MS = 5 * 1000L;
 
     private static final long PHASE_INITIAL_INTERVAL = 0L;
-    private static final long PHASE_WAITING_INTERVAL = 1 * 1000L;
+    private static final long PHASE_WAITING_INTERVAL = 5 * 1000L;
     private static final long PHASE_WORKING_INTERVAL = 100L;
     private static final long PHASE_NAPPING_INTERVAL = 10 * 1000L;
 

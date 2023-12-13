@@ -92,6 +92,10 @@ public class KSBatchSwitch2 extends KSBatchSwitch {
             return res;
         }
 
+        if (data.length < 3) {
+            return res; // It's not extended packet.
+        }
+
         long supported = (long) outProps.get(BatchSwitch.PROP_SUPPORTED_SWITCHES).getValue();
         long curStates = (long) outProps.get(BatchSwitch.PROP_SWITCH_STATES).getValue();
         long newStates = curStates;

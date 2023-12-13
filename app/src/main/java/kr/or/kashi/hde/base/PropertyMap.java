@@ -69,6 +69,28 @@ public abstract class PropertyMap {
     }
 
     /** Put only bits of value in mask to a property */
+    public void putBit(String name, int mask, boolean set) {
+        int current = get(name, Integer.class);
+        if (set) {
+            current |= mask;
+        } else {
+            current &= ~mask;
+        }
+        put(name, current);
+    }
+
+    /** Put only bits of value in mask to a property */
+    public void putBit(String name, long mask, boolean set) {
+        long current = get(name, Long.class);
+        if (set) {
+            current |= mask;
+        } else {
+            current &= ~mask;
+        }
+        put(name, current);
+    }
+
+    /** Put only bits of value in mask to a property */
     public void putBits(String name, int mask, int value) {
         int current = get(name, Integer.class);
         for (int i=0; i<Integer.SIZE; i++) {

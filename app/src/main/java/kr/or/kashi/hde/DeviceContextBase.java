@@ -88,7 +88,7 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
 
     protected int mPollPhase = DeviceStatePollee.Phase.INITIAL;
     protected long mPollInterval = 0L;
-    private long mLastUpdateTime = 0L;
+    protected long mLastUpdateTime = 0L;
 
     protected DeviceContextBase mParent;
     private Map<String, DeviceContextBase> mChildren = new TreeMap<>();     // Always sorted.
@@ -146,6 +146,11 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
 
     public <E> E getChild(Class<E> clazz, String address) {
         return (E) mChildren.get(address);
+    }
+
+    public <E> E getChildAt(Class<E> clazz, int index) {
+        if (index >= getChildCount()) return null;
+        return (E) getChildren(clazz).toArray()[index];
     }
 
     public <E> Collection<E> getChildren(Class<E> clazz) {
