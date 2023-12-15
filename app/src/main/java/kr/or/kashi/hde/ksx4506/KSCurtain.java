@@ -17,9 +17,9 @@
 
 package kr.or.kashi.hde.ksx4506;
 
-import android.content.Context;
 import android.util.Log;
 
+import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
@@ -48,9 +48,30 @@ public class KSCurtain extends KSDeviceContextBase {
     public KSCurtain(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps, Curtain.class);
 
-        // Register the tasks to be performed when specific property changes.
-        setPropertyTask(HomeDevice.PROP_ONOFF, this::onCurtainControlTask);
-        setPropertyTask(Curtain.PROP_OPERATION, this::onCurtainControlTask);
+        if (isMaster()) {
+            // Register the tasks to be performed when specific property changes.
+            setPropertyTask(HomeDevice.PROP_ONOFF, this::onCurtainControlTask);
+            setPropertyTask(Curtain.PROP_OPERATION, this::onCurtainControlTask);
+        }
+    }
+
+    protected int getCapabilities() {
+        return CAP_STATUS_SINGLE | CAP_CHARAC_SINGLE;
+    }
+
+    @Override
+    protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) {
+        // No data to parse from request packet.
+
+        // Send response packet.
+        final PropertyMap props = getReadPropertyMap();
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        data.append(0); // no error
+        makeBasicCurtainStateByte(props, data);
+        makeExtendedCurtainStateByte(props, data);
+        sendPacket(createPacket(CMD_STATUS_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
     }
 
     @Override
@@ -74,6 +95,28 @@ public class KSCurtain extends KSDeviceContextBase {
     }
 
     @Override
+    protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) {
+        // No data to parse from request packet.
+
+        final PropertyMap props = getReadPropertyMap();
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+
+        data.append(0); // no error
+
+        int data1 = 0;
+        int supports = props.get(Curtain.PROP_SUPPORTS, Integer.class);
+        if ((supports & Curtain.Support.OPEN_LEVEL) != 0) data1 |= (1 << 0);
+        if ((supports & Curtain.Support.OPEN_ANGLE) != 0) data1 |= (1 << 1);
+        if ((supports & Curtain.Support.STATE) == 0)      data1 |= (1 << 2);
+        data.append(data1);
+
+        // Send response packet.
+        sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    @Override
     protected @ParseResult int parseCharacteristicRsp(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length < 2) {
             if (DBG) Log.w(TAG, "parse-chr-rsp: wrong size of data " + packet.data.length);
@@ -89,9 +132,9 @@ public class KSCurtain extends KSDeviceContextBase {
 
         final int data1 = packet.data[1] & 0xFF;
         int supports = 0;
-        if ((data1 & (1 << 0)) != 0) supports |= (1 << Curtain.Support.OPEN_LEVEL);
-        if ((data1 & (1 << 1)) != 0) supports |= (1 << Curtain.Support.OPEN_ANGLE);
-        if ((data1 & (1 << 2)) != 0) supports |= (1 << Curtain.Support.STATE);
+        if ((data1 & (1 << 0)) != 0) supports |= Curtain.Support.OPEN_LEVEL;
+        if ((data1 & (1 << 1)) != 0) supports |= Curtain.Support.OPEN_ANGLE;
+        if ((data1 & (1 << 2)) == 0) supports |= Curtain.Support.STATE;
         outProps.put(Curtain.PROP_SUPPORTS, supports);
 
         if ((supports & Curtain.Support.OPEN_LEVEL) != 0) {
@@ -116,6 +159,22 @@ public class KSCurtain extends KSDeviceContextBase {
     }
 
     @Override
+    protected @ParseResult int parseSingleControlReq(KSPacket packet, PropertyMap outProps) {
+        // Parse request packet.
+        parseCurtainControlReq(packet.data, outProps);
+
+        // Send response packet.
+        final PropertyMap props = getReadPropertyMap();
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        data.append(0); // no error
+        makeBasicCurtainStateByte(props, data);
+        makeExtendedCurtainStateByte(props, data);
+        sendPacket(createPacket(CMD_SINGLE_CONTROL_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    @Override
     protected @ParseResult int parseSingleControlRsp(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length < 3) {
             if (DBG) Log.w(TAG, "parse-control-rsp: wrong size of data " + packet.data.length);
@@ -133,6 +192,16 @@ public class KSCurtain extends KSDeviceContextBase {
         parseExtendedCurtainStateByte(packet.data[2], outProps);
 
         return PARSE_OK_ACTION_PERFORMED;
+    }
+
+    private void makeBasicCurtainStateByte(PropertyMap props, ByteArrayBuffer outData) {
+        int state = props.get(Curtain.PROP_STATE, Integer.class);
+        int data = 0;
+        if (state == Curtain.OpState.OPENED)  data |= (1 << 0);
+        if (state == Curtain.OpState.CLOSED)  data |= (1 << 1);
+        if (state == Curtain.OpState.CLOSING) data |= (1 << 2);
+        if (state == Curtain.OpState.OPENING) data |= (1 << 3);
+        outData.append(data);
     }
 
     private void parseBasicCurtainStateByte(byte data, PropertyMap outProps) {
@@ -153,6 +222,13 @@ public class KSCurtain extends KSDeviceContextBase {
         outProps.put(HomeDevice.PROP_ONOFF, onoff);
     }
 
+    private void makeExtendedCurtainStateByte(PropertyMap props, ByteArrayBuffer outData) {
+        int openLevel = props.get(Curtain.PROP_CUR_OPEN_LEVEL, Integer.class);
+        int openAngle = props.get(Curtain.PROP_CUR_OPEN_ANGLE, Integer.class);
+        int data = (openLevel & 0x0F) | ((openAngle & 0x0F) << 4);
+        outData.append(data);
+    }
+
     private void parseExtendedCurtainStateByte(byte data, PropertyMap outProps) {
         final int openLevel = clamp("openLevel", (data >> 0) & 0x0F, mMinOpenLevel, mMaxOpenLevel);
         final int openAngle = clamp("openAngle", (data >> 4) & 0x0F, mMinOpenAngle, mMaxOpenAngle);
@@ -161,45 +237,61 @@ public class KSCurtain extends KSDeviceContextBase {
     }
 
     protected boolean onCurtainControlTask(PropertyMap reqProps, PropertyMap outProps) {
-        final int curOperation = (Integer) getProperty(Curtain.PROP_OPERATION).getValue();
-        final int reqOperation = reqProps.get(Curtain.PROP_OPERATION, Integer.class);
-        if (reqOperation != curOperation) {
-            sendPacket(makeCurtainControlReq(reqOperation, reqProps));
-            return true;
+        boolean curOnOff = (Boolean) getProperty(HomeDevice.PROP_ONOFF).getValue();
+        boolean newOnOff = (Boolean) reqProps.get(HomeDevice.PROP_ONOFF).getValue();
+        int curOperation = (Integer) getProperty(Curtain.PROP_OPERATION).getValue();
+        int newOperation = reqProps.get(Curtain.PROP_OPERATION, Integer.class);
+        if (newOperation == curOperation && newOnOff != curOnOff) {
+            newOperation = (newOnOff) ? Curtain.Operation.OPEN : Curtain.Operation.CLOSE;
         }
 
-        final boolean curOnOff = (Boolean) getProperty(HomeDevice.PROP_ONOFF).getValue();
-        final boolean reqOnOff = (Boolean) reqProps.get(HomeDevice.PROP_ONOFF).getValue();
-        if (reqOnOff != curOnOff) {
-            int operation = Curtain.Operation.CLOSE;
-            if (reqOnOff == true) {
-                operation = Curtain.Operation.OPEN;
-            }
-            sendPacket(makeCurtainControlReq(operation, reqProps));
-            outProps.put(Curtain.PROP_OPERATION, operation);
-            return true;
-        }
+        // Send control packet
+        sendPacket(makeCurtainControlReq(newOperation, reqProps));
 
+        outProps.put(Curtain.PROP_OPERATION, newOperation);
+        outProps.put(HomeDevice.PROP_ONOFF, (newOperation == Curtain.Operation.OPEN));
         return false;
     }
 
-    private KSPacket makeCurtainControlReq(int opertation, PropertyMap props) {
-        byte data[] = new byte[2];
+    private KSPacket makeCurtainControlReq(int operation, PropertyMap props) {
+        final ByteArrayBuffer data = new ByteArrayBuffer();
 
-        data[0] = 0;
-        switch (opertation) {
-            case Curtain.Operation.STOP:  data[0] = 0; break;
-            case Curtain.Operation.OPEN:  data[0] = 1; break;
-            case Curtain.Operation.CLOSE: data[0] = 2; break;
+        int data0 = 0;
+        switch (operation) {
+            case Curtain.Operation.STOP:  data0 = 2; break;
+            case Curtain.Operation.OPEN:  data0 = 1; break;
+            case Curtain.Operation.CLOSE: data0 = 0; break;
             default:
-                Log.d(TAG, "make-control-req: unknown operation:" + opertation);
+                Log.d(TAG, "make-control-req: unknown operation:" + operation);
                 break;
         }
+        data.append(data0);
 
         final int openLevel = props.get(Curtain.PROP_CUR_OPEN_LEVEL, Integer.class);
         final int openAngle = props.get(Curtain.PROP_CUR_OPEN_ANGLE, Integer.class);
-        data[1] = (byte) ((openLevel & 0x0F) | ((openAngle << 4) & 0xF0));
+        final int data1 = ((openLevel & 0x0F) | ((openAngle << 4) & 0xF0));
+        data.append(data1);
 
-        return createPacket(CMD_SINGLE_CONTROL_REQ, data);
+        return createPacket(CMD_SINGLE_CONTROL_REQ, data.toArray());
+    }
+
+    private void parseCurtainControlReq(byte[] data, PropertyMap outProps) {
+        int opData = data[0] & 0xFF;
+
+        int operation = Curtain.Operation.STOP;
+        if (opData == 0) operation = Curtain.Operation.CLOSE;
+        else if (opData == 1) operation = Curtain.Operation.OPEN;
+        else if (opData == 2) operation = Curtain.Operation.STOP;
+        int state = (operation == Curtain.Operation.OPEN) ? Curtain.OpState.OPENED : Curtain.OpState.CLOSED;
+
+        outProps.put(Curtain.PROP_OPERATION, operation);
+        outProps.put(Curtain.PROP_STATE, state);
+        outProps.put(HomeDevice.PROP_ONOFF, (operation == Curtain.Operation.OPEN));
+
+        int openLevel = data[1] & 0x0F;
+        int openAngle = (data[1] >> 4) & 0x0F;
+
+        outProps.put(Curtain.PROP_CUR_OPEN_LEVEL, openLevel);
+        outProps.put(Curtain.PROP_CUR_OPEN_ANGLE, openAngle);
     }
 }

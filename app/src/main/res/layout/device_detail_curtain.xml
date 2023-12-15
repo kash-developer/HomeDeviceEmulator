@@ -27,15 +27,115 @@
 
     <LinearLayout
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|center_vertical"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/operation_check"
+            android:text="Operation"
+            style="@style/TitleCheckStyle" />
+
+        <Button
+            android:id="@+id/op_open_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Open" />
+
+        <Button
+            android:id="@+id/op_close_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Close" />
+
+        <Button
+            android:id="@+id/op_stop_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stop" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="30dp"
         android:gravity="left|center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="120dp"
+        <CheckBox
+            android:id="@+id/state_check"
+            android:text="State"
+            style="@style/TitleCheckStyle" />
+
+        <RadioGroup
+            android:id="@+id/state_group"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:text="CURTAIN" />
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/state_opened_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Opened" />
+
+            <RadioButton
+                android:id="@+id/state_closed_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Closed" />
+
+            <RadioButton
+                android:id="@+id/state_opening_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Opening" />
+
+            <RadioButton
+                android:id="@+id/state_closing_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Closing" />
+
+        </RadioGroup>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|center_vertical"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/open_level_check"
+            android:text="Open Level"
+            style="@style/TitleCheckStyle" />
+
+        <SeekBar
+            android:id="@+id/open_level_seek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|center_vertical"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/open_angle_check"
+            android:text="Open Angle"
+            style="@style/TitleCheckStyle" />
+
+        <SeekBar
+            android:id="@+id/open_angle_seek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
 
     </LinearLayout>
 

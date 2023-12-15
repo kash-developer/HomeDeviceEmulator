@@ -101,7 +101,7 @@ public class Curtain extends HomeDevice {
     public static final String PROP_MIN_OPEN_LEVEL  = PROP_PREFIX + "open_level.min";
 
     /** Property for the maximum level of opening */
-    @PropertyDef(valueClass=Integer.class)
+    @PropertyDef(valueClass=Integer.class, defValueI=10)
     public static final String PROP_MAX_OPEN_LEVEL  = PROP_PREFIX + "open_level.max";
 
     /** Property for current level of opening */
@@ -113,7 +113,7 @@ public class Curtain extends HomeDevice {
     public static final String PROP_MIN_OPEN_ANGLE  = PROP_PREFIX + "open_angle.min";
 
     /** Property for the maximum angle of opening */
-    @PropertyDef(valueClass=Integer.class)
+    @PropertyDef(valueClass=Integer.class, defValueI=10)
     public static final String PROP_MAX_OPEN_ANGLE  = PROP_PREFIX + "open_angle.max";
 
     /** Property for current angle of opening */

@@ -17,10 +17,17 @@
 
 package kr.or.kashi.hde.test;
 
+import static kr.or.kashi.hde.device.Curtain.PROP_CUR_OPEN_ANGLE;
+import static kr.or.kashi.hde.device.Curtain.PROP_OPERATION;
+
+import android.util.Log;
+
+import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.base.PropertyMap;
+import kr.or.kashi.hde.device.Curtain;
 
 public class DeviceTestCase<T> extends TestCase implements HomeDevice.Callback {
     private HomeDevice mDevice;
@@ -61,6 +68,25 @@ public class DeviceTestCase<T> extends TestCase implements HomeDevice.Callback {
         }
     }
 
+    public void assertSupported(String propName, int supportMask) throws Exception {
+        final long supports = mDevice.getProperty(propName, Integer.class);
+        if ((supports & supportMask) != supportMask) {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public void assertSupported(String propName, long supportMask) throws Exception {
+        final long supports = mDevice.getProperty(propName, Long.class);
+        if ((supports & supportMask) != supportMask) {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public <E> void assertEquals(String propName, Class<E> valueClass, E exprectedValue) throws Exception {
+        final E value = mDevice.getProperty(propName, valueClass);
+        assertEquals(value, exprectedValue);
+    }
+
     public <E> void assertPropertyChanaged(String propName, Class<E> valueClass, E fromValue, E toValue) throws Exception {
         mDevice.setProperty(propName, valueClass, fromValue);
         wait_();
@@ -69,7 +95,7 @@ public class DeviceTestCase<T> extends TestCase implements HomeDevice.Callback {
         assertEquals(toValue, mDevice.getProperty(propName, valueClass));
     }
 
-    private void waitForPropertyChanged() throws Exception {
+    protected void waitForPropertyChanged() throws Exception {
         mWaitForCallback = true;
         wait_();
         if (mWaitForCallback) {
