@@ -47,6 +47,13 @@ public class KSDoorLock extends KSDeviceContextBase {
         final PropertyTask controlTask = this::onDoorLockControlTask;
         setPropertyTask(DoorLock.PROP_CURRENT_STATES, controlTask);
         setPropertyTask(HomeDevice.PROP_ONOFF, controlTask);
+
+        if (isSlave()) {
+            // HACK: Initialize just as all supported.
+            long supports = DoorLock.State.DOOR_OPENED | DoorLock.State.EMERGENCY_ALARMED;
+            mRxPropertyMap.put(DoorLock.PROP_SUPPORTED_STATES, supports);
+            commitPropertyChanges(mRxPropertyMap);
+        }
     }
 
     protected int getCapabilities() {
