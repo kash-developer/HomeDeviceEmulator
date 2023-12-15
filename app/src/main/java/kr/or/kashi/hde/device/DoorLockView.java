@@ -19,25 +19,107 @@ package kr.or.kashi.hde.device;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.View;
+import android.widget.CheckBox;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.ToggleButton;
 
+import androidx.annotation.IdRes;
 import androidx.annotation.Nullable;
 
+import kr.or.kashi.hde.R;
+import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.widget.HomeDeviceView;
 
-public class DoorLockView extends HomeDeviceView<DoorLock> {
+public class DoorLockView extends HomeDeviceView<DoorLock> implements View.OnClickListener {
     private static final String TAG = DoorLockView.class.getSimpleName();
     private final Context mContext;
+
+    private CheckBox mDoorCheck;
+    private RadioGroup mDoorGroup;
+    private RadioButton mDoorOpenedRadio;
+    private RadioButton mDoorClosedRadio;
+    private CheckBox mEmergencyCheck;
+    private RadioGroup mEmergencyGroup;
+    private RadioButton mEmergencyAlarmedRadio;
+    private RadioButton mEmergencyNormalRadio;
 
     public DoorLockView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
-
     }
 
     @Override
     protected void onFinishInflate () {
         super.onFinishInflate();
 
+        mDoorCheck = findViewById(R.id.door_check);
+        mDoorCheck.setEnabled(false);
+        mDoorCheck.setOnClickListener(this);
+        mDoorGroup = findViewById(R.id.door_group);
+        mDoorOpenedRadio = findViewById(R.id.door_opened_radio);
+        mDoorOpenedRadio.setOnClickListener(this);
+        mDoorClosedRadio = findViewById(R.id.door_closed_radio);
+        mDoorClosedRadio.setOnClickListener(this);
+
+        mEmergencyCheck = findViewById(R.id.emergency_check);
+        mEmergencyCheck.setEnabled(false);
+        mEmergencyCheck.setOnClickListener(this);
+        mEmergencyGroup = findViewById(R.id.emergency_group);
+        mEmergencyAlarmedRadio = findViewById(R.id.emergency_alarmed_radio);
+        mEmergencyAlarmedRadio.setEnabled(isSlave());
+        mEmergencyAlarmedRadio.setOnClickListener(this);
+        mEmergencyNormalRadio = findViewById(R.id.emergency_normal_radio);
+        mEmergencyNormalRadio.setEnabled(isSlave());
+        mEmergencyNormalRadio.setOnClickListener(this);
     }
 
+    @Override
+    public void onUpdateProperty(PropertyMap props, PropertyMap changed) {
+        final long supports = props.get(DoorLock.PROP_SUPPORTED_STATES, Long.class);
+        mDoorCheck.setChecked((supports & DoorLock.State.DOOR_OPENED) != 0);
+        mEmergencyCheck.setChecked((supports & DoorLock.State.EMERGENCY_ALARMED) != 0);
+        mDoorOpenedRadio.setEnabled(mDoorCheck.isChecked());
+        mDoorClosedRadio.setEnabled(mDoorCheck.isChecked());
+        mEmergencyAlarmedRadio.setEnabled(isSlave() && mDoorCheck.isChecked());
+        mEmergencyNormalRadio.setEnabled(isSlave() && mDoorCheck.isChecked());
+
+        final long states = props.get(DoorLock.PROP_CURRENT_STATES, Long.class);
+        final boolean opened = (states & DoorLock.State.DOOR_OPENED) != 0;
+        final boolean alarmed = (states & DoorLock.State.EMERGENCY_ALARMED) != 0;
+        mDoorGroup.check(opened ? R.id.door_opened_radio : R.id.door_closed_radio);
+        mEmergencyGroup.check(alarmed ? R.id.emergency_alarmed_radio : R.id.emergency_normal_radio);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == mDoorCheck) {
+            setSupports();
+        } else if (v == mEmergencyCheck) {
+            setSupports();
+        } else if (v == mDoorOpenedRadio) {
+            setStates();
+        } else if (v == mDoorClosedRadio) {
+            setStates();
+        } else if (v == mEmergencyAlarmedRadio) {
+            setStates();
+        } else if (v == mEmergencyNormalRadio) {
+            setStates();
+        }
+    }
+
+    private void setSupports() {
+        long supports = 0;
+        if (mDoorCheck.isChecked()) supports |= DoorLock.State.DOOR_OPENED;
+        if (mEmergencyCheck.isChecked()) supports |= DoorLock.State.EMERGENCY_ALARMED;
+        device().setProperty(DoorLock.PROP_SUPPORTED_STATES, Long.class, supports);
+    }
+
+    private void setStates() {
+        long states = 0;
+        if (mDoorOpenedRadio.isChecked()) states |= DoorLock.State.DOOR_OPENED;
+        if (mEmergencyAlarmedRadio.isChecked()) states |= DoorLock.State.EMERGENCY_ALARMED;
+        device().setProperty(DoorLock.PROP_CURRENT_STATES, Long.class, states);
+    }
 }

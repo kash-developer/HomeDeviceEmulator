@@ -27,15 +27,68 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="30dp"
+        android:layout_height="wrap_content"
         android:gravity="left|center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="120dp"
+        <CheckBox
+            android:id="@+id/door_check"
+            android:text="Door"
+            style="@style/TitleCheckStyle" />
+
+
+        <RadioGroup
+            android:id="@+id/door_group"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:text="DOOR LOCK" />
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/door_opened_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Opened" />
+
+            <RadioButton
+                android:id="@+id/door_closed_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Closed" />
+
+        </RadioGroup>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|center_vertical"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/emergency_check"
+            android:text="Emergency"
+            style="@style/TitleCheckStyle" />
+
+        <RadioGroup
+            android:id="@+id/emergency_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/emergency_alarmed_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Alarmed" />
+
+            <RadioButton
+                android:id="@+id/emergency_normal_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Normal" />
+
+        </RadioGroup>
 
     </LinearLayout>
 
