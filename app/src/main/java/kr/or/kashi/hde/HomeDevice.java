@@ -21,11 +21,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.ArraySet;
 import android.util.Log;
+import android.util.Pair;
 
 import java.lang.ref.WeakReference;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -151,7 +153,7 @@ public class HomeDevice {
     private final Executor mHandlerExecutor;
     private final Object mLock = new Object();
     private DeviceContextListenerImpl mDeviceListener = null;
-    private final List<HomeDevice.Callback> mCallbacks = new ArrayList<>();
+    private final List<Pair<Callback,Executor>> mCallbacks = new ArrayList<>();
     private final Map<String, PropertyValue> mStagedProperties = new ConcurrentHashMap<>();
     private final Runnable mCommitPropsRunnable = this::commitStagedProperties;
 
@@ -242,12 +244,16 @@ public class HomeDevice {
      * @param callback The callback to handle event.
      */
     public void addCallback(Callback callback) {
+        addCallback(callback, mHandlerExecutor);
+    }
+
+    public void addCallback(Callback callback, Executor executor) {
         synchronized (mLock) {
             if (mCallbacks.isEmpty() && mDeviceListener == null) {
                 mDeviceListener = new DeviceContextListenerImpl(this);
                 mDeviceContext.setListener(mDeviceListener);
             }
-            mCallbacks.add(callback);
+            mCallbacks.add(Pair.create(callback, executor));
         }
     }
 
@@ -257,7 +263,13 @@ public class HomeDevice {
      */
     public void removeCallback(Callback callback) {
         synchronized (mLock) {
-            mCallbacks.remove(callback);
+            Iterator it = mCallbacks.iterator();
+            while (it.hasNext()) {
+                Pair<Callback,Executor> cb = (Pair<Callback,Executor>) it.next();
+                if (cb.first == callback) {
+                    it.remove();
+                }
+            }
             if (mCallbacks.isEmpty() && mDeviceListener != null) {
                 mDeviceContext.setListener(null);
                 mDeviceListener = null;
@@ -350,7 +362,7 @@ public class HomeDevice {
     }
 
     public void onPropertyChanged(List<PropertyValue> props) {
-        Collection<Callback> callbacks;
+        Collection<Pair<Callback,Executor>> callbacks;
         synchronized (mLock) {
             if (mCallbacks.isEmpty()) return;
             callbacks = new ArraySet<>(mCallbacks);
@@ -358,20 +370,20 @@ public class HomeDevice {
 
         PropertyMap propMap = new ReadOnlyPropertyMap(props);
 
-        for (Callback cb : callbacks) {
-            mHandlerExecutor.execute(() -> cb.onPropertyChanged(this, propMap));
+        for (Pair<Callback,Executor> cb : callbacks) {
+            cb.second.execute(() -> cb.first.onPropertyChanged(this, propMap));
         }
     }
 
     public void onErrorOccurred(int error) {
-        Collection<Callback> callbacks;
+        Collection<Pair<Callback,Executor>> callbacks;
         synchronized (mLock) {
             if (mCallbacks.isEmpty()) return;
             callbacks = new ArraySet<>(mCallbacks);
         }
 
-        for (Callback cb : callbacks) {
-            mHandlerExecutor.execute(() -> cb.onErrorOccurred(this, error));
+        for (Pair<Callback,Executor> cb : callbacks) {
+            cb.second.execute(() -> cb.first.onErrorOccurred(this, error));
         }
     }
 
