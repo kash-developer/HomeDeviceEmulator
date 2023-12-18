@@ -69,6 +69,14 @@ public class BatchSwitchView extends HomeDeviceView<BatchSwitch> {
 
     @Override
     public void onUpdateProperty(PropertyMap props, PropertyMap changed) {
+        final long supports = props.get(BatchSwitch.PROP_SUPPORTED_SWITCHES, Long.class);
+        mGasLockingCheck.setEnabled((supports & BatchSwitch.Switch.GAS_LOCKING) != 0);
+        mOutingSettingCheck.setEnabled((supports & BatchSwitch.Switch.OUTING_SETTING) != 0);
+        mBatchLightOffCheck.setEnabled((supports & BatchSwitch.Switch.BATCH_LIGHT_OFF) != 0);
+        mPowerSavingCheck.setEnabled((supports & BatchSwitch.Switch.POWER_SAVING) != 0);
+        mElevatorUpCallCheck.setEnabled((supports & BatchSwitch.Switch.ELEVATOR_UP_CALL) != 0);
+        mElevatorDownCallCheck.setEnabled((supports & BatchSwitch.Switch.ELEVATOR_DOWN_CALL) != 0);
+
         final long curStates = props.get(BatchSwitch.PROP_SWITCH_STATES, Long.class);
         mGasLockingCheck.setChecked((curStates & BatchSwitch.Switch.GAS_LOCKING) != 0);
         mOutingSettingCheck.setChecked((curStates & BatchSwitch.Switch.OUTING_SETTING) != 0);
