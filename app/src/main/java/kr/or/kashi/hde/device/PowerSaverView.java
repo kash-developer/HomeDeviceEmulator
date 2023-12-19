@@ -103,6 +103,7 @@ public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.O
 
         final float standbyConsumption = props.get(PowerSaver.PROP_STANDBY_CONSUMPTION, Float.class);
         mStandbyPowerText.setText("" + standbyConsumption);
+        if (!mStandbyPowerEdit.hasFocus()) mStandbyPowerEdit.setText("" + standbyConsumption);
     }
 
     @Override
