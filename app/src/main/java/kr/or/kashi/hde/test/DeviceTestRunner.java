@@ -34,6 +34,7 @@ import java.util.concurrent.Executor;
 
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.device.LightTest;
+import kr.or.kashi.hde.ksx4506.KSAddress;
 
 public class DeviceTestRunner implements Runnable {
     private static final String TAG = DeviceTestRunner.class.getSimpleName();
@@ -164,6 +165,12 @@ public class DeviceTestRunner implements Runnable {
 
         for (int i=0; i<mDevices.size(); i++) {
             HomeDevice device = mDevices.get(i);
+
+            // Test only single devices
+            if (new KSAddress(device.getAddress()).getDeviceSubId().hasFull()) {
+                continue;
+            }
+
             callOnDeviceTestStarted(device);
 
             int progress = (int) (((double)i / (double)mDevices.size()) * 100.0);
