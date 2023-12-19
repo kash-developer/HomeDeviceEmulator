@@ -27,15 +27,144 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:gravity="left|center_vertical"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
         android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="120dp"
+        <CheckBox
+            android:id="@+id/function_check"
+            android:text="Functions:"
+            style="@style/TitleCheckStyle2" />
+
+        <kr.or.kashi.hde.widget.FlowLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:text="THERMOSTAT" />
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/function_heating_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HEATING" />
+
+            <CheckBox
+                android:id="@+id/function_cooling_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="COOLING" />
+
+            <CheckBox
+                android:id="@+id/function_outing_setting_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OUTING_SETTING" />
+
+            <CheckBox
+                android:id="@+id/function_hotwater_only_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HOTWATER_ONLY" />
+
+            <CheckBox
+                android:id="@+id/function_reserved_mode_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="RESERVED_MODE" />
+
+        </kr.or.kashi.hde.widget.FlowLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/temp_range_check"
+            android:text="Temp. Range:"
+            style="@style/TitleCheckStyle2" />
+
+        <TextView
+            android:id="@+id/temp_range_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/current_temp_check"
+            android:text="Current Temp.:"
+            style="@style/TitleCheckStyle2" />
+
+        <TextView
+            android:id="@+id/current_temp_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\u2103" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/setting_temp_check"
+            android:text="Setting Temp.:"
+            style="@style/TitleCheckStyle2" />
+
+        <TextView
+            android:id="@+id/setting_temp_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\u2103" />
+
+        <Space
+            android:layout_width="10dp"
+            android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/setting_temp_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:inputType="number"
+            android:textSize="14dp"
+            android:text="0.0" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\u2103" />
+
+        <Button
+            android:id="@+id/temp_setting_button"
+            android:layout_width="70dp"
+            android:layout_height="40dp"
+            android:text="Set" />
 
     </LinearLayout>
 
