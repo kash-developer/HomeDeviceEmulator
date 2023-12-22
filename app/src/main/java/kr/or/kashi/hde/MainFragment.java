@@ -52,6 +52,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import kr.or.kashi.hde.base.PropertyMap;
+import kr.or.kashi.hde.test.DeviceTestCallback;
 import kr.or.kashi.hde.util.DebugLog;
 import kr.or.kashi.hde.util.LocalPreferences;
 import kr.or.kashi.hde.util.LocalPreferences.Pref;
@@ -290,6 +291,11 @@ public class MainFragment extends Fragment {
         mDeviceControlArea = (ViewGroup) v.findViewById(R.id.device_control_area);
 
         mDeviceTestPart = (DeviceTestPartView) v.findViewById(R.id.device_test_part);
+        mDeviceTestPart.getTestRunner().addCallback(new DeviceTestCallback() {
+            @Override public void onTestRunnerFinished() {
+                mAutoTestToggle.setChecked(false);
+            }
+        });
 
         if (needInitRange()) {
             resetRanges();
@@ -676,6 +682,10 @@ public class MainFragment extends Fragment {
 
         if (mSelectedDevice != null) {
             mSelectedDevice.addCallback(mDeviceCallback);
+
+            if (!mDeviceTestPart.getTestRunner().isRunning()) {
+                setAutoTestOn(false);
+            }
         }
 
         setDeviceControlView(mSelectedDevice);

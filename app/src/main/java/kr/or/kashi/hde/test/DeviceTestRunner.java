@@ -63,6 +63,10 @@ public class DeviceTestRunner implements Runnable {
         }
     }
 
+    public boolean isRunning() {
+        return mRun;
+    }
+
     public boolean start(List<HomeDevice> devices) {
         if (mThread != null) {
             stop();
@@ -184,6 +188,7 @@ public class DeviceTestRunner implements Runnable {
             callOnDeviceTestFinished(device);
         }
 
+        mRun = false;
         callOnTestRunnerFinished();
         Log.d(TAG, "thread finished");
     }

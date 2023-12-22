@@ -76,6 +76,10 @@ public class DeviceTestPartView extends LinearLayout implements DeviceTestCallba
         mDeviceTestRunner.addCallback(mReportDialog);
     }
 
+    public DeviceTestRunner getTestRunner() {
+        return mDeviceTestRunner;
+    }
+
     public boolean startTest(List<HomeDevice> devices) {
         return mDeviceTestRunner.start(devices);
     }
