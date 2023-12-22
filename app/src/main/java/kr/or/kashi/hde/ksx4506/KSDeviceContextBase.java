@@ -87,6 +87,36 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
         return (getCapabilities() & caps) == caps;
     }
 
+    protected boolean checkStatusCapability() {
+        return checkStatusCapability(getDeviceSubId());
+    }
+
+    protected boolean checkStatusCapability(final KSAddress.DeviceSubId subId) {
+        if (subId.hasSingle() && isCapableOf(CAP_STATUS_SINGLE)) return true;
+        if (subId.hasFull() && isCapableOf(CAP_STATUS_MULTI)) return true;
+        return false;
+    }
+
+    protected boolean checkCharacCapability() {
+        return checkCharacCapability(getDeviceSubId());
+    }
+
+    protected boolean checkCharacCapability(final KSAddress.DeviceSubId subId) {
+        if (subId.hasSingle() && isCapableOf(CAP_CHARAC_SINGLE)) return true;
+        if (subId.hasFull() && isCapableOf(CAP_CHARAC_MULTI)) return true;
+        return false;
+    }
+
+    protected boolean checkCapabilityByPacket(KSPacket packet) {
+        final int cmd = packet.commandType;
+        final int subId = packet.deviceSubId;
+        if (cmd == CMD_STATUS_REQ || cmd == CMD_STATUS_RSP)
+            return checkStatusCapability(KSAddress.toDeviceSubId(subId));
+        if (cmd == CMD_CHARACTERISTIC_REQ || cmd == CMD_CHARACTERISTIC_RSP)
+            return checkCharacCapability(KSAddress.toDeviceSubId(subId));
+        return true;
+    }
+
     @Override
     public void onAttachedToStream() {
         super.onAttachedToStream(); // call super
@@ -108,7 +138,7 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
 
         if (newPhase != curPhase) {
             if (newPhase == DeviceStatePollee.Phase.NAPPING) {
-                // Clear flag to re-reterive the characteristics of device when
+                // Clear flag to re-retrieve the characteristics of device when
                 // returning to working state.
                 mCharacteristicRetrieved = false;
 
@@ -119,7 +149,7 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
             boolean connected = (newPhase == DeviceStatePollee.Phase.WORKING);
 
             if (getDeviceSubId().isAll()) {
-                // Can't retreive the status from the device if it's of full range,
+                // Can't retrieve the status from the device if it's of full range,
                 // so no way to treat it as connected.
                 connected = false;
             }
@@ -146,7 +176,7 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
         }
 
         if (getDeviceSubId().isAll()) {
-            // Can't retreive the status from the device if it's of full range,
+            // Can't retrieve the status from the device if it's of full range,
             // so returns always current time as if the status is up-to-date.
             return SystemClock.uptimeMillis();
         }
@@ -162,7 +192,7 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
         }
 
         if (getDeviceSubId().isAll()) {
-            // Can't retreive the status from the device if it's of full range.
+            // Can't retrieve the status from the device if it's of full range.
             return;
         }
 
@@ -172,10 +202,13 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
             }
 
             // Skip query of status if the device is not capable of.
-            if (getDeviceSubId().hasSingle() && !isCapableOf(CAP_CHARAC_SINGLE))
+            if (!checkCharacCapability()) {
+                // HACK: If has child, set first child's update time as also of group's update time.
+                final KSDeviceContextBase firstChild = getChildAt(KSDeviceContextBase.class, 0);
+                if (firstChild != null) mLastUpdateTime = firstChild.getUpdateTime();
                 return;
-            if (getDeviceSubId().hasFull() && !isCapableOf(CAP_CHARAC_MULTI))
-                return;
+            }
+
 
             final HomePacket packet = makeCharacteristicReq();
 
@@ -211,9 +244,8 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
         cancelAllAutoSchedules();
 
         // Skip query of status if the device is not capable of.
-        if ((getDeviceSubId().hasSingle() && !isCapableOf(CAP_STATUS_SINGLE)))
-            return;
-        if (getDeviceSubId().hasFull() && !isCapableOf(CAP_STATUS_MULTI)) {
+        if (!checkStatusCapability()) {
+            // HACK: If has child, set first child's update time as also of group's update time.
             final KSDeviceContextBase firstChild = getChildAt(KSDeviceContextBase.class, 0);
             if (firstChild != null) mLastUpdateTime = firstChild.getUpdateTime();
             return;
@@ -273,6 +305,11 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
 
     public @ParseResult int parsePayload(HomePacket packet, PropertyMap outProps) {
         KSPacket ksPacket = (KSPacket) packet;
+
+        // Check context's capabilities according to received packet.
+        if (!checkCapabilityByPacket(ksPacket)) {
+            return PARSE_OK_NONE;
+        }
 
         // In slave mode, each single device doesn't need to parse its part from combined packet.
         if (isSlave()) {
@@ -361,10 +398,12 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
 
         packet.deviceId = devId;
         packet.deviceSubId = subId;
+        packet.commandType = cmd;
+        packet.data = (data == null) ? new byte[0] : data;
 
         if (cmd == CMD_STATUS_REQ || cmd == CMD_CHARACTERISTIC_REQ) {
             // If the device is of group, query for all (0x?F) with the group.
-            if ((packet.deviceSubId & 0xF0) != 0) {
+            if ((packet.deviceSubId & 0xF0) != 0 && checkCapabilityByPacket(packet)) {
                 packet.deviceSubId |= 0x0F;
             }
 
@@ -376,9 +415,6 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
                     break;
             }
         }
-
-        packet.commandType = cmd;
-        packet.data = (data == null) ? new byte[0] : data;
 
         return packet;
     }
