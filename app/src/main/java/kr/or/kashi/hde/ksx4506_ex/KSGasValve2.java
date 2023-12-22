@@ -91,7 +91,7 @@ public class KSGasValve2 extends KSGasValve {
         byte controlData = super.makeControlReqData(states, alarms);
 
         // OVERRIDE the bit of gas valve since it's not compatible with standard.
-        // WTF!!! HACK: In extended specification, the value of gas closed state is inversed
+        // WTF!!! HACK: In extended specification, the value of gas closed state is inverted
         // compared to original specification (see '7.6 gas valve action control request')
         if ((states & GasValve.State.GAS_VALVE) != 0L) {
             controlData |= (byte)(1 << 0);      // 1:open valve
@@ -106,5 +106,20 @@ public class KSGasValve2 extends KSGasValve {
         }
 
         return controlData;
+    }
+
+    @Override
+    protected void parseControlReqData(int controlData, PropertyMap outProps) {
+        super.parseControlReqData(controlData, outProps);
+
+        final boolean openValve = ((controlData & (1 << 0)) != 0);
+        outProps.putBit(GasValve.PROP_CURRENT_STATES, GasValve.State.GAS_VALVE, openValve);
+        outProps.put(HomeDevice.PROP_ONOFF, openValve);
+
+        final boolean inductionOn = ((controlData & (1 << 2)) != 0);
+        outProps.putBit(GasValve.PROP_CURRENT_STATES, GasValve.State.INDUCTION, inductionOn);
+        if (supportsInductionOnly(outProps)) {
+            outProps.put(HomeDevice.PROP_ONOFF, inductionOn);
+        }
     }
 }

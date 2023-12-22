@@ -19,9 +19,11 @@ package kr.or.kashi.hde.ksx4506;
 
 import android.util.Log;
 
+import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.device.DoorLock;
 import kr.or.kashi.hde.device.GasValve;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
@@ -39,12 +41,34 @@ public class KSGasValve extends KSDeviceContextBase {
     public KSGasValve(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps, GasValve.class);
 
-        // Register the tasks to be performed when specific property changes.
-        setPropertyTask(GasValve.PROP_CURRENT_STATES, mSingleControlTask);
-        setPropertyTask(GasValve.PROP_CURRENT_ALARMS, mSingleControlTask);
-        setPropertyTask(HomeDevice.PROP_ONOFF, mSingleControlTask);
+        if (isMaster()) {
+            // Register the tasks to be performed when specific property changes.
+            setPropertyTask(GasValve.PROP_CURRENT_STATES, mSingleControlTask);
+            setPropertyTask(GasValve.PROP_CURRENT_ALARMS, mSingleControlTask);
+            setPropertyTask(HomeDevice.PROP_ONOFF, mSingleControlTask);
+        }
     }
 
+    @Override
+    protected int getCapabilities() {
+        return CAP_STATUS_SINGLE | CAP_CHARAC_SINGLE;
+    }
+
+    @Override
+    protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) {
+        // No data to parse from request packet.
+
+        // Send response packet.
+        final PropertyMap props = getReadPropertyMap();
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        data.append(0); // no error
+        makeGasValveStateByte(props, data);
+        sendPacket(createPacket(CMD_STATUS_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    @Override
     protected @ParseResult int parseStatusRsp(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length < 2) {
             if (DBG) Log.w(TAG, "parse-status-rsp: wrong size of data " + packet.data.length);
@@ -63,6 +87,28 @@ public class KSGasValve extends KSDeviceContextBase {
         return PARSE_OK_STATE_UPDATED;
     }
 
+    @Override
+    protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) {
+        // No data to parse from request packet.
+
+        final PropertyMap props = getReadPropertyMap();
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        data.append(0); // no error
+
+        final long supportedAlarms = props.get(GasValve.PROP_SUPPORTED_ALARMS, Long.class);
+
+        int characData = 0;
+        if ((supportedAlarms & GasValve.Alarm.EXTINGUISHER_BUZZING) != 0) characData |= (1L << 0);
+        if ((supportedAlarms & GasValve.Alarm.GAS_LEAKAGE_DETECTED) != 0) characData |= (1L << 1);
+        data.append(characData);
+
+        // Send response packet.
+        sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    @Override
     protected @ParseResult int parseCharacteristicRsp(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length < 2) {
             if (DBG) Log.w(TAG, "parse-chr-rsp: wrong size of data " + packet.data.length);
@@ -91,6 +137,21 @@ public class KSGasValve extends KSDeviceContextBase {
         return PARSE_OK_PEER_DETECTED;
     }
 
+    @Override
+    protected @ParseResult int parseSingleControlReq(KSPacket packet, PropertyMap outProps) {
+        final int control = packet.data[0] & 0xFF;
+        parseControlReqData(control, outProps);
+
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        data.append(0); // no error
+        makeGasValveStateByte(outProps, data);
+        // Send response packet.
+        sendPacket(createPacket(CMD_SINGLE_CONTROL_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    @Override
     protected @ParseResult int parseSingleControlRsp(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length < 2) {
             if (DBG) Log.w(TAG, "parse-status-ctrl-rsp: wrong size of data " + packet.data.length);
@@ -107,6 +168,19 @@ public class KSGasValve extends KSDeviceContextBase {
         parseGasValveStateByte(packet.data[1], outProps);
 
         return PARSE_OK_ACTION_PERFORMED;
+    }
+
+    protected void makeGasValveStateByte(PropertyMap props, ByteArrayBuffer outData) {
+        final long curStates = props.get(GasValve.PROP_CURRENT_STATES, Long.class);
+        final long curAlarms = props.get(GasValve.PROP_CURRENT_ALARMS, Long.class);
+
+        int stateData = 0;
+        if ((curStates & GasValve.State.GAS_VALVE) != 0) stateData |= (1 << 0);
+        if ((curStates & GasValve.State.GAS_VALVE) == 0) stateData |= (1 << 1);
+        if ((curAlarms & GasValve.Alarm.EXTINGUISHER_BUZZING) != 0) stateData |= (1 << 3);
+        if ((curAlarms & GasValve.Alarm.GAS_LEAKAGE_DETECTED) != 0) stateData |= (1 << 4);
+
+        outData.append(stateData);
     }
 
     protected void parseGasValveStateByte(byte stateByte, PropertyMap outProps) {
@@ -170,5 +244,14 @@ public class KSGasValve extends KSDeviceContextBase {
         }
 
         return controlData;
+    }
+
+    protected void parseControlReqData(int controlData, PropertyMap outProps) {
+        final boolean closeValve = ((controlData & (1 << 0)) != 0);
+        final boolean stopBuzzing = ((controlData & (1 << 1)) != 0);
+
+        outProps.putBit(GasValve.PROP_CURRENT_STATES, GasValve.State.GAS_VALVE, !closeValve);
+        outProps.put(HomeDevice.PROP_ONOFF, !closeValve);
+        outProps.putBit(GasValve.PROP_CURRENT_ALARMS, GasValve.Alarm.EXTINGUISHER_BUZZING, !stopBuzzing);
     }
 }

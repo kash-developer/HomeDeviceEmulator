@@ -75,9 +75,14 @@ public class DeviceTestCase<T> extends TestCase implements HomeDevice.Callback {
         }
     }
 
-    public <E> void assertEquals(String propName, Class<E> valueClass, E exprectedValue) throws Exception {
+    public <E> void assertEquals(String propName, Class<E> valueClass, E expectedValue) throws Exception {
         final E value = mDevice.getProperty(propName, valueClass);
-        assertEquals(value, exprectedValue);
+        assertEquals(value, expectedValue);
+    }
+
+    public <E> void assertMasked(String propName, Class<E> valueClass, E maskedValue) throws Exception {
+        final E value = mDevice.getProperty(propName, valueClass);
+        assertEquals(value, ((long)value & (long)maskedValue) == (long)maskedValue);
     }
 
     public <E> void assertPropertyChanaged(String propName, Class<E> valueClass, E fromValue, E toValue) throws Exception {

@@ -27,15 +27,133 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:gravity="left|center_vertical"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
         android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="120dp"
+        <CheckBox
+            android:id="@+id/gas_valve_check"
+            android:text="Gas Valve:"
+            style="@style/TitleCheckStyle2" />
+
+        <RadioGroup
+            android:id="@+id/gas_valve_group"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:text="GAS VALVE" />
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/gas_valve_closed_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Closed" />
+
+            <RadioButton
+                android:id="@+id/gas_valve_opened_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Opened" />
+
+        </RadioGroup>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/induction_check"
+            android:text="Induction:"
+            style="@style/TitleCheckStyle2" />
+
+        <RadioGroup
+            android:id="@+id/induction_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/induction_off_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OFF" />
+
+            <RadioButton
+                android:id="@+id/induction_on_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ON" />
+
+        </RadioGroup>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/extinguisher_check"
+            android:text="Extinguisher:"
+            style="@style/TitleCheckStyle2" />
+
+        <RadioGroup
+            android:id="@+id/extinguisher_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/extinguisher_normal_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Normal" />
+
+            <RadioButton
+                android:id="@+id/extinguisher_buzzing_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Buzzing" />
+
+        </RadioGroup>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/gas_leakage_check"
+            android:text="Gas Leakage:"
+            style="@style/TitleCheckStyle2" />
+
+        <RadioGroup
+            android:id="@+id/gas_leakage_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/gas_leakage_normal_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Normal" />
+
+            <RadioButton
+                android:id="@+id/gas_leakage_detected_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Detected" />
+
+        </RadioGroup>
 
     </LinearLayout>
 
