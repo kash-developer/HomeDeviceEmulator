@@ -277,6 +277,15 @@ public class MainFragment extends Fragment {
         mAutoTestToggle = (ToggleButton) v.findViewById(R.id.auto_test_toggle);
         mAutoTestToggle.setEnabled(!mNetwork.isSlaveMode());
         mAutoTestToggle.setOnClickListener(view -> setAutoTestOn(((Checkable)view).isChecked()));
+        mAutoTestToggle.setOnCheckedChangeListener((view, isChecked) -> {
+            if (isChecked) {
+                mNetwork.getDeviceStatePoller().setPaused(true);
+                mDeviceTestPart.startTest(getCurrentDevices());
+            } else {
+                mDeviceTestPart.stopTest();
+                mNetwork.getDeviceStatePoller().setPaused(false);
+            }
+        });
 
         mDeviceCountText = v.findViewById(R.id.device_count_text);
 
@@ -296,6 +305,8 @@ public class MainFragment extends Fragment {
                 mAutoTestToggle.setChecked(false);
             }
         });
+        final Button closeButton = mDeviceTestPart.findViewById(R.id.close_button);
+        closeButton.setOnClickListener(view -> setAutoTestOn(false));
 
         if (needInitRange()) {
             resetRanges();
@@ -477,15 +488,7 @@ public class MainFragment extends Fragment {
 
     private void setAutoTestOn(boolean testOn) {
         mAutoTestToggle.setChecked(testOn);
-        if (testOn) {
-            final Button closeButton = mDeviceTestPart.findViewById(R.id.close_button);
-            closeButton.setOnClickListener(view -> setAutoTestOn(false));
-            mDeviceTestPart.setVisibility(View.VISIBLE);
-            mDeviceTestPart.startTest(getCurrentDevices());
-        } else {
-            mDeviceTestPart.setVisibility(View.GONE);
-            mDeviceTestPart.stopTest();
-        }
+        mDeviceTestPart.setVisibility(testOn ? View.VISIBLE : View.GONE);
     }
 
     private void addSelectedDevices() {

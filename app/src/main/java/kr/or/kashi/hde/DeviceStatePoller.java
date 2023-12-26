@@ -63,6 +63,7 @@ public class DeviceStatePoller implements Runnable {
     private long mPollIntervalMs = POLL_INTERVAL_MS;
     private Thread mThread = null;
     private boolean mRun = true;
+    private boolean mPaused = false;
     private boolean mRepeative = false;
 
     public DeviceStatePoller() { }
@@ -114,7 +115,9 @@ public class DeviceStatePoller implements Runnable {
                     if (!info.disposed) {
                         mPolleeQueue.add(info);
                     }
-                    mPolleeQueue.wait(getPollIntervalMs());
+
+                    final long waitTimeMs = mPaused ? Long.MAX_VALUE : getPollIntervalMs();
+                    mPolleeQueue.wait(waitTimeMs);
                 }
             } catch (Exception e) {
                 if (!mRun && (e instanceof InterruptedIOException || e instanceof InterruptedException)) {
@@ -209,6 +212,7 @@ public class DeviceStatePoller implements Runnable {
 
         mThread = new Thread(this, TAG + "." + DeviceStatePoller.class.getSimpleName());
         mRun = true;
+        mPaused = false;
         mRepeative = repeative;
 
         mThread.start();
@@ -233,6 +237,17 @@ public class DeviceStatePoller implements Runnable {
         }
 
         mThread = null;
+    }
+
+    public void setPaused(boolean paused) {
+        if (!mRun || paused == mPaused) {
+            return;
+        }
+
+        synchronized (mPolleeQueue) {
+            mPaused = paused;
+            mPolleeQueue.notifyAll();
+        }
     }
 
     public void addPollee(DeviceStatePollee pollee) {
