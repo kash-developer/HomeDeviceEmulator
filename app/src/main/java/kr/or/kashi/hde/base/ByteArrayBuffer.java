@@ -37,6 +37,14 @@ public final class ByteArrayBuffer {
         mBuffer = newBuffer;
     }
 
+    public int size() {
+        return mLength;
+    }
+
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
     public void append(byte b) {
         int newLen = mLength + 1;
         ensureCapableOf(newLen);

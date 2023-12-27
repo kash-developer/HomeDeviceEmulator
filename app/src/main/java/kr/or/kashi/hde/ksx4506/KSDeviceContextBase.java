@@ -201,14 +201,13 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
                 return;
             }
 
-            // Skip query of status if the device is not capable of.
-            if (!checkCharacCapability()) {
+            // Skip query of status if the device is not capable of multiple characteristics.
+            if (getDeviceSubId().hasFull() && !isCapableOf(CAP_CHARAC_MULTI)) {
                 // HACK: If has child, set first child's update time as also of group's update time.
                 final KSDeviceContextBase firstChild = getChildAt(KSDeviceContextBase.class, 0);
                 if (firstChild != null) mLastUpdateTime = firstChild.getUpdateTime();
                 return;
             }
-
 
             final HomePacket packet = makeCharacteristicReq();
 
@@ -243,8 +242,8 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
 
         cancelAllAutoSchedules();
 
-        // Skip query of status if the device is not capable of.
-        if (!checkStatusCapability()) {
+        // Skip query of status if the device is not capable of multiple status.
+        if (getDeviceSubId().hasFull() && !isCapableOf(CAP_STATUS_MULTI)) {
             // HACK: If has child, set first child's update time as also of group's update time.
             final KSDeviceContextBase firstChild = getChildAt(KSDeviceContextBase.class, 0);
             if (firstChild != null) mLastUpdateTime = firstChild.getUpdateTime();
@@ -401,19 +400,13 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
         packet.commandType = cmd;
         packet.data = (data == null) ? new byte[0] : data;
 
-        if (cmd == CMD_STATUS_REQ || cmd == CMD_CHARACTERISTIC_REQ) {
-            // If the device is of group, query for all (0x?F) with the group.
-            if ((packet.deviceSubId & 0xF0) != 0 && checkCapabilityByPacket(packet)) {
-                packet.deviceSubId |= 0x0F;
-            }
-
-            // Some devices should queary with full range (0x0F) for single devices.
-            switch (packet.deviceId) {
-                case 0x30:  // house meter
-                case 0x36:  // thermostat
-                    packet.deviceSubId |= 0x0F;
-                    break;
-            }
+        // If the device is capable of multiple status, modify the sub-id to
+        // query for all (0x?F) devices.
+        if (cmd == CMD_STATUS_REQ && isCapableOf(CAP_STATUS_MULTI)) {
+            packet.deviceSubId |= 0x0F;
+        }
+        if (cmd == CMD_CHARACTERISTIC_REQ && isCapableOf(CAP_CHARAC_MULTI)) {
+            packet.deviceSubId |= 0x0F;
         }
 
         return packet;

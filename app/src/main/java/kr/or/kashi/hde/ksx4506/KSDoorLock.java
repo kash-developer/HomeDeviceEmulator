@@ -52,7 +52,7 @@ public class KSDoorLock extends KSDeviceContextBase {
             // HACK: Initialize just as all supported.
             long supports = DoorLock.State.DOOR_OPENED | DoorLock.State.EMERGENCY_ALARMED;
             mRxPropertyMap.put(DoorLock.PROP_SUPPORTED_STATES, supports);
-            commitPropertyChanges(mRxPropertyMap);
+            mRxPropertyMap.commit();
         }
     }
 

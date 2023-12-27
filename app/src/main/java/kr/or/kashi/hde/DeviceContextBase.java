@@ -272,7 +272,7 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
     @Override
     public void requestUpdate() {
         if (mUpdateReqRunnable == null) {
-            mUpdateReqRunnable = () -> requestUpdate(mRxPropertyMap); // TODO: Use map as readonly
+            mUpdateReqRunnable = () -> requestUpdate(mRxPropertyMap);
         }
         if (!mHandler.hasCallbacks(mUpdateReqRunnable)) {
             mHandler.postDelayed(mUpdateReqRunnable, 10);
