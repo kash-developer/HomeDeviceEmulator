@@ -136,7 +136,7 @@ public class KSHouseMeter2 extends KSHouseMeter {
     }
 
     @Override
-    protected void parseMeterCharByte(byte charByte, int meterIndex, PropertyMap outProps) {
+    protected void parseMeterCharByte(int charByte, int meterIndex, PropertyMap outProps) {
         super.parseMeterCharByte(charByte, meterIndex, outProps); // call super
 
         // HACK: Some device of manufacturer set fifth bit of data byte in

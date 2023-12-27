@@ -27,15 +27,141 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:gravity="left|center_vertical"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
         android:orientation="horizontal">
 
+        <CheckBox
+            android:id="@+id/meter_type_check"
+            android:text="Meter Type:"
+            style="@style/TitleCheckStyle2" />
+
         <TextView
-            android:layout_width="120dp"
+            android:id="@+id/meter_type_text"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:text="HOUSE METER" />
+            android:text="" />
+
+        <Spinner
+            android:id="@+id/meter_type_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/meter_state_check"
+            android:text="Meter State:"
+            style="@style/TitleCheckStyle2" />
+
+        <RadioGroup
+            android:id="@+id/meter_state_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/meter_state_disabled_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Disabled" />
+
+            <RadioButton
+                android:id="@+id/meter_state_enabled_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enabled" />
+
+        </RadioGroup>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/current_meter_check"
+            android:text="Current Meter:"
+            style="@style/TitleCheckStyle2" />
+
+        <TextView
+            android:id="@+id/current_meter_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="" />
+
+        <EditText
+            android:id="@+id/current_meter_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:inputType="number"
+            android:text="0.0" />
+
+        <Spinner
+            android:id="@+id/current_meter_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/current_meter_set_button"
+            android:layout_width="70dp"
+            android:layout_height="40dp"
+            android:text="Set" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/total_meter_check"
+            android:text="Total Meter:"
+            style="@style/TitleCheckStyle2" />
+
+        <TextView
+            android:id="@+id/total_meter_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="" />
+
+        <EditText
+            android:id="@+id/total_meter_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:inputType="number"
+            android:text="0.0" />
+
+        <Spinner
+            android:id="@+id/total_meter_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/total_meter_set_button"
+            android:layout_width="70dp"
+            android:layout_height="40dp"
+            android:text="Set" />
 
     </LinearLayout>
 
