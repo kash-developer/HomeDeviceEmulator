@@ -18,11 +18,14 @@
 package kr.or.kashi.hde.ksx4506;
 
 import android.util.Log;
-
+import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
+import kr.or.kashi.hde.HomeAddress;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.device.AirConditioner;
+import kr.or.kashi.hde.device.HouseMeter;
 import kr.or.kashi.hde.device.Thermostat;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
@@ -59,34 +62,119 @@ public class KSThermostat extends KSDeviceContextBase {
     public KSThermostat(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps, Thermostat.class);
 
-        // Register the tasks to be performed when specific property changes.
-        setPropertyTask(HomeDevice.PROP_ONOFF, this::onPowerControlTask);
-        setPropertyTask(Thermostat.PROP_FUNCTION_STATES, this::onFunctionControlTask);
-        setPropertyTask(Thermostat.PROP_SETTING_TEMPERATURE, this::onTemperatureControlTask);
+        if (isMaster()) {
+            // Register the tasks to be performed when specific property changes.
+            setPropertyTask(HomeDevice.PROP_ONOFF, this::onPowerControlTask);
+            setPropertyTask(Thermostat.PROP_FUNCTION_STATES, this::onFunctionControlTask);
+            setPropertyTask(Thermostat.PROP_SETTING_TEMPERATURE, this::onTemperatureControlTask);
+        } else {
+            // TEMP: Initialize some properties as specific values in slave mode.
+            long supportedFunctions = 0;
+            supportedFunctions |= Thermostat.Function.HEATING;
+            supportedFunctions |= Thermostat.Function.OUTING_SETTING;
+            supportedFunctions |= Thermostat.Function.HOTWATER_ONLY;
+            supportedFunctions |= Thermostat.Function.RESERVED_MODE;
+            mRxPropertyMap.put(Thermostat.PROP_SUPPORTED_FUNCTIONS, supportedFunctions);
+            mRxPropertyMap.put(Thermostat.PROP_MIN_TEMPERATURE, mMinTemperature);
+            mRxPropertyMap.put(Thermostat.PROP_MAX_TEMPERATURE, mMaxTemperature);
+            mRxPropertyMap.put(Thermostat.PROP_TEMP_RESOLUTION, mSupportHalfDegree ? 0.5f : 1.0f);
+            mRxPropertyMap.put(Thermostat.PROP_SETTING_TEMPERATURE, 10.0f);
+            mRxPropertyMap.put(Thermostat.PROP_CURRENT_TEMPERATURE, 10.0f);
+            mRxPropertyMap.commit();
+        }
+
+        Log.e(TAG, "KKK KSThermostat " + getAddress() + " : " + mMaxTemperature + " " + getProperty(Thermostat.PROP_MAX_TEMPERATURE) + " " + isMaster());
     }
 
     @Override
-    public @ParseResult int parsePayload(HomePacket packet, PropertyMap outProps) {
-        KSPacket ksPacket = (KSPacket) packet;
+    protected int getCapabilities() {
+        return CAP_STATUS_MULTI | CAP_CHARAC_MULTI;
+    }
 
-        switch (ksPacket.commandType) {
+    @Override
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
+        switch (packet.commandType) {
+            // Request commands
+            case CMD_HEATING_STATE_REQ: return parseHeatingStateReq(packet, outProps);
+            case CMD_TEMPERATURE_REQ: return parseTemperatureReq(packet, outProps);
+            case CMD_RESERVED_MODE_REQ: return parseReservedModeReq(packet, outProps);
+            case CMD_OUTING_SETTING_REQ: return parseOutingSettingReq(packet, outProps);
+            case CMD_HOTWATER_ONLY_REQ: return parseHotwaterOnlyReq(packet, outProps);
+            // Response commands
             case CMD_HEATING_STATE_RSP:
             case CMD_TEMPERATURE_RSP:
             case CMD_RESERVED_MODE_RSP:
             case CMD_OUTING_SETTING_RSP:
             case CMD_HOTWATER_ONLY_RSP: {
                 // All the responses about control requests is same with the response of status.
-                int res = parseStatusRsp(ksPacket, outProps);
+                int res = parseStatusRsp(packet, outProps);
                 if (res < PARSE_OK_NONE && res == PARSE_OK_ERROR_RECEIVED) {
                     return res;
                 }
                 return PARSE_OK_ACTION_PERFORMED;
             }
         }
-
+        // Call super as fallback
         return super.parsePayload(packet, outProps);
     }
 
+    @Override
+    protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) {
+        // No data to parse from request packet.
+
+        final KSAddress devAddress = (KSAddress)getAddress();
+        if (!devAddress.getDeviceSubId().isFullOfGroup()) {
+            // Only full type of group device can parse the packet.
+            return PARSE_OK_NONE;
+        }
+
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        makeStatusRspData(getReadPropertyMap(), data);
+
+        // Send response packet
+        sendPacket(createPacket(CMD_STATUS_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected void makeStatusRspData(PropertyMap props, ByteArrayBuffer outData) {
+        outData.append(0); // no error
+
+        int heatingState  = 0;
+        int coolingState  = 0;  // not used
+        int outingSetting = 0;
+        int reservedMode  = 0;
+        int hotwaterOnly  = 0;
+        int devIndex = 0;
+
+        for (KSThermostat child: getChildren(KSThermostat.class)) {
+            final PropertyMap childProps = child.getReadPropertyMap();
+            final long curStates = childProps.get(Thermostat.PROP_FUNCTION_STATES, Long.class);
+            if ((curStates & Thermostat.Function.HEATING) != 0) heatingState |= (1 << devIndex);
+            if ((curStates & Thermostat.Function.OUTING_SETTING) != 0) outingSetting |= (1 << devIndex);
+            if ((curStates & Thermostat.Function.HOTWATER_ONLY) != 0) hotwaterOnly |= (1 << devIndex);
+            if ((curStates & Thermostat.Function.RESERVED_MODE) != 0) reservedMode |= (1 << devIndex);
+            devIndex++;
+        }
+
+        outData.append(heatingState);
+        outData.append(outingSetting);
+        outData.append(reservedMode);
+        outData.append(hotwaterOnly);
+
+        for (KSThermostat child: getChildren(KSThermostat.class)) {
+            final PropertyMap childProps = child.getReadPropertyMap();
+            final float tempRes = childProps.get(Thermostat.PROP_TEMP_RESOLUTION, Float.class);
+            final float minTemp = childProps.get(Thermostat.PROP_MIN_TEMPERATURE, Float.class);
+            final float maxTemp = childProps.get(Thermostat.PROP_MAX_TEMPERATURE, Float.class);
+            final float setTemp = childProps.get(Thermostat.PROP_SETTING_TEMPERATURE, Float.class);
+            final float curTemp = childProps.get(Thermostat.PROP_CURRENT_TEMPERATURE, Float.class);
+            outData.append(KSUtils.makeTemperatureByte(setTemp, minTemp, maxTemp, tempRes));
+            outData.append(KSUtils.makeTemperatureByte(curTemp, minTemp, maxTemp, tempRes));
+        }
+    }
+
+    @Override
     protected @ParseResult int parseStatusRsp(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length < 5) {
             if (DBG) Log.w(TAG, "parse-status-rsp: wrong size of data " + packet.data.length);
@@ -163,6 +251,46 @@ public class KSThermostat extends KSDeviceContextBase {
         return result;
     }
 
+    @Override
+    protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) {
+        // No data to parse from request packet.
+
+        final KSAddress devAddress = (KSAddress)getAddress();
+        if (!devAddress.getDeviceSubId().isFullOfGroup()) {
+            // Only full type of group device can parse the packet.
+            return PARSE_OK_NONE;
+        }
+
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        data.append(0); // no error
+        data.append(mManufacturerId);
+        data.append(mTemperatureDetectingType);
+
+        final PropertyMap props = getReadPropertyMap();
+        final float maxTemp = props.get(Thermostat.PROP_MAX_TEMPERATURE, Float.class);
+        final float minTemp = props.get(Thermostat.PROP_MIN_TEMPERATURE, Float.class);
+        data.append((int)maxTemp);
+        data.append((int)minTemp);
+
+Log.e(TAG, "KKK " + getAddress() + " " + maxTemp + " " + minTemp);
+
+        int data5 = 0;
+        final long supportedFunctions = props.get(Thermostat.PROP_SUPPORTED_FUNCTIONS, Long.class);
+        if ((supportedFunctions & Thermostat.Function.OUTING_SETTING) != 0L) data5 |= (1 << 1);
+        if ((supportedFunctions & Thermostat.Function.HOTWATER_ONLY) != 0L)  data5 |= (1 << 2);
+        if ((supportedFunctions & Thermostat.Function.RESERVED_MODE) != 0L)  data5 |= (1 << 3);
+        final float tempRes = props.get(Thermostat.PROP_TEMP_RESOLUTION, Float.class);
+        if (KSUtils.floatEquals(tempRes, 0.5f))                              data5 |= (1 << 4);
+        data.append(data5);
+        data.append(getChildCount()); // count of thermostats
+
+        // Send response packet
+        sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    @Override
     protected @ParseResult int parseCharacteristicRsp(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length < 2) {
             if (DBG) Log.w(TAG, "parse-chr-rsp: wrong size of data " + packet.data.length);
@@ -204,6 +332,77 @@ public class KSThermostat extends KSDeviceContextBase {
         outProps.put(Thermostat.PROP_TEMP_RESOLUTION, mSupportHalfDegree ? 0.5f : 1.0f);
 
         return PARSE_OK_PEER_DETECTED;
+    }
+
+    protected @ParseResult int parseHeatingStateReq(KSPacket packet, PropertyMap outProps) {
+        // Parse request packet
+        final boolean heatingOn = ((packet.data[0] & 0xFF) == 0x01);
+        outProps.putBit(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HEATING, heatingOn);
+
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        makeStatusRspData(outProps, data); // Encode response packet same with status.
+
+        // Send response packet
+        sendPacket(createPacket(CMD_HEATING_STATE_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseTemperatureReq(KSPacket packet, PropertyMap outProps) {
+        // Parse request packet
+        final float temp = KSUtils.parseTemperatureByte(packet.data[0]);
+        outProps.put(Thermostat.PROP_SETTING_TEMPERATURE, temp);
+        outProps.put(Thermostat.PROP_CURRENT_TEMPERATURE, temp); // TODO: This should be changed by some simulated logic.
+
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        makeStatusRspData(outProps, data); // Encode response packet same with status.
+
+        // Send response packet
+        sendPacket(createPacket(CMD_TEMPERATURE_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseReservedModeReq(KSPacket packet, PropertyMap outProps) {
+        // Parse request packet
+        final boolean reservedMode = ((packet.data[0] & 0xFF) == 0x01);
+        outProps.putBit(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.RESERVED_MODE, reservedMode);
+
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        makeStatusRspData(outProps, data); // Encode response packet same with status.
+
+        // Send response packet
+        sendPacket(createPacket(CMD_RESERVED_MODE_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseOutingSettingReq(KSPacket packet, PropertyMap outProps) {
+        // Parse request packet
+        final boolean outinggOn = ((packet.data[0] & 0xFF) == 0x01);
+        outProps.putBit(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.OUTING_SETTING, outinggOn);
+
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        makeStatusRspData(outProps, data); // Encode response packet same with status.
+
+        // Send response packet
+        sendPacket(createPacket(CMD_OUTING_SETTING_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseHotwaterOnlyReq(KSPacket packet, PropertyMap outProps) {
+        // Parse request packet
+        final boolean hotwaterOnly = ((packet.data[0] & 0xFF) == 0x01);
+        outProps.putBit(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HOTWATER_ONLY, hotwaterOnly);
+
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        makeStatusRspData(outProps, data); // Encode response packet same with status.
+
+        // Send response packet
+        sendPacket(createPacket(CMD_HOTWATER_ONLY_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
     }
 
     protected @ParseResult int parseSingleControlRsp(KSPacket packet, PropertyMap outProps) {
