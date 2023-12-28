@@ -108,6 +108,7 @@ public class KSMainContext extends MainContext {
                     props.put(HomeDevice.PROP_ADDR, parentAddr);
                     props.put(HomeDevice.PROP_AREA, HomeDevice.Area.UNKNOWN);
                     props.put(HomeDevice.PROP_NAME, "Virtual " + parentAddr);
+                    props.put(HomeDevice.PROP_IS_SLAVE, device.getProperty(HomeDevice.PROP_IS_SLAVE, Boolean.class));
 
                     // Create new virutal device as parent.
                     parent = createDevice(props.toMap());
