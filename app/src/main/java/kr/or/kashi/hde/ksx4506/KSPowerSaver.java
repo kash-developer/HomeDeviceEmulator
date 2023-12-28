@@ -104,16 +104,13 @@ public class KSPowerSaver extends KSDeviceContextBase {
     }
 
     @Override
-    public @ParseResult int parsePayload(HomePacket packet, PropertyMap outProps) {
-        KSPacket ksPacket = (KSPacket) packet;
-
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
         // TODO: Use some new interface of parsing action.
-        switch (ksPacket.commandType) {
+        switch (packet.commandType) {
             case CMD_STANDBY_POWER_GETTING_RSP:
             case CMD_STANDBY_POWER_SETTING_RSP:
-                return parseStandbyPowerRsp(ksPacket, outProps);
+                return parseStandbyPowerRsp(packet, outProps);
         }
-
         return super.parsePayload(packet, outProps);
     }
 

@@ -321,21 +321,22 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
 
         mAutoStatusReqScheduleError = 0; // Clear last error code
 
-        switch (ksPacket.commandType) {
-            case CMD_STATUS_REQ: return parseStatusReq(ksPacket, outProps);
-            case CMD_STATUS_RSP: return parseStatusRsp(ksPacket, outProps);
-            case CMD_CHARACTERISTIC_REQ: return parseCharacteristicReq(ksPacket, outProps);
+        return parsePayload(ksPacket, outProps);
+    }
+
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
+        switch (packet.commandType) {
+            case CMD_STATUS_REQ: return parseStatusReq(packet, outProps);
+            case CMD_STATUS_RSP: return parseStatusRsp(packet, outProps);
+            case CMD_CHARACTERISTIC_REQ: return parseCharacteristicReq(packet, outProps);
             case CMD_CHARACTERISTIC_RSP: {
-                int res = parseCharacteristicRsp(ksPacket, outProps);
-                if (res >= PARSE_OK_NONE) {
-                    mCharacteristicRetrieved = true;
-                }
+                int res = parseCharacteristicRsp(packet, outProps);
+                if (res >= PARSE_OK_NONE) mCharacteristicRetrieved = true;
                 return res;
             }
-            case CMD_SINGLE_CONTROL_REQ: return parseSingleControlReq(ksPacket, outProps);
-            case CMD_SINGLE_CONTROL_RSP: return parseSingleControlRsp(ksPacket, outProps);
+            case CMD_SINGLE_CONTROL_REQ: return parseSingleControlReq(packet, outProps);
+            case CMD_SINGLE_CONTROL_RSP: return parseSingleControlRsp(packet, outProps);
         }
-
         return PARSE_OK_NONE;
     }
 

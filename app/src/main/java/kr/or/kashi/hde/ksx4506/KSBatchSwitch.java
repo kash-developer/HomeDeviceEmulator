@@ -94,19 +94,15 @@ public class KSBatchSwitch extends KSDeviceContextBase {
     }
 
     @Override
-    public @ParseResult int parsePayload(HomePacket packet, PropertyMap outProps) {
-        KSPacket ksPacket = (KSPacket) packet;
-
-        switch (ksPacket.commandType) {
-            case CMD_SWITCH_SETTING_RESULT_REQ: return parseSwitchSettingResultReq(ksPacket, outProps);
-            case CMD_SWITCH_SETTING_RESULT_RSP: return parseSwitchSettingResultRsp(ksPacket, outProps);
-
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
+        switch (packet.commandType) {
+            case CMD_SWITCH_SETTING_RESULT_REQ: return parseSwitchSettingResultReq(packet, outProps);
+            case CMD_SWITCH_SETTING_RESULT_RSP: return parseSwitchSettingResultRsp(packet, outProps);
             case CMD_ELEVATOR_FLOOR_DISPLAY_RSP: {
                 // Same with the response of status.
-                return parseStatusRspBytes(ksPacket.data, outProps);
+                return parseStatusRspBytes(packet.data, outProps);
             }
         }
-
         return super.parsePayload(packet, outProps);
     }
 

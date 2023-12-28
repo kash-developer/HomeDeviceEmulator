@@ -90,15 +90,13 @@ public class KSAirConditioner extends KSDeviceContextBase {
     }
 
     @Override
-    public @ParseResult int parsePayload(HomePacket packet, PropertyMap outProps) {
-        KSPacket ksPacket = (KSPacket) packet;
-
-        switch (ksPacket.commandType) {
-            case CMD_OPERATION_STATE_REQ: return parseOperationStateReq(ksPacket, outProps);
-            case CMD_TEMPERATURE_SETTING_REQ: return parseTemperatureSettingReq(ksPacket, outProps);
-            case CMD_OPERATION_MODE_REQ: return parseOperationModeReq(ksPacket, outProps);
-            case CMD_FLOW_DIRECTION_REQ: return parseFlowDirectionReq(ksPacket, outProps);
-            case CMD_FAN_SPEED_REQ: return parseFanSpeedReq(ksPacket, outProps);
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
+        switch (packet.commandType) {
+            case CMD_OPERATION_STATE_REQ: return parseOperationStateReq(packet, outProps);
+            case CMD_TEMPERATURE_SETTING_REQ: return parseTemperatureSettingReq(packet, outProps);
+            case CMD_OPERATION_MODE_REQ: return parseOperationModeReq(packet, outProps);
+            case CMD_FLOW_DIRECTION_REQ: return parseFlowDirectionReq(packet, outProps);
+            case CMD_FAN_SPEED_REQ: return parseFanSpeedReq(packet, outProps);
 
             case CMD_OPERATION_STATE_RSP:
             case CMD_TEMPERATURE_SETTING_RSP:
@@ -106,7 +104,7 @@ public class KSAirConditioner extends KSDeviceContextBase {
             case CMD_FLOW_DIRECTION_RSP:
             case CMD_FAN_SPEED_RSP: {
                 // All the responses about control requests is same with the response of status.
-                int res = parseStatusRsp(ksPacket, outProps);
+                int res = parseStatusRsp(packet, outProps);
                 if (res < PARSE_OK_NONE && res == PARSE_OK_ERROR_RECEIVED) {
                     return res;
                 }

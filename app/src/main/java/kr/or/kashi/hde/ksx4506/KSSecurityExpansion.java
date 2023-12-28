@@ -58,20 +58,17 @@ public class KSSecurityExpansion extends KSDeviceContextBase {
     }
 
     @Override
-    public @ParseResult int parsePayload(HomePacket packet, PropertyMap outProps) {
-        KSPacket ksPacket = (KSPacket) packet;
-
-        switch (ksPacket.commandType) {
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
+        switch (packet.commandType) {
             case CMD_SENSOR_SETTING_RSP: {
                 // All the responses about control requests is same with the response of status.
-                int res = parseStatusRsp(ksPacket, outProps);
+                int res = parseStatusRsp(packet, outProps);
                 if (res < PARSE_OK_NONE && res == PARSE_OK_ERROR_RECEIVED) {
                     return res;
                 }
                 return PARSE_OK_ACTION_PERFORMED;
             }
         }
-
         return super.parsePayload(packet, outProps);
     }
 

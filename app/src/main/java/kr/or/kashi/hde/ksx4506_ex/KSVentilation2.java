@@ -46,14 +46,12 @@ public class KSVentilation2 extends KSVentilation {
         super(mainContext, defaultProps);
     }
 
-    public @ParseResult int parsePayload(HomePacket packet, PropertyMap outProps) {
-        KSPacket ksPacket = (KSPacket) packet;
-
-        switch (ksPacket.commandType) {
+    @Override
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
+        switch (packet.commandType) {
             case CMD_FILTER_CHANGE_ALARM_OFF_RSP:
-                return parseFilterChangeAlarmOffControlRsp(ksPacket, outProps);
+                return parseFilterChangeAlarmOffControlRsp(packet, outProps);
         }
-
         return super.parsePayload(packet, outProps);
     }
 

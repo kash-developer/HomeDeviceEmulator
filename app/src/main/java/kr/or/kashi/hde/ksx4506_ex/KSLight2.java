@@ -60,14 +60,12 @@ public class KSLight2 extends KSLight {
         }
     };
 
-    public @ParseResult int parsePayload(HomePacket packet, PropertyMap outProps) {
-        KSPacket ksPacket = (KSPacket) packet;
-
-        switch (ksPacket.commandType) {
-            case CMD_SINGLE_TONE_CONTROL_REQ: return parseSingleToneControlReq(ksPacket, outProps);
-            case CMD_SINGLE_TONE_CONTROL_RSP: return parseSingleToneControlRsp(ksPacket, outProps);
+    @Override
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
+        switch (packet.commandType) {
+            case CMD_SINGLE_TONE_CONTROL_REQ: return parseSingleToneControlReq(packet, outProps);
+            case CMD_SINGLE_TONE_CONTROL_RSP: return parseSingleToneControlRsp(packet, outProps);
         }
-
         return super.parsePayload(packet, outProps);
     }
 
