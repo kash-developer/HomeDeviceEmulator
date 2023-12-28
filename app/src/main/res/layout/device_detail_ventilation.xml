@@ -27,15 +27,170 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:gravity="left|center_vertical"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
         android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="120dp"
+        <CheckBox
+            android:id="@+id/modes_check"
+            android:text="Modes:"
+            style="@style/TitleCheckStyle" />
+
+        <kr.or.kashi.hde.widget.FlowRadioGroup
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:text="VENTILATION" />
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/mode_normal_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NORMAL" />
+
+            <RadioButton
+                android:id="@+id/mode_sleep_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SLEEP" />
+
+            <RadioButton
+                android:id="@+id/mode_recycle_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="RECYCLE" />
+
+            <RadioButton
+                android:id="@+id/mode_auto_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AUTO" />
+
+            <RadioButton
+                android:id="@+id/mode_saving_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SAVING" />
+
+            <RadioButton
+                android:id="@+id/mode_cleanair_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CLEANAIR" />
+
+            <RadioButton
+                android:id="@+id/mode_internal_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INTERNAL" />
+
+        </kr.or.kashi.hde.widget.FlowRadioGroup>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/sensors_check"
+            android:text="Sensors:"
+            style="@style/TitleCheckStyle" />
+
+        <kr.or.kashi.hde.widget.FlowLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/sensor_co2_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CO2" />
+
+        </kr.or.kashi.hde.widget.FlowLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/alarms_check"
+            android:text="Alarms:"
+            style="@style/TitleCheckStyle" />
+
+        <kr.or.kashi.hde.widget.FlowLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/alarm_fan_overheating_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FAN_OVERHEATING" />
+
+            <CheckBox
+                android:id="@+id/alarm_recycler_change_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="RECYCLER_CHANGE" />
+
+            <CheckBox
+                android:id="@+id/alarm_filter_change_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FILTER_CHANGE" />
+
+            <CheckBox
+                android:id="@+id/alarm_smoke_removing_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SMOKE_REMOVING" />
+
+            <CheckBox
+                android:id="@+id/alarm_high_co2_level_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HIGH_CO2_LEVEL" />
+
+            <CheckBox
+                android:id="@+id/alarm_heater_running_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HEATER_RUNNING" />
+
+        </kr.or.kashi.hde.widget.FlowLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|top"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/fan_speed_check"
+            android:text="Fan Speed:"
+            style="@style/TitleCheckStyle" />
+
+        <TextView
+            android:id="@+id/fan_speed_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="" />
+
+        <SeekBar
+            android:id="@+id/fan_speed_seek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"/>
 
     </LinearLayout>
 
