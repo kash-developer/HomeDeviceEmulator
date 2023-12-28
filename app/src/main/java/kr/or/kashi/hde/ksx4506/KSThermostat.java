@@ -82,8 +82,6 @@ public class KSThermostat extends KSDeviceContextBase {
             mRxPropertyMap.put(Thermostat.PROP_CURRENT_TEMPERATURE, 10.0f);
             mRxPropertyMap.commit();
         }
-
-        Log.e(TAG, "KKK KSThermostat " + getAddress() + " : " + mMaxTemperature + " " + getProperty(Thermostat.PROP_MAX_TEMPERATURE) + " " + isMaster());
     }
 
     @Override
@@ -271,8 +269,6 @@ public class KSThermostat extends KSDeviceContextBase {
         final float minTemp = props.get(Thermostat.PROP_MIN_TEMPERATURE, Float.class);
         data.append((int)maxTemp);
         data.append((int)minTemp);
-
-Log.e(TAG, "KKK " + getAddress() + " " + maxTemp + " " + minTemp);
 
         int data5 = 0;
         final long supportedFunctions = props.get(Thermostat.PROP_SUPPORTED_FUNCTIONS, Long.class);
