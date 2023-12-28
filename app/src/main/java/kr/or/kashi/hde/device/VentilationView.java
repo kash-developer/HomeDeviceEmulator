@@ -83,6 +83,7 @@ public class VentilationView extends HomeDeviceView<Ventilation> {
         mSensorsCheck = findViewById(R.id.sensors_check);
         mSensorCo2Check = findViewById(R.id.sensor_co2_check);
         mSensorCo2Check.setOnClickListener(v -> setSupportedSensors());
+        mSensorCo2Check.setClickable(isSlave());
         mAlarmsCheck = findViewById(R.id.alarms_check);
         mAlarmFanOverHeatingCheck = findViewById(R.id.alarm_fan_overheating_check);
         mAlarmFanOverHeatingCheck.setOnClickListener(v -> setOperationAlarms());
@@ -135,7 +136,6 @@ public class VentilationView extends HomeDeviceView<Ventilation> {
         mModeInternalRadio.setChecked((operationMode & Ventilation.Mode.INTERNAL) != 0);
 
         final long supportedSendors = props.get(Ventilation.PROP_SUPPORTED_SENSORS, Long.class);
-        mSensorCo2Check.setEnabled((supportedSendors & Ventilation.Sensor.CO2) != 0);
         mSensorCo2Check.setChecked((supportedSendors & Ventilation.Sensor.CO2) != 0);
 
         final long operationAlarms = props.get(Ventilation.PROP_OPERATION_ALARM, Long.class);

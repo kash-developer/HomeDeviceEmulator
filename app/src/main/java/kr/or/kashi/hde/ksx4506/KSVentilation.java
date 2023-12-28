@@ -19,10 +19,12 @@ package kr.or.kashi.hde.ksx4506;
 
 import android.util.Log;
 
+import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.device.Thermostat;
 import kr.or.kashi.hde.device.Ventilation;
 import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
 import kr.or.kashi.hde.ksx4506.KSPacket;
@@ -44,28 +46,83 @@ public class KSVentilation extends KSDeviceContextBase {
     public static final int CMD_MODE_CONTROL_RSP = 0xC3;
 
     private int mMinFanSpeedLevel = 0;
-    private int mMaxFanSpeedLevel = 0;
+    private int mMaxFanSpeedLevel = 5;
 
     public KSVentilation(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps, Ventilation.class);
 
-        // Register the tasks to be performed when specific property changes.
-        setPropertyTask(HomeDevice.PROP_ONOFF, this::onPowerControlTask);
-        setPropertyTask(Ventilation.PROP_CUR_FAN_SPEED, this::onFanSpeedControlTask);
-        setPropertyTask(Ventilation.PROP_OPERATION_MODE, this::onModeControlTask);
-        setPropertyTask(Ventilation.PROP_OPERATION_ALARM, this::onAlarmControlTask);
+        if (isMaster()) {
+            // Register the tasks to be performed when specific property changes.
+            setPropertyTask(HomeDevice.PROP_ONOFF, this::onPowerControlTask);
+            setPropertyTask(Ventilation.PROP_CUR_FAN_SPEED, this::onFanSpeedControlTask);
+            setPropertyTask(Ventilation.PROP_OPERATION_MODE, this::onModeControlTask);
+            setPropertyTask(Ventilation.PROP_OPERATION_ALARM, this::onAlarmControlTask);
+        } else {
+            // TEMP: Initialize some properties as specific values in slave mode.
+            long supportedModes = 0;
+            supportedModes |= Ventilation.Mode.NORMAL;
+            supportedModes |= Ventilation.Mode.SLEEP;
+            supportedModes |= Ventilation.Mode.RECYCLE;
+            supportedModes |= Ventilation.Mode.AUTO;
+            supportedModes |= Ventilation.Mode.SAVING;
+            supportedModes |= Ventilation.Mode.CLEANAIR;
+            supportedModes |= Ventilation.Mode.INTERNAL;
+            mRxPropertyMap.put(Ventilation.PROP_SUPPORTED_MODES, supportedModes);
+
+            long supportedSensors = 0;
+            supportedSensors |= Ventilation.Sensor.CO2;
+            mRxPropertyMap.put(Ventilation.PROP_SUPPORTED_SENSORS, supportedSensors);
+
+            mRxPropertyMap.put(Ventilation.PROP_OPERATION_MODE, Ventilation.Mode.NORMAL);
+            mRxPropertyMap.put(Ventilation.PROP_OPERATION_ALARM, 0);
+            mRxPropertyMap.put(Ventilation.PROP_CUR_FAN_SPEED, mMinFanSpeedLevel);
+            mRxPropertyMap.put(Ventilation.PROP_MIN_FAN_SPEED, mMinFanSpeedLevel);
+            mRxPropertyMap.put(Ventilation.PROP_MAX_FAN_SPEED, mMaxFanSpeedLevel);
+
+            mRxPropertyMap.commit();
+        }
+    }
+
+    @Override
+    protected int getCapabilities() {
+        return CAP_STATUS_SINGLE | CAP_CHARAC_SINGLE;
     }
 
     @Override
     public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
         // TODO: Use some new interface of parsing action.
         switch (packet.commandType) {
+            case CMD_POWER_CONTROL_REQ: return parsePowerControlReq(packet, outProps);
+            case CMD_FAN_SPEED_CONTROL_REQ: return parseFanSpeedControlReq(packet, outProps);
+            case CMD_MODE_CONTROL_REQ: return parseModeControlReq(packet, outProps);
+
             case CMD_POWER_CONTROL_RSP:
             case CMD_FAN_SPEED_CONTROL_RSP:
-            case CMD_MODE_CONTROL_RSP:
+            case CMD_MODE_CONTROL_RSP: {
                 return parseSingleControlRsp(packet, outProps);
+            }
         }
+
         return super.parsePayload(packet, outProps);
+    }
+
+    @Override
+    protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) {
+        // No data to parse from request packet.
+
+        final PropertyMap props = getReadPropertyMap();
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+
+        data.append(0); // no error
+        makePowerStateByte(props, data);
+        makeFanSpeedByte(props, data);
+        makeModeStateByte(props, data);
+        makeAlarmStateByte(props, data);
+
+        // Send response packet
+        sendPacket(createPacket(CMD_STATUS_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
     }
 
     @Override
@@ -85,6 +142,34 @@ public class KSVentilation extends KSDeviceContextBase {
         parseFanSpeedByte(packet.data[2], outProps);
         parseModeStateByte(packet.data[3], outProps);
         parseAlarmStateByte(packet.data[4], outProps);
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    @Override
+    protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) {
+        // No data to parse from request packet.
+
+        final PropertyMap props = getReadPropertyMap();
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+
+        mMinFanSpeedLevel = props.get(Ventilation.PROP_MIN_FAN_SPEED, Integer.class);
+        mMaxFanSpeedLevel = props.get(Ventilation.PROP_MAX_FAN_SPEED, Integer.class);
+        data.append(mMaxFanSpeedLevel);
+
+        int supportByte = 0;
+        final long supportedModes = props.get(Ventilation.PROP_SUPPORTED_MODES, Long.class);
+        if ((supportedModes | Ventilation.Mode.NORMAL) != 0) supportByte |= (1 << 0);
+        if ((supportedModes | Ventilation.Mode.SLEEP) != 0) supportByte |= (1 << 1);
+        if ((supportedModes | Ventilation.Mode.RECYCLE) != 0) supportByte |= (1 << 2);
+        if ((supportedModes | Ventilation.Mode.AUTO) != 0) supportByte |= (1 << 3);
+        if ((supportedModes | Ventilation.Mode.SAVING) != 0) supportByte |= (1 << 4);
+        final long supportedSensors = props.get(Ventilation.PROP_SUPPORTED_SENSORS, Long.class);
+        if ((supportedSensors | Ventilation.Sensor.CO2) != 0) supportByte |= (1 << 5);
+        data.append(supportByte);
+
+        // Send response packet
+        sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
 
         return PARSE_OK_STATE_UPDATED;
     }
@@ -113,10 +198,54 @@ public class KSVentilation extends KSDeviceContextBase {
         outProps.put(Ventilation.PROP_SUPPORTED_MODES, supportedModes);
 
         long supportedSensors = 0;
-        if ((packet.data[1] & (1 << 5)) != 0) supportedSensors |= Ventilation.Sensor.CO2;
+        if ((data1 & (1 << 5)) != 0) supportedSensors |= Ventilation.Sensor.CO2;
         outProps.put(Ventilation.PROP_SUPPORTED_SENSORS, supportedSensors);
 
         return PARSE_OK_PEER_DETECTED;
+    }
+
+    protected @ParseResult int parsePowerControlReq(KSPacket packet, PropertyMap outProps) {
+        // Parse request packet.
+        parsePowerStateByte(packet.data[0], outProps);
+
+        // Send response packet
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        makeSingleControlRsp(outProps, data); // Encode common response packet for all control request.
+        sendPacket(createPacket(CMD_POWER_CONTROL_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseFanSpeedControlReq(KSPacket packet, PropertyMap outProps) {
+        // Parse request packet.
+        parseFanSpeedByte(packet.data[0], outProps);
+
+        // Send response packet
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        makeSingleControlRsp(outProps, data); // Encode common response packet for all control request.
+        sendPacket(createPacket(CMD_POWER_CONTROL_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseModeControlReq(KSPacket packet, PropertyMap outProps) {
+        // Parse request packet.
+        parseModeStateByte(packet.data[0], outProps);
+
+        // Send response packet
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        makeSingleControlRsp(outProps, data); // Encode common response packet for all control request.
+        sendPacket(createPacket(CMD_POWER_CONTROL_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected void makeSingleControlRsp(PropertyMap props, ByteArrayBuffer outData) {
+        outData.append(0); // no error
+        makePowerStateByte(props, outData);     // data 1: power state
+        makeHighCO2AlarmByte(props, outData);   // data 2: co2 overflow
+        makeModeStateByte(props, outData);      // data 3: mode state
+        makeAlarmStateByte(props, outData);     // date 4: alarm state
     }
 
     @Override
@@ -133,16 +262,25 @@ public class KSVentilation extends KSDeviceContextBase {
         }
 
         parsePowerStateByte(packet.data[1], outProps);
-        // Ignore DATA 2 (CO2 overflow alarm) because it will be retreived from next alarm byte.
+        parseHighCO2AlarmByte(packet.data[2], outProps);
         parseModeStateByte(packet.data[3], outProps);
         parseAlarmStateByte(packet.data[4], outProps);
 
         return PARSE_OK_ACTION_PERFORMED;
     }
 
+    protected void makePowerStateByte(PropertyMap props, ByteArrayBuffer outData) {
+        outData.append(props.get(HomeDevice.PROP_ONOFF, Boolean.class) ? 0x01 : 0x00);
+    }
+
     private void parsePowerStateByte(byte powerByte, PropertyMap outProps) {
         final int running = powerByte & 0xFF;
         outProps.put(HomeDevice.PROP_ONOFF, (running == 1));
+    }
+
+    protected void makeFanSpeedByte(PropertyMap props, ByteArrayBuffer outData) {
+        int curSpeed = props.get(Ventilation.PROP_CUR_FAN_SPEED, Integer.class);
+        outData.append(curSpeed);
     }
 
     private void parseFanSpeedByte(byte fanSpeedByte, PropertyMap outProps) {
@@ -152,8 +290,36 @@ public class KSVentilation extends KSDeviceContextBase {
         outProps.put(Ventilation.PROP_CUR_FAN_SPEED, fanSpeed);
     }
 
+    protected void makeHighCO2AlarmByte(PropertyMap props, ByteArrayBuffer outData) {
+        long opAlarms = props.get(Ventilation.PROP_OPERATION_ALARM, Long.class);
+        int co2OverByte = ((opAlarms & Ventilation.Alarm.HIGH_CO2_LEVEL) != 0) ? 0x01 : 0x00;
+        outData.append(co2OverByte);
+    }
+
+    private void parseHighCO2AlarmByte(byte alarmByte, PropertyMap outProps) {
+        // Ignored because it will be retrieved from the status alarm byte.
+        // see. parseAlarmStateByte()
+    }
+
+    protected void makeModeStateByte(PropertyMap props, ByteArrayBuffer outData) {
+        long mode = props.get(Ventilation.PROP_OPERATION_MODE, Long.class);
+        outData.append(modeToByte(mode));
+    }
+
     protected void parseModeStateByte(byte modeByte, PropertyMap outProps) {
         outProps.put(Ventilation.PROP_OPERATION_MODE, byteToMode(modeByte));
+    }
+
+    protected void makeAlarmStateByte(PropertyMap props, ByteArrayBuffer outData) {
+        int alarmByte = 0;
+        long opAlarms = props.get(Ventilation.PROP_OPERATION_ALARM, Long.class);
+        if ((opAlarms & Ventilation.Alarm.FAN_OVERHEATING) != 0) alarmByte |= (1 << 0);
+        if ((opAlarms & Ventilation.Alarm.RECYCLER_CHANGE) != 0) alarmByte |= (1 << 1);
+        if ((opAlarms & Ventilation.Alarm.FILTER_CHANGE) != 0) alarmByte |= (1 << 2);
+        if ((opAlarms & Ventilation.Alarm.SMOKE_REMOVING) != 0) alarmByte |= (1 << 3);
+        if ((opAlarms & Ventilation.Alarm.HIGH_CO2_LEVEL) != 0) alarmByte |= (1 << 4);
+        if ((opAlarms & Ventilation.Alarm.HEATER_RUNNING) != 0) alarmByte |= (1 << 5);
+        outData.append(alarmByte);
     }
 
     private void parseAlarmStateByte(byte alarmByte, PropertyMap outProps) {
