@@ -159,13 +159,13 @@ public class KSVentilation extends KSDeviceContextBase {
 
         int supportByte = 0;
         final long supportedModes = props.get(Ventilation.PROP_SUPPORTED_MODES, Long.class);
-        if ((supportedModes | Ventilation.Mode.NORMAL) != 0) supportByte |= (1 << 0);
-        if ((supportedModes | Ventilation.Mode.SLEEP) != 0) supportByte |= (1 << 1);
-        if ((supportedModes | Ventilation.Mode.RECYCLE) != 0) supportByte |= (1 << 2);
-        if ((supportedModes | Ventilation.Mode.AUTO) != 0) supportByte |= (1 << 3);
-        if ((supportedModes | Ventilation.Mode.SAVING) != 0) supportByte |= (1 << 4);
+        if ((supportedModes & Ventilation.Mode.NORMAL) != 0) supportByte |= (1 << 0);
+        if ((supportedModes & Ventilation.Mode.SLEEP) != 0) supportByte |= (1 << 1);
+        if ((supportedModes & Ventilation.Mode.RECYCLE) != 0) supportByte |= (1 << 2);
+        if ((supportedModes & Ventilation.Mode.AUTO) != 0) supportByte |= (1 << 3);
+        if ((supportedModes & Ventilation.Mode.SAVING) != 0) supportByte |= (1 << 4);
         final long supportedSensors = props.get(Ventilation.PROP_SUPPORTED_SENSORS, Long.class);
-        if ((supportedSensors | Ventilation.Sensor.CO2) != 0) supportByte |= (1 << 5);
+        if ((supportedSensors & Ventilation.Sensor.CO2) != 0) supportByte |= (1 << 5);
         data.append(supportByte);
 
         // Send response packet
