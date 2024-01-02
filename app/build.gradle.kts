@@ -1,6 +1,11 @@
+import java.lang.Integer
+import java.text.SimpleDateFormat
+import java.util.Date
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-android")
 }
 
 android {
@@ -11,8 +16,10 @@ android {
         applicationId = "kr.or.kashi.hde"
         minSdk = 27
         targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
+
+        val date = SimpleDateFormat("yyMMdd").format(Date())
+        versionCode = Integer.valueOf(date)
+        versionName = "1.0-${date}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
