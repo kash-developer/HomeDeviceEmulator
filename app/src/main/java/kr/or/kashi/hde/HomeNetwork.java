@@ -61,16 +61,16 @@ public class HomeNetwork {
         mEventHandler = new Handler(Looper.getMainLooper());
         mIsSlaveMode = isSlaveMode;
 
-        mMainContext = createMainContext(context);
+        mMainContext = createMainContext(context, isSlaveMode);
         mStreamProcessor = new StreamProcessor(context, mEventHandler, mStreamErrorRunable);
         mDeviceDiscovery = mMainContext.getDeviceDiscovery();
         mDeviceStatePoller = new DeviceStatePoller();
     }
 
-    private MainContext createMainContext(Context context) {
+    private MainContext createMainContext(Context context, boolean isSlaveMode) {
         // return new KSMainContext(context);     // standard (2016)
         // return new KSMainContext2(context);    // extended (2022)
-        return new KDMainContext(context);     // non-standard
+        return new KDMainContext(context, isSlaveMode);     // non-standard
     }
 
     public boolean isRunning() {

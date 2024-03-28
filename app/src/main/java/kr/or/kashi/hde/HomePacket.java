@@ -30,6 +30,15 @@ public interface HomePacket {
     boolean parse(ByteBuffer buffer) throws BufferUnderflowException;
     void toBuffer(ByteBuffer buffer) throws BufferOverflowException;
 
+    public class Null implements HomePacket {
+        @Override public String address() { return ""; }
+        @Override public int command() { return 0; }
+        @Override public byte[] data() { return new byte[0]; }
+        @Override public int hashCode() { return 0; };
+        @Override public boolean parse(ByteBuffer buffer) throws BufferUnderflowException { return false; }
+        @Override public void toBuffer(ByteBuffer buffer) throws BufferOverflowException { }
+    }
+
     public class WithMeta implements HomePacket {
         public boolean suppressLog = false;
 

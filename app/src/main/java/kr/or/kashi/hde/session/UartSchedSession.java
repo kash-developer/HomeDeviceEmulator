@@ -38,11 +38,16 @@ public class UartSchedSession extends NetworkSessionAdapter {
     private static final boolean DBG = true;
     private static final int BUFFER_SIZE = 1024;
 
+    public static final int PORT_TYPE_RS232 = UartSched.PORT_TYPE_RS232;
+    public static final int PORT_TYPE_RS485 = UartSched.PORT_TYPE_RS485;
+    public static final int PORT_TYPE_RS485_MASTER = UartSched.PORT_TYPE_RS485_MASTER;
+    public static final int PORT_TYPE_RS485_SLAVE = UartSched.PORT_TYPE_RS485_SLAVE;
+
     private final Context mContext;
     private final Handler mHandler;
+    private final int mPortType;
     private final String mPortName;
     private final int mPortSpeed;
-    private final UartSched mUartSched;
 
     private UartSchedPort mUartSchedPort;
     private UartSchedPort.Callback mUartSchedPortCallback = new UartSchedPort.Callback() {
@@ -94,12 +99,12 @@ public class UartSchedSession extends NetworkSessionAdapter {
 
     private final Map<Long, ArraySet<PacketSchedule>> mPacketSchedules = new ConcurrentHashMap<>();
 
-    public UartSchedSession(Context context, Handler handler, String name, int speed) {
+    public UartSchedSession(Context context, Handler handler, int type, String name, int speed) {
         mContext = context;
         mHandler = handler;
+        mPortType = type;
         mPortName = name;
         mPortSpeed = speed;
-        mUartSched = new UartSched(handler);
     }
 
     @Override
@@ -110,7 +115,12 @@ public class UartSchedSession extends NetworkSessionAdapter {
             mPacketSchedules.clear();
         }
 
-        mUartSchedPort = mUartSched.openPort(mPortName, mPortSpeed);
+        try {
+            mUartSchedPort = UartSched.openPort(mHandler, mPortType, mPortName, mPortSpeed);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
         if (mUartSchedPort == null) {
             Log.e(TAG, "Can't open port (" + mPortName + ", " + mPortSpeed + ")");
             return false;
@@ -130,7 +140,7 @@ public class UartSchedSession extends NetworkSessionAdapter {
         mUartSchedPort.unregisterCallback(mUartSchedPortCallback);
 
         if (mUartSchedPort != null) {
-            mUartSched.closePort(mUartSchedPort);
+            UartSched.closePort(mUartSchedPort);
             mUartSchedPort = null;
         }
     }

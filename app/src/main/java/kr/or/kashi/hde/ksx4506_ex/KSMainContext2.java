@@ -35,8 +35,8 @@ public class KSMainContext2 extends KSMainContext {
     private static final String TAG = "KSMainContext2";
     private static final boolean DBG = true;
 
-    public KSMainContext2(Context context) {
-        super(context);
+    public KSMainContext2(Context context, boolean isSlaveMode) {
+        super(context, isSlaveMode);
 
         // Override super's map with extended classes.
         mAddressToClassMap.put(0x33, KSBatchSwitch2.class);

@@ -74,6 +74,11 @@ public class StreamTxThread extends Thread {
                     } else {
                         final HomePacket packet = mPacketQueue.poll();
 
+                        if (packet instanceof HomePacket.Null) {
+                            mOutputStream.write(packet.data(), 0, 0);
+                            continue;
+                        }
+
                         boolean suppressLog = false;
                         if (packet instanceof HomePacket.WithMeta) {
                             suppressLog = ((HomePacket.WithMeta)packet).suppressLog;

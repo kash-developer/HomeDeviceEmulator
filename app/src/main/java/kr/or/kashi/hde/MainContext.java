@@ -37,15 +37,17 @@ public abstract class MainContext extends DeviceManager
     private static final int RX_BUFFER_SIZE = 1024;
 
     private final Context mContext;
+    protected final boolean mIsSlaveMode;
     private final Handler mRxEventHandler;
     private final ByteBuffer mRxByteBuffer;
     private final Runnable mProcessBufferRunnable = this::onProcessBuffer;
     private final Runnable mClearBufferRunnable = this::onClearBuffer;
     protected StreamProcessor mStreamProcessor;
 
-    public MainContext(Context context) {
+    public MainContext(Context context, boolean isSlaveMode) {
         super(context, null);
         mContext = context;
+        mIsSlaveMode = isSlaveMode;
         mRxEventHandler = new Handler(Looper.getMainLooper());
         mRxByteBuffer = ByteBuffer.allocate(RX_BUFFER_SIZE);
     }
@@ -193,6 +195,7 @@ public abstract class MainContext extends DeviceManager
     }
 
     private void printTxLog(HomePacket packet) {
+        if (packet.data().length == 0) return;
         // TODO: Should be get more efficient instead of converting to byte buffer.
         ByteBuffer byteBuffer = ByteBuffer.allocate(64);
         packet.toBuffer(byteBuffer);

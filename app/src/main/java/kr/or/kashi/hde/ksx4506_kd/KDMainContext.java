@@ -31,8 +31,8 @@ public class KDMainContext extends KSMainContext2 {
     private static final String TAG = "KDMainContext";
     private static final boolean DBG = true;
 
-    public KDMainContext(Context context) {
-        super(context);
+    public KDMainContext(Context context, boolean isSlaveMode) {
+        super(context, isSlaveMode);
 
         // Override super's map with extended classes.
         mAddressToClassMap.put(0x36, KDThermostat.class);

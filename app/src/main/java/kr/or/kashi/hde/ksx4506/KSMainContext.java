@@ -25,6 +25,7 @@ import kr.or.kashi.hde.base.BasicPropertyMap;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyValue;
 import kr.or.kashi.hde.DeviceContextBase;
+import kr.or.kashi.hde.DeviceContextBase.ParseResult;
 import kr.or.kashi.hde.DeviceDiscovery;
 import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
@@ -57,8 +58,8 @@ public class KSMainContext extends MainContext {
         return ksAddr.getDeviceId();
     }
 
-    public KSMainContext(Context context) {
-        super(context);
+    public KSMainContext(Context context, boolean isSlaveMode) {
+        super(context, isSlaveMode);
         mAddressToClassMap.put(0x02, KSAirConditioner.class);
         mAddressToClassMap.put(0x33, KSBatchSwitch.class);
         mAddressToClassMap.put(0x35, KSBoiler.class);
@@ -124,26 +125,23 @@ public class KSMainContext extends MainContext {
     @Override
     public void removeDevice(HomeDevice device) {
         final String address = device.getAddress();
-
-        if (!containsDevice(device) && !mVirtualDeviceMap.containsKey(address)) {
-            return;
+        if (mVirtualDeviceMap.containsKey(address)) {
+            mVirtualDeviceMap.remove(address);
         }
 
         final KSDeviceContextBase dc = ((KSDeviceContextBase)device.dc());
-        final int devId = dc.getDeviceId();
-        final int subId = dc.getDeviceSubId().value();
-        if ((subId & 0x0F) == 0x0F) {
-            device.dc().removeAllChildren();
+        if (dc.getDeviceSubId().hasFull()) { // all devices in group(?F) or all device (FF)
+            dc.removeAllChildren();
         } else {
-            String parentAddr = new KSAddress(devId, (subId | 0x0F)).toAddressString();
-            HomeDevice parent = getDevice(parentAddr);
+            final DeviceContextBase parent = dc.getParent();
             if (parent != null) {
-                parent.dc().removeChild(device.dc());
-            }
-        }
+                parent.removeChild(dc);
 
-        if (mVirtualDeviceMap.containsKey(address)) {
-            mVirtualDeviceMap.remove(address);
+                final String parentAddress = parent.getAddress().getDeviceAddress();
+                if (!parent.hasChild() && mVirtualDeviceMap.containsKey(parentAddress)) {
+                    mVirtualDeviceMap.remove(parentAddress);
+                }
+            }
         }
 
         super.removeDevice(device); // Call super
@@ -275,12 +273,15 @@ public class KSMainContext extends MainContext {
         final KSAddress address = new KSAddress(packet.deviceId, packet.deviceSubId);
         final String devAddr = address.getDeviceAddress();
         HomeDevice device = getDevice(devAddr);
+
+        @DeviceContextBase.ParseResult int res = DeviceContextBase.PARSE_OK_NONE;
+
         if (device == null) {
             // No device found, try to get from virtual.
             device = mVirtualDeviceMap.get(devAddr);
         }
         if (device != null) {
-            device.dc().parsePacket(packet);
+            res = device.dc().parsePacket(packet);
 
             if (device.dc().isMaster()) {
                 // TODO: Consider if doing by parent is more efficient.
@@ -288,6 +289,13 @@ public class KSMainContext extends MainContext {
                     child.parsePacket(packet);
                 }
             }
+        }
+
+        // HACK: In slave mode, if any response packet was sent, let's send
+        // null packet to avoid timeout and make the port be ready in receive
+        // mode as soon as possible.
+        if (mIsSlaveMode && res == DeviceContextBase.PARSE_OK_NONE) {
+            sendPacket(null, new HomePacket.Null());
         }
     }
 }

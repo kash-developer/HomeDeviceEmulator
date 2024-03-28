@@ -158,11 +158,7 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
 
-        String portPath = "/dev/ttyS0";
-        if (Build.MODEL.length() == 15 && Build.MODEL.substring(6,15).equals("NS-SAMPLE")) {
-            portPath = "/dev/ttyS4";
-        }
-
+        final String portPath = "/dev/ttyS0";
         if (!new File(portPath).exists()) {
             Log.e(TAG, portPath + " is does not exist");
             return null;
@@ -173,6 +169,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void startEmulator() {
         setStateText("STARTING...");
+
+        final boolean isSlaveMode = MODE_TYPE_SLAVE.equals(mModesSpinner.getSelectedItem().toString());
 
         NetworkSession networkSession = null;
 
@@ -185,7 +183,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 try {
-                    networkSession = new UartSchedSession(this, mHandler, portPath, 9600);
+                    int portType = isSlaveMode ? UartSchedSession.PORT_TYPE_RS485_SLAVE : UartSchedSession.PORT_TYPE_RS485_MASTER;
+                    networkSession = new UartSchedSession(this, mHandler, portType, portPath, 9600);
                 } catch (RuntimeException e) {
                     setStateText("ERROR: PORT IS NOT SUPPORTED!");
                 }
@@ -216,8 +215,6 @@ public class MainActivity extends AppCompatActivity {
         if (networkSession == null) {
             return;
         }
-
-        final boolean isSlaveMode = MODE_TYPE_SLAVE.equals(mModesSpinner.getSelectedItem().toString());
 
         mHomeNetwork = new HomeNetwork(this, isSlaveMode);
         boolean res = mHomeNetwork.start(networkSession);

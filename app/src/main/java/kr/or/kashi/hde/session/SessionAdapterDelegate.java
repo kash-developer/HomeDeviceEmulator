@@ -39,7 +39,9 @@ public class SessionAdapterDelegate implements NetworkSession {
     }
 
     public void putData(byte[] b) {
-        mInputStream.addBuffer(b);
+        if (mInputStream != null) {
+            mInputStream.addBuffer(b);
+        }
     }
 
     @Override
