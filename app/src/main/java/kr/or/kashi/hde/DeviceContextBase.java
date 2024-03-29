@@ -36,6 +36,7 @@ import kr.or.kashi.hde.base.BasicPropertyMap;
 import kr.or.kashi.hde.base.PropertyInflater;
 import kr.or.kashi.hde.base.ReadOnlyPropertyMap;
 import kr.or.kashi.hde.base.StageablePropertyMap;
+import kr.or.kashi.hde.ksx4506.KSLight;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyTask;
 import kr.or.kashi.hde.base.PropertyValue;
@@ -293,7 +294,17 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
     }
 
     public @ParseResult int parsePacket(HomePacket packet) {
-        mLastUpdateTime = SystemClock.uptimeMillis();
+        final long updateTime = SystemClock.uptimeMillis();
+        mLastUpdateTime = updateTime;
+
+        if (mIsSlave) {
+            for (DeviceContextBase child: getChildren()) {
+                child.mLastUpdateTime = updateTime;
+            }
+            if (getParent() != null) {
+                getParent().mLastUpdateTime = updateTime;
+            }
+        }
 
         int res = parsePayload(packet, mRxPropertyMap);
         if (res <= PARSE_OK_NONE) {
