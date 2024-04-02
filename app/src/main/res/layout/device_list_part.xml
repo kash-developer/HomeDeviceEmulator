@@ -85,32 +85,24 @@
             android:layout_height="wrap_content"
             android:layout_weight="1" />
 
-        <LinearLayout
-            android:id="@+id/polling_intervals_group"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_width="match_parent"
-            android:orientation="horizontal">
+            android:paddingLeft="10dp"
+            android:paddingRight="2dp"
+            android:text="Polling Interval:" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingLeft="10dp"
-                android:paddingRight="2dp"
-                android:text="Polling Interval:" />
+        <Spinner
+            android:id="@+id/polling_intervals_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white" />
 
-            <Spinner
-                android:id="@+id/polling_intervals_spinner"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@android:color/white" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingRight="2dp"
-                android:text="(ms)" />
-
-        </LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingRight="2dp"
+            android:text="(ms)" />
 
     </LinearLayout>
 

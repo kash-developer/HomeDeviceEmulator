@@ -89,7 +89,6 @@ public class MainFragment extends Fragment {
     private TextView mSingleIdTextView;
     private ToggleButton mSingleFullToggle;
     private TextView mRangeTextView;
-    private ViewGroup mPollingIntervalsGroup;
     private Spinner mPollingIntervalsSpinner;
     private ToggleButton mAutoTestToggle;
     private TextView mDeviceCountText;
@@ -251,8 +250,6 @@ public class MainFragment extends Fragment {
         ((Button)v.findViewById(R.id.load_button)).setOnClickListener(view -> loadDeviceList());
         ((Button)v.findViewById(R.id.save_button)).setOnClickListener(view -> saveDeviceList());
 
-        mPollingIntervalsGroup = (ViewGroup) v.findViewById(R.id.polling_intervals_group);
-        mPollingIntervalsGroup.setVisibility(!mNetwork.isSlaveMode() ? View.VISIBLE : View.INVISIBLE);
         final List<String> intervalTexts = new ArrayList<>();
         intervalTexts.add("0");
         intervalTexts.add("500");
