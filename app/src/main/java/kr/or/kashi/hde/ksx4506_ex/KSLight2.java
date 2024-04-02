@@ -47,7 +47,7 @@ public class KSLight2 extends KSLight {
     public KSLight2(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps);
 
-        if (!isSlave()) { // TODO:
+        if (!isSlave()) {
             setPropertyTask(Light.PROP_CUR_TONE_LEVEL, mSingleToneControlTask);
         }
     }

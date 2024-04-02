@@ -24,7 +24,9 @@ import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -143,5 +145,10 @@ public final class Utils {
 
     public static double millisToDays(long ms) {
         return Math.round(((double)ms / (double)DAY_MS) * 100000.0) / 100000.0;
+    }
+
+    public static void hideKeyboard(Context context, View view) {
+        InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 }

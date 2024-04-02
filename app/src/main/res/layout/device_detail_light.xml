@@ -68,11 +68,31 @@
             android:text="Dimming"
             style="@style/TitleCheckStyle" />
 
+        <TextView
+            android:id="@+id/light_dimming_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="70dp"
+            android:text="" />
+
         <SeekBar
             android:id="@+id/light_dimming_seekbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:layout_gravity="center"/>
+
+        <EditText
+            android:id="@+id/light_dimming_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:gravity="center"
+            android:minWidth="30dp"
+            android:singleLine="true"
+            android:inputType="number"
+            android:textSize="10sp"
+            android:text="255" />
 
     </LinearLayout>
 
@@ -87,11 +107,31 @@
             android:text="Color"
             style="@style/TitleCheckStyle" />
 
+        <TextView
+            android:id="@+id/light_color_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="70dp"
+            android:text="" />
+
         <SeekBar
             android:id="@+id/light_color_seekbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:layout_gravity="center"/>
+
+        <EditText
+            android:id="@+id/light_color_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:gravity="center"
+            android:minWidth="30dp"
+            android:singleLine="true"
+            android:inputType="number"
+            android:textSize="10sp"
+            android:text="255" />
 
     </LinearLayout>
 
