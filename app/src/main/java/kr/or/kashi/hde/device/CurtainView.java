@@ -21,6 +21,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.RadioButton;
@@ -35,11 +36,13 @@ import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.widget.HomeDeviceView;
 
 public class CurtainView extends HomeDeviceView<Curtain>
-        implements View.OnClickListener, RadioGroup.OnCheckedChangeListener {
+        implements  View.OnClickListener,
+                    RadioGroup.OnCheckedChangeListener,
+                    SeekBar.OnSeekBarChangeListener {
 
     private static final String TAG = CurtainView.class.getSimpleName();
     private final Context mContext;
-
+    private ViewGroup mOperationGroup;
     private CheckBox mOperationCheck;
     private Button mOpStopButton;
     private Button mOpOpenButton;
@@ -65,20 +68,18 @@ public class CurtainView extends HomeDeviceView<Curtain>
     protected void onFinishInflate () {
         super.onFinishInflate();
 
+        mOperationGroup = findViewById(R.id.operation_group);
+        mOperationGroup.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         mOperationCheck = findViewById(R.id.operation_check);
         mOperationCheck.setEnabled(false);
-        mOperationCheck.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         mOpStopButton = findViewById(R.id.op_stop_button);
         mOpStopButton.setEnabled(isMaster());
-        mOpStopButton.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         mOpStopButton.setOnClickListener(this);
         mOpOpenButton = findViewById(R.id.op_open_button);
         mOpOpenButton.setEnabled(isMaster());
-        mOpOpenButton.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         mOpOpenButton.setOnClickListener(this);
         mOpCloseButton = findViewById(R.id.op_close_button);
         mOpCloseButton.setEnabled(isMaster());
-        mOpCloseButton.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         mOpCloseButton.setOnClickListener(this);
 
         mStateCheck = findViewById(R.id.state_check);
@@ -96,11 +97,13 @@ public class CurtainView extends HomeDeviceView<Curtain>
         mOpenLevelCheck.setEnabled(isSlave());
         mOpenLevelCheck.setOnClickListener(this);
         mOpenLevelSeek = findViewById(R.id.open_level_seek);
+        mOpenLevelSeek.setOnSeekBarChangeListener(this);
 
         mOpenAngleCheck = findViewById(R.id.open_angle_check);
         mOpenAngleCheck.setEnabled(isSlave());
         mOpenAngleCheck.setOnClickListener(this);
         mOpenAngleSeek = findViewById(R.id.open_angle_seek);
+        mOpenAngleSeek.setOnSeekBarChangeListener(this);
     }
 
     @Override
@@ -175,6 +178,16 @@ public class CurtainView extends HomeDeviceView<Curtain>
             else if (checkedId == R.id.state_opening_radio) state = Curtain.OpState.OPENING;
             else if (checkedId == R.id.state_closing_radio) state = Curtain.OpState.CLOSING;
             device().setProperty(Curtain.PROP_STATE, Integer.class, state);
+        }
+    }
+
+    @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
+    @Override public void onStartTrackingTouch(SeekBar seekBar) { }
+    @Override public void onStopTrackingTouch(SeekBar seekBar) {
+        if (seekBar == mOpenLevelSeek) {
+            device().setProperty(Curtain.PROP_CUR_OPEN_LEVEL, Integer.class, seekBar.getProgress());
+        } else if (seekBar == mOpenAngleSeek) {
+            device().setProperty(Curtain.PROP_CUR_OPEN_ANGLE, Integer.class, seekBar.getProgress());
         }
     }
 }

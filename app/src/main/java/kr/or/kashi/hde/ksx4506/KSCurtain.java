@@ -282,10 +282,18 @@ public class KSCurtain extends KSDeviceContextBase {
         if (opData == 0) operation = Curtain.Operation.CLOSE;
         else if (opData == 1) operation = Curtain.Operation.OPEN;
         else if (opData == 2) operation = Curtain.Operation.STOP;
-        int state = (operation == Curtain.Operation.OPEN) ? Curtain.OpState.OPENED : Curtain.OpState.CLOSED;
+
+        // Just changed current state by requested operation.
+        // TODO: PROP_STATE should be changed by emulation layer.
+        int opState = outProps.get(Curtain.PROP_STATE, Integer.class);
+        if (operation == Curtain.Operation.OPEN) {
+            opState = Curtain.OpState.OPENED;
+        } else if (operation == Curtain.Operation.CLOSE) {
+            opState = Curtain.OpState.CLOSED;
+        }
 
         outProps.put(Curtain.PROP_OPERATION, operation);
-        outProps.put(Curtain.PROP_STATE, state);
+        outProps.put(Curtain.PROP_STATE, opState);
         outProps.put(HomeDevice.PROP_ONOFF, (operation == Curtain.Operation.OPEN));
 
         int openLevel = data[1] & 0x0F;
