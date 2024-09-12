@@ -126,7 +126,14 @@ public class UartSchedSession extends NetworkSessionAdapter {
             return false;
         }
 
-        mUartSchedPort.registerCallback(mUartSchedPortCallback);
+        if (mPortType == PORT_TYPE_RS485_SLAVE) {
+            // If the port works as slave, put null executor intentionally to call
+            // callbacks synchronously without handler executor, because responding
+            // is time-critical.
+            mUartSchedPort.registerCallback(mUartSchedPortCallback, null);
+        } else {
+            mUartSchedPort.registerCallback(mUartSchedPortCallback);
+        }
 
         return true;
     }

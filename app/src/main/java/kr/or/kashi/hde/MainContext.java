@@ -126,14 +126,18 @@ public abstract class MainContext extends DeviceManager
             }
 
             mRxByteBuffer.put(data, 0, length);
+        }
 
-            if (mRxEventHandler.hasCallbacks(mClearBufferRunnable) == false) {
-                mRxEventHandler.removeCallbacks(mClearBufferRunnable);
-            }
+        if (mRxEventHandler.hasCallbacks(mClearBufferRunnable) == false) {
+            mRxEventHandler.removeCallbacks(mClearBufferRunnable);
+        }
 
+        if (!mIsSlaveMode) {
             if (mRxEventHandler.hasCallbacks(mProcessBufferRunnable) == false) {
                 mRxEventHandler.post(mProcessBufferRunnable);
             }
+        } else {
+            onProcessBuffer();
         }
     }
 
