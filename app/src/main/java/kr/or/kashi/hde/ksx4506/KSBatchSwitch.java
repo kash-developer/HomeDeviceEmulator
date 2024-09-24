@@ -120,7 +120,7 @@ public class KSBatchSwitch extends KSDeviceContextBase {
 
     @Override
     protected @ParseResult int parseStatusRsp(KSPacket packet, PropertyMap outProps) {
-        if (packet.data.length < 2) {
+        if (packet.data.length < 3) {
             if (DBG) Log.w(TAG, "parse-status-rsp: wrong size of data " + packet.data.length);
             return PARSE_ERROR_MALFORMED_PACKET;
         }
@@ -254,15 +254,15 @@ public class KSBatchSwitch extends KSDeviceContextBase {
     protected void makeStatusRspBytes(PropertyMap props, ByteArrayBuffer outData) {
         final long states = props.get(BatchSwitch.PROP_SWITCH_STATES, Long.class);
 
-        int data = 0;
-        if (mGasLockingReqTriggered) data |= (1 << 0);
-        if (mOutingSettingReqTriggered) data |= (1 << 1);
-        if ((states & BatchSwitch.Switch.BATCH_LIGHT_OFF) == 0) data |= (1 << 2);
-        if ((states & BatchSwitch.Switch.POWER_SAVING) == 0) data |= (1 << 3);
-        if (mElevatorUpCallReqTriggered) data |= (1 << 4);
-        if (mElevatorDownCallReqTriggered) data |= (1 << 5);
-
-        outData.append(data);
+        int data1 = 0;
+        if (mGasLockingReqTriggered) data1 |= (1 << 0);
+        if (mOutingSettingReqTriggered) data1 |= (1 << 1);
+        if ((states & BatchSwitch.Switch.BATCH_LIGHT_OFF) == 0) data1 |= (1 << 2);
+        if ((states & BatchSwitch.Switch.POWER_SAVING) == 0) data1 |= (1 << 3);
+        if (mElevatorUpCallReqTriggered) data1 |= (1 << 4);
+        if (mElevatorDownCallReqTriggered) data1 |= (1 << 5);
+        outData.append(data1);  // DATA1
+        outData.append(0);      // DATA2 (reserved)
     }
 
     protected @ParseResult int parseStatusRspBytes(byte[] data, PropertyMap outProps) {
@@ -271,7 +271,10 @@ public class KSBatchSwitch extends KSDeviceContextBase {
 
         boolean newReqTriggered = false;
 
-        if ((data[1] & (1 << 0)) != 0) {
+        final int data1 = data[1];  // DATA1
+        final int data2 = data[2];  // DATA2 (reserved, unused)
+
+        if ((data1 & (1 << 0)) != 0) {
             if (mGasLockingReqTriggered == false) {
                 mGasLockingReqTriggered = true;
                 mSavedGasLocking = (curStates & BatchSwitch.Switch.GAS_LOCKING) != 0;
@@ -285,7 +288,7 @@ public class KSBatchSwitch extends KSDeviceContextBase {
             }
         }
 
-        if ((data[1] & (1 << 1)) != 0) {
+        if ((data1 & (1 << 1)) != 0) {
             if (mOutingSettingReqTriggered == false) {
                 mOutingSettingReqTriggered = true;
                 mSavedOutingSetting = (curStates & BatchSwitch.Switch.OUTING_SETTING) != 0;
@@ -299,19 +302,19 @@ public class KSBatchSwitch extends KSDeviceContextBase {
             }
         }
 
-        if ((data[1] & (1 << 2)) != 0) {
+        if ((data1 & (1 << 2)) != 0) {
             newStates &= ~BatchSwitch.Switch.BATCH_LIGHT_OFF;
         } else {
             newStates |= BatchSwitch.Switch.BATCH_LIGHT_OFF;
         }
 
-        if ((data[1] & (1 << 3)) != 0) {
+        if ((data1 & (1 << 3)) != 0) {
             newStates &= ~BatchSwitch.Switch.POWER_SAVING;
         } else {
             newStates |= BatchSwitch.Switch.POWER_SAVING;
         }
 
-        if ((data[1] & (1 << 4)) != 0) {
+        if ((data1 & (1 << 4)) != 0) {
             newStates |= BatchSwitch.Switch.ELEVATOR_UP_CALL;
             if (mElevatorUpCallReqTriggered == false) {
                 mElevatorUpCallReqTriggered = true;
@@ -324,7 +327,7 @@ public class KSBatchSwitch extends KSDeviceContextBase {
             }
         }
 
-        if ((data[1] & (1 << 5)) != 0) {
+        if ((data1 & (1 << 5)) != 0) {
             newStates |= BatchSwitch.Switch.ELEVATOR_DOWN_CALL;
             if (mElevatorDownCallReqTriggered == false) {
                 mElevatorDownCallReqTriggered = true;
