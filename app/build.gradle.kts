@@ -79,6 +79,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     implementation(files("libs/libuartsched.jar"))
+    implementation(files("libs/libwallmini2.jar"))
     implementation("com.github.mik3y:usb-serial-for-android:3.5.1")
 
 }

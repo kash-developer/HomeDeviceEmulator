@@ -30,6 +30,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -167,6 +168,14 @@ public class MainActivity extends AppCompatActivity {
         return portPath;
     }
 
+    private void suppressInternalService() {
+        for (com.kdiwin.wall.home.WHomeNetwork network: com.kdiwin.wall.Wall.getManager(
+                this, com.kdiwin.wall.home.WHomeNetworkManager.class).
+                        getInstalledNetworks()) {
+            network.stop();
+        }
+    }
+
     private void startEmulator() {
         setStateText("STARTING...");
 
@@ -181,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
                     setStateText("ERROR: NO INTERNAL PORT!");
                     break;
                 }
+                suppressInternalService();
 
                 try {
                     int portType = isSlaveMode ? UartSchedSession.PORT_TYPE_RS485_SLAVE : UartSchedSession.PORT_TYPE_RS485_MASTER;
