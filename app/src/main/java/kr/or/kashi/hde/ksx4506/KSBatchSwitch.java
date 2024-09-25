@@ -30,6 +30,7 @@ import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.device.BatchSwitch;
+import kr.or.kashi.hde.device.Thermostat;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
 import kr.or.kashi.hde.ksx4506.KSPacket;
@@ -76,6 +77,20 @@ public class KSBatchSwitch extends KSDeviceContextBase {
         } else {
             setPropertyTask(HomeDevice.PROP_ONOFF, this::onSetSwitchStatesTaskForSlave);
             setPropertyTask(BatchSwitch.PROP_SWITCH_STATES, this::onSetSwitchStatesTaskForSlave);
+
+            // TEMP: Initialize some properties as specific values in slave mode.
+            long supportedSwitches = 0;
+            supportedSwitches |= BatchSwitch.Switch.GAS_LOCKING;
+            supportedSwitches |= BatchSwitch.Switch.OUTING_SETTING;
+            supportedSwitches |= BatchSwitch.Switch.BATCH_LIGHT_OFF;
+            supportedSwitches |= BatchSwitch.Switch.POWER_SAVING;
+            supportedSwitches |= BatchSwitch.Switch.ELEVATOR_UP_CALL;
+            supportedSwitches |= BatchSwitch.Switch.ELEVATOR_DOWN_CALL;
+            supportedSwitches |= BatchSwitch.Switch.THREEWAY_LIGHT;
+            supportedSwitches |= BatchSwitch.Switch.COOKTOP_OFF;
+            supportedSwitches |= BatchSwitch.Switch.HEATER_SAVING;
+            mRxPropertyMap.put(BatchSwitch.PROP_SUPPORTED_SWITCHES, supportedSwitches);
+            mRxPropertyMap.commit();
         }
     }
 
