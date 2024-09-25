@@ -23,6 +23,7 @@ import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.base.PropertyTask;
 import kr.or.kashi.hde.device.Curtain;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
@@ -50,8 +51,13 @@ public class KSCurtain extends KSDeviceContextBase {
 
         if (isMaster()) {
             // Register the tasks to be performed when specific property changes.
-            setPropertyTask(HomeDevice.PROP_ONOFF, this::onCurtainControlTask);
-            setPropertyTask(Curtain.PROP_OPERATION, this::onCurtainControlTask);
+            final PropertyTask propTask = this::onCurtainControlTask;
+            setPropertyTask(HomeDevice.PROP_ONOFF, propTask);
+            setPropertyTask(Curtain.PROP_OPERATION, propTask);
+        } else {
+            final PropertyTask propTask = this::onCurtainStateUpdateTaskForSlave;
+            setPropertyTask(HomeDevice.PROP_ONOFF, propTask);
+            setPropertyTask(Curtain.PROP_STATE, propTask);
         }
     }
 
@@ -250,6 +256,19 @@ public class KSCurtain extends KSDeviceContextBase {
 
         outProps.put(Curtain.PROP_OPERATION, newOperation);
         outProps.put(HomeDevice.PROP_ONOFF, (newOperation == Curtain.Operation.OPEN));
+        return false;
+    }
+
+    protected boolean onCurtainStateUpdateTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {
+        boolean curOnOff = (Boolean) getProperty(HomeDevice.PROP_ONOFF).getValue();
+        boolean newOnOff = (Boolean) reqProps.get(HomeDevice.PROP_ONOFF).getValue();
+        int curState = (Integer) getProperty(Curtain.PROP_STATE).getValue();
+        int newState = reqProps.get(Curtain.PROP_STATE, Integer.class);
+        if (newState == curState && newOnOff != curOnOff) {
+            newState = (newOnOff) ? Curtain.OpState.OPENED : Curtain.OpState.CLOSED;
+        }
+        outProps.put(Curtain.PROP_STATE, newState);
+        outProps.put(HomeDevice.PROP_ONOFF, (newState == Curtain.OpState.OPENED) || (newState == Curtain.OpState.OPENING));
         return false;
     }
 
