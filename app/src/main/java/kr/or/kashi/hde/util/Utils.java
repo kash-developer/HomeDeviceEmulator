@@ -99,6 +99,24 @@ public final class Utils {
         return toHexString(buffer);
     }
 
+    public static String formatString(double num, int dc1, int dc2) {
+        final String numStr = String.format("%.0" + dc2 + "f", num);
+
+        int limitCount = dc1 + dc2;
+        if (dc2 > 0) limitCount++; // dot
+
+        if (limitCount <= numStr.length()) {
+            return numStr.substring(numStr.length()-limitCount);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int i=0; i<(limitCount-numStr.length()); i++) {
+            sb.append('0');
+        }
+        sb.append(numStr);
+        return sb.toString();
+    }
+
     public static Point getDisplaySize(Context context) {
         Point size = new Point(0, 0);
         DisplayManager dm = (DisplayManager)context.getSystemService(Context.DISPLAY_SERVICE);

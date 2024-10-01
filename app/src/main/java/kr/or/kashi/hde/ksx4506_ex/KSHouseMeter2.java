@@ -136,12 +136,14 @@ public class KSHouseMeter2 extends KSHouseMeter {
     }
 
     @Override
-    protected void parseMeterCharByte(int charByte, int meterIndex, PropertyMap outProps) {
-        super.parseMeterCharByte(charByte, meterIndex, outProps); // call super
+    protected @ParseResult int parseMeterCharByte(int charByte, int meterIndex, PropertyMap outProps) {
+        int res = super.parseMeterCharByte(charByte, meterIndex, outProps); // call super
 
         // HACK: Some device of manufacturer set fifth bit of data byte in
         // chracteristics response to inform that each value of total meters extended to
         // have 1 more byte (2 digits as bcd).
         mExtendedMeterDigits = (mCharData1ReservedBit5 == 1);
+
+        return res;
     }
 }

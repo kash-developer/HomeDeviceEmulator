@@ -31,6 +31,7 @@ import kr.or.kashi.hde.device.HouseMeter;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
 import kr.or.kashi.hde.ksx4506.KSPacket;
+import kr.or.kashi.hde.util.Utils;
 
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ public class KSHouseMeter extends KSDeviceContextBase {
     public static final int CURRENT_METER_BYTES = 3; // BCD 6 digits
     public static final int TOTAL_METER_BYTES = 3;   // BCD 6 digits
     public static final int METER_DATA_BYTES = CURRENT_METER_BYTES + TOTAL_METER_BYTES;
+    public static final int TOTAL_METER_COUNT = 5;   // water, gas, electricity, hot_water, heating
 
     protected int mCharData1ReservedBit5 = 0;
     protected int mCharData1ReservedBit6 = 0;
@@ -121,6 +123,7 @@ public class KSHouseMeter extends KSDeviceContextBase {
             data.append(0); // no error
             makeMeterDataBytes(getReadPropertyMap(), data);
         } else if (pktSubId.isFull()) {
+            // TODO: Need to check the order of children by sub-id and fill with zero for skipped id.
             for (KSHouseMeter child: getChildren(KSHouseMeter.class)) {
                 makeMeterDataBytes(child.getReadPropertyMap(), data);
             }
@@ -165,14 +168,10 @@ public class KSHouseMeter extends KSDeviceContextBase {
 
             // Parse only one part of this single device.
             final int thisSingleId = thisSubId.value() & 0x0F;
-            if (thisSingleId > 0x0 && thisSingleId < 0xF) {
-                final int meterIndex = thisSingleId - 1;
+            final int meterIndex = thisSingleId - 1;
+            if (meterIndex >= 0 && meterIndex < TOTAL_METER_COUNT) {
                 return parseMeterDataBytes(packet.data, 0, meterIndex, outProps);
-            } else {
-                Log.w(TAG, "parse-status-rsp: out of id range: " + thisSingleId);
             }
-        } else {
-            Log.w(TAG, "parse-status-rsp: not implemented case, should never reach this");
         }
 
         return PARSE_OK_NONE;
@@ -191,21 +190,21 @@ public class KSHouseMeter extends KSDeviceContextBase {
         int cd6 = 0;
 
         if (type == HouseMeter.MeterType.ELECTRICITY) {
-            double rest = Math.round(currentMeter * 1.0) / 1.0;
-            cd1 = (int)(rest / 100000.0);   rest %= 100000.0;
-            cd2 = (int)(rest / 10000.0);    rest %= 10000.0;
-            cd3 = (int)(rest / 1000.0);     rest %= 1000.0;
-            cd4 = (int)(rest / 100.0);      rest %= 100.0;
-            cd5 = (int)(rest / 10.0);       rest %= 10.0;
-            cd6 = (int)(rest / 1.0);        rest %= 1.0;
+            String numStr = Utils.formatString(currentMeter, 6, 0);
+            cd1 = numStr.charAt(0) - '0';
+            cd2 = numStr.charAt(1) - '0';
+            cd3 = numStr.charAt(2) - '0';
+            cd4 = numStr.charAt(3) - '0';
+            cd5 = numStr.charAt(4) - '0';
+            cd6 = numStr.charAt(5) - '0';
         } else {
-            double rest = Math.round(currentMeter * 1000.0) / 1000.0;
-            cd1 = (int)(rest / 100.0);      rest %= 100.0;
-            cd2 = (int)(rest / 10.0);       rest %= 10.0;
-            cd3 = (int)(rest / 1.0);        rest %= 1.0;
-            cd4 = (int)(rest / 0.1);        rest %= 0.1;
-            cd5 = (int)(rest / 0.01);       rest %= 0.01;
-            cd6 = (int)(rest / 0.001);      rest %= 0.001;
+            String numStr = Utils.formatString(currentMeter, 3, 3);
+            cd1 = numStr.charAt(0) - '0';
+            cd2 = numStr.charAt(1) - '0';
+            cd3 = numStr.charAt(2) - '0';
+            cd4 = numStr.charAt(4) - '0';
+            cd5 = numStr.charAt(5) - '0';
+            cd6 = numStr.charAt(6) - '0';
         }
 
         outData.append(((cd1 << 4) & 0xF0) | (cd2 & 0x0F));
@@ -220,21 +219,21 @@ public class KSHouseMeter extends KSDeviceContextBase {
         int td6 = 0;
 
         if (type == HouseMeter.MeterType.HEATING) {
-            double rest = Math.round(totalMeter * 100.0) / 100.0;;
-            td1 = (int)(rest / 1000.0);     rest %= 1000.0;
-            td2 = (int)(rest / 100.0);      rest %= 100.0;
-            td3 = (int)(rest / 10.0);       rest %= 10.0;
-            td4 = (int)(rest / 1.0);        rest %= 1.0;
-            td5 = (int)(rest / 0.1);        rest %= 0.1;
-            td6 = (int)(rest / 0.01);       rest %= 0.01;
+            String numStr = Utils.formatString(totalMeter, 4, 2);
+            td1 = numStr.charAt(0) - '0';
+            td2 = numStr.charAt(1) - '0';
+            td3 = numStr.charAt(2) - '0';
+            td4 = numStr.charAt(3) - '0';
+            td5 = numStr.charAt(5) - '0';
+            td6 = numStr.charAt(6) - '0';
         } else{
-            double rest = Math.round(totalMeter * 10.0) / 10.0;;
-            td1 = (int)(rest / 10000.0);    rest %= 10000.0;
-            td2 = (int)(rest / 1000.0);     rest %= 1000.0;
-            td3 = (int)(rest / 100.0);      rest %= 100.0;
-            td4 = (int)(rest / 10.0);       rest %= 10.0;
-            td5 = (int)(rest / 1.0);        rest %= 1.0;
-            td6 = (int)(rest / 0.1);        rest %= 0.1;
+            String numStr = Utils.formatString(totalMeter, 5, 1);
+            td1 = numStr.charAt(0) - '0';
+            td2 = numStr.charAt(1) - '0';
+            td3 = numStr.charAt(2) - '0';
+            td4 = numStr.charAt(3) - '0';
+            td5 = numStr.charAt(4) - '0';
+            td6 = numStr.charAt(6) - '0';
         }
 
         outData.append(((td1 << 4) & 0xF0) | (td2 & 0x0F));
@@ -360,14 +359,7 @@ public class KSHouseMeter extends KSDeviceContextBase {
             final int thisSingleId = thisSubId.value() & 0x0F;
             final int meterIndex = thisSingleId - 1;
 
-            parseMeterCharByte(packet.data[1] & 0xFF, meterIndex, outProps);
-
-            final boolean enabled = outProps.get(HouseMeter.PROP_METER_ENABLED, Boolean.class);
-            if (enabled) {
-                return PARSE_OK_PEER_DETECTED;
-            }
-        } else {
-            Log.w(TAG, "parse-chr-rsp: should never reach this");
+            return parseMeterCharByte(packet.data[1] & 0xFF, meterIndex, outProps);
         }
 
         return PARSE_OK_NONE;
@@ -387,7 +379,7 @@ public class KSHouseMeter extends KSDeviceContextBase {
         return 0;
     }
 
-    protected void parseMeterCharByte(int charByte, int meterIndex, PropertyMap outProps) {
+    protected @ParseResult int parseMeterCharByte(int charByte, int meterIndex, PropertyMap outProps) {
         // Put out the enabled state of meter
         boolean enabled = (charByte & (1 << meterIndex)) != 0;
         outProps.put(HouseMeter.PROP_METER_ENABLED, enabled);
@@ -397,6 +389,8 @@ public class KSHouseMeter extends KSDeviceContextBase {
         mCharData1ReservedBit5 = (charByte >> 5) & 0x01;
         mCharData1ReservedBit6 = (charByte >> 6) & 0x01;
         mCharData1ReservedBit7 = (charByte >> 7) & 0x01;
+
+        return (meterIndex < TOTAL_METER_COUNT) ? PARSE_OK_PEER_DETECTED : PARSE_OK_NONE;
     }
 
     protected boolean onSetMeterEnabledTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {
