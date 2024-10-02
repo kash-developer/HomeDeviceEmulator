@@ -24,6 +24,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -50,6 +51,7 @@ public class DeviceTestPartView extends LinearLayout implements DeviceTestCallba
     private TextView mTestProgressText;
     private Button mReportButton;
     private TestResultView mTestResultView;
+    private ProgressBar mTestProgress;
 
     public DeviceTestPartView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -70,6 +72,8 @@ public class DeviceTestPartView extends LinearLayout implements DeviceTestCallba
         mReportButton.setOnClickListener(view -> onReportClicked());
 
         mTestResultView = findViewById(R.id.test_result_view);
+
+        mTestProgress = findViewById(R.id.test_progress);
 
         mDeviceTestRunner.addCallback(this);
         mDeviceTestRunner.addCallback(mTestResultView);
@@ -95,6 +99,7 @@ public class DeviceTestPartView extends LinearLayout implements DeviceTestCallba
     @Override
     public void onTestRunnerStarted() {
         DebugLog.printEvent("onTestRunnerStarted");
+        mTestProgress.setVisibility(View.VISIBLE);
         mReportButton.setEnabled(false);
         mReportButton.setTextColor(0xFF888888);
         mTestResultView.clear();
@@ -109,6 +114,7 @@ public class DeviceTestPartView extends LinearLayout implements DeviceTestCallba
         mReportButton.setTextColor(0xFF000000);
         mTestStateText.setText("STOPPED");
         mTestProgressText.setText("100%");
+        mTestProgress.setVisibility(View.GONE);
     }
 
     @Override
