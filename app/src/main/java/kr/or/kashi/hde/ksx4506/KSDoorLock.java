@@ -195,8 +195,8 @@ public class KSDoorLock extends KSDeviceContextBase {
         boolean curDoorOpened = (curStates & DoorLock.State.DOOR_OPENED) != 0L;
         boolean newDoorOpened = (newStates & DoorLock.State.DOOR_OPENED) != 0L;
         if (newDoorOpened == curDoorOpened && newOnOff != curOnOff) {
-            if (newOnOff) newStates &= ~DoorLock.State.DOOR_OPENED;
-            else newStates |= DoorLock.State.DOOR_OPENED;
+            if (newOnOff) newStates |= DoorLock.State.DOOR_OPENED;
+            else newStates &= ~DoorLock.State.DOOR_OPENED;
         }
 
         if (isMaster()) {
@@ -205,7 +205,7 @@ public class KSDoorLock extends KSDeviceContextBase {
             sendPacket(createPacket(CMD_SINGLE_CONTROL_REQ, data));
         } else {
             outProps.put(DoorLock.PROP_CURRENT_STATES, newStates);
-            outProps.put(HomeDevice.PROP_ONOFF, (newStates & DoorLock.State.DOOR_OPENED) == 0L);
+            outProps.put(HomeDevice.PROP_ONOFF, (newStates & DoorLock.State.DOOR_OPENED) != 0L);
         }
 
         return true;
