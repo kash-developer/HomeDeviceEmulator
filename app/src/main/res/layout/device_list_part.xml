@@ -57,6 +57,7 @@
             android:id="@+id/auto_test_toggle"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
+            android:textColor="@color/button_text_color"
             android:checked="false"
             android:textOn="Auto Test"
             android:textOff="Auto Test" />
@@ -85,24 +86,32 @@
             android:layout_height="wrap_content"
             android:layout_weight="1" />
 
-        <TextView
+        <LinearLayout
+            android:id="@+id/polling_interval_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingLeft="10dp"
-            android:paddingRight="2dp"
-            android:text="Polling Interval:" />
+            android:orientation="horizontal">
 
-        <Spinner
-            android:id="@+id/polling_intervals_spinner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/white" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10dp"
+                android:paddingRight="2dp"
+                android:text="Polling Interval:" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingRight="2dp"
-            android:text="(ms)" />
+            <Spinner
+                android:id="@+id/polling_intervals_spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingRight="2dp"
+                android:text="(ms)" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

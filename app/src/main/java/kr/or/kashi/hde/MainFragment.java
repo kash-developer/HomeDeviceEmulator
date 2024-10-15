@@ -250,6 +250,7 @@ public class MainFragment extends Fragment {
         ((Button)v.findViewById(R.id.load_button)).setOnClickListener(view -> loadDeviceList());
         ((Button)v.findViewById(R.id.save_button)).setOnClickListener(view -> saveDeviceList());
 
+        v.findViewById(R.id.polling_interval_group).setVisibility(mNetwork.isSlaveMode() ? View.GONE : View.VISIBLE);
         final List<String> intervalTexts = new ArrayList<>();
         intervalTexts.add("0");
         intervalTexts.add("500");
@@ -257,7 +258,6 @@ public class MainFragment extends Fragment {
         intervalTexts.add("2000");
         intervalTexts.add("3000");
         mPollingIntervalsSpinner = (Spinner) v.findViewById(R.id.polling_intervals_spinner);
-        mPollingIntervalsSpinner.setEnabled(!mNetwork.isSlaveMode());
         mPollingIntervalsSpinner.setAdapter(new ArrayAdapter<>(mContext, R.layout.spinner_item, intervalTexts));
         mPollingIntervalsSpinner.setSelection(LocalPreferences.getInt(Pref.POLLING_INTERVAL_INDEX, 2));
         mPollingIntervalsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {

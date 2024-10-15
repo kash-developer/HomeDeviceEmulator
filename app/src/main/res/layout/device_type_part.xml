@@ -57,6 +57,7 @@
             android:id="@+id/discovery_toggle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="@color/button_text_color"
             android:checked="false"
             android:textOn="Discovery"
             android:textOff="Discovery" />
