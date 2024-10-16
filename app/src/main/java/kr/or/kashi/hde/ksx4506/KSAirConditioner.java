@@ -153,7 +153,7 @@ public class KSAirConditioner extends KSDeviceContextBase {
         if (pktSubId.isSingle() || pktSubId.isSingleOfGroup()) {
             // Parse just single data since this is single device.
             return parseDeviceStateBytes(packet.data, 0, outProps);
-        } else if (pktSubId.isFullOfGroup()) {
+        } else if (pktSubId.isFull() || pktSubId.isFullOfGroup()) {
             // From group data, parse only one channel associated to this single device.
             final int thisSingleId = thisSubId.value() & 0x0F;
             if (thisSingleId > 0x0 && thisSingleId < 0xF) {
@@ -282,6 +282,11 @@ public class KSAirConditioner extends KSDeviceContextBase {
     protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) {
         // No data to parse from request packet.
 
+        final KSAddress.DeviceSubId thisSubId = ((KSAddress)getAddress()).getDeviceSubId();
+        if (thisSubId.isSingle() || thisSubId.isSingleOfGroup()) {
+            return PARSE_OK_NONE;
+        }
+
         final PropertyMap props = getReadPropertyMap();
         final ByteArrayBuffer data = new ByteArrayBuffer();
 
@@ -312,7 +317,7 @@ public class KSAirConditioner extends KSDeviceContextBase {
         mMaxCoolingTemp = mMaxHeatingTemp = maxTemp; // TODO:
         mMinCoolingTemp = mMinHeatingTemp = minTemp; // TODO:
         mMaxFanSpeed = props.get(AirConditioner.PROP_MAX_FAN_SPEED, Integer.class);
-        mNumberOfDevices = (hasChild()) ? (getChildCount()) : (1);
+        mNumberOfDevices = getChildCount();
 
         data.append(maxTempByte);
         data.append(minTempByte);
