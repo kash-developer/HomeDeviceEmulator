@@ -19,6 +19,7 @@ package kr.or.kashi.hde.ksx4506_ex;
 
 import android.util.Log;
 
+import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
@@ -87,19 +88,114 @@ public class KSGasValve2 extends KSGasValve {
     }
 
     @Override
-    protected byte makeControlReqData(long states, long alarms) {
-        byte controlData = super.makeControlReqData(states, alarms);
+    protected boolean onSetSupportedStateTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {
+        final long reqSupportedStates = reqProps.get(GasValve.PROP_SUPPORTED_STATES, Long.class);
+        if ((reqSupportedStates & GasValve.State.INDUCTION) != 0) {
+            outProps.put(GasValve.PROP_SUPPORTED_STATES, reqSupportedStates);
+            return true;
+        }
+        return super.onSetSupportedStateTaskForSlave(reqProps, outProps); // call super
+    }
 
+    @Override
+    protected boolean onSetCurrentStateTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {
+        // Ignore super
+
+        final long supportedStates = (Long) getProperty(GasValve.PROP_SUPPORTED_STATES).getValue();
+        final boolean supportsGasValve = ((supportedStates & GasValve.State.GAS_VALVE) != 0);
+        final boolean supportsInduction = ((supportedStates & GasValve.State.INDUCTION) != 0);
+
+        long curStates = (Long) getProperty(GasValve.PROP_CURRENT_STATES).getValue();
+        long newStates = reqProps.get(GasValve.PROP_CURRENT_STATES, Long.class);
+        boolean curOnOff = (Boolean) getProperty(HomeDevice.PROP_ONOFF).getValue();
+        boolean newOnOff = reqProps.get(HomeDevice.PROP_ONOFF, Boolean.class);
+
+        if (curStates != newStates) {
+            if (supportsInduction && !supportsGasValve) {
+                newOnOff = ((newStates & GasValve.State.INDUCTION) != 0L);
+            } else if (supportsGasValve) {
+                newOnOff = ((newStates & GasValve.State.GAS_VALVE) != 0L);
+            }
+        } else if (curOnOff != newOnOff) {
+            if (newOnOff) {
+                if (supportsInduction) newStates |= GasValve.State.INDUCTION;
+                if (supportsGasValve) newStates |= GasValve.State.GAS_VALVE;
+            } else {
+                if (supportsInduction) newStates &= ~GasValve.State.INDUCTION;
+                if (supportsGasValve) newStates &= ~GasValve.State.GAS_VALVE;
+            }
+        }
+
+        outProps.put(GasValve.PROP_CURRENT_STATES, newStates);
+        outProps.put(HomeDevice.PROP_ONOFF, newOnOff);
+        return true;
+    }
+
+    @Override
+    protected int makeCharacRspByte(PropertyMap props) {
+        int data = super.makeCharacRspByte(props);
+
+        final long supportedStates = props.get(GasValve.PROP_SUPPORTED_STATES, Long.class);
+        final long supportedAlarms = props.get(GasValve.PROP_SUPPORTED_ALARMS, Long.class);
+
+        if ((supportedStates & GasValve.State.INDUCTION) != 0) {
+            if ((supportedStates & GasValve.State.GAS_VALVE) != 0) {
+                data |= (1L << 2);  // hybrid
+            } else {
+                data |= (1L << 3);  // induction only
+            }
+        }
+
+        return data;
+    }
+
+    protected int makeGasValveStateByte(PropertyMap props) {
+        int stateByte = super.makeGasValveStateByte(props);
+        final long curStates = props.get(GasValve.PROP_CURRENT_STATES, Long.class);
+        if ((curStates & GasValve.State.INDUCTION) != 0) stateByte |= (1 << 5); // bit5: induction on
+        return stateByte;
+    }
+
+    @Override
+    protected long remapReqStates(PropertyMap reqProps) {
+        long curStates = (Long) getProperty(GasValve.PROP_CURRENT_STATES).getValue();
+        long reqStates = reqProps.get(GasValve.PROP_CURRENT_STATES, Long.class);
+        long difStates = curStates ^ reqStates;
+
+        if ((difStates & (GasValve.State.GAS_VALVE | GasValve.State.INDUCTION)) == 0) {
+            // Check also changes of on/off state, and overide switch state if so.
+            final boolean curOnOff = (Boolean) getProperty(HomeDevice.PROP_ONOFF).getValue();
+            final boolean reqOnOff = (Boolean) reqProps.get(HomeDevice.PROP_ONOFF).getValue();
+            if (reqOnOff != curOnOff) {
+                if (reqOnOff) {
+                    reqStates |= GasValve.State.GAS_VALVE;
+                    reqStates |= GasValve.State.INDUCTION;
+                } else {
+                    reqStates &= ~GasValve.State.GAS_VALVE;
+                    reqStates &= ~GasValve.State.INDUCTION;
+                }
+            }
+        }
+
+        return reqStates;
+    }
+
+    @Override
+    protected byte makeControlReqData(long reqStates, long difStates, long reqAlarms, long difAlarms) {
+        byte controlData = super.makeControlReqData(reqStates, difStates, reqAlarms, difAlarms); // call super
+
+        // [Gas Valve] bit:0
         // OVERRIDE the bit of gas valve since it's not compatible with standard.
-        // WTF!!! HACK: In extended specification, the value of gas closed state is inverted
+        // WTF!!! HACK: In extended specification, the value of gas closed state is inversed
         // compared to original specification (see '7.6 gas valve action control request')
-        if ((states & GasValve.State.GAS_VALVE) != 0L) {
+        if ((reqStates & GasValve.State.GAS_VALVE) != 0L) {
             controlData |= (byte)(1 << 0);      // 1:open valve
         } else {
             controlData &= ~((byte)(1 << 0));   // 0:close value
         }
 
-        if ((states & GasValve.State.INDUCTION) != 0L) {
+        // [Induction] bit:2
+        if ((reqStates & GasValve.State.INDUCTION) != 0L) {
             controlData &= ~((byte)(1 << 2));   // 0:on
         } else {
             controlData |= (byte)(1 << 2);      // 1:off
@@ -112,14 +208,25 @@ public class KSGasValve2 extends KSGasValve {
     protected void parseControlReqData(int controlData, PropertyMap outProps) {
         super.parseControlReqData(controlData, outProps);
 
-        final boolean openValve = ((controlData & (1 << 0)) != 0);
-        outProps.putBit(GasValve.PROP_CURRENT_STATES, GasValve.State.GAS_VALVE, openValve);
-        outProps.put(HomeDevice.PROP_ONOFF, openValve);
+        final boolean gasValveOpen = ((controlData & (1 << 0)) != 0);
+        final boolean inductionOn = ((controlData & (1 << 2)) == 0);
 
-        final boolean inductionOn = ((controlData & (1 << 2)) != 0);
-        outProps.putBit(GasValve.PROP_CURRENT_STATES, GasValve.State.INDUCTION, inductionOn);
-        if (supportsInductionOnly(outProps)) {
+        final long supportedStates = (Long) getProperty(GasValve.PROP_SUPPORTED_STATES).getValue();
+        final boolean supportsGasValve = ((supportedStates & GasValve.State.GAS_VALVE) != 0);
+        final boolean supportsInduction = ((supportedStates & GasValve.State.INDUCTION) != 0);
+
+        if (supportsGasValve) {
+            outProps.putBit(GasValve.PROP_CURRENT_STATES, GasValve.State.GAS_VALVE, gasValveOpen);
+        }
+
+        if (supportsInduction) {
+            outProps.putBit(GasValve.PROP_CURRENT_STATES, GasValve.State.INDUCTION, inductionOn);
+        }
+
+        if (supportsInduction && !supportsGasValve) {
             outProps.put(HomeDevice.PROP_ONOFF, inductionOn);
+        } else if (supportsGasValve) {
+            outProps.put(HomeDevice.PROP_ONOFF, gasValveOpen);
         }
     }
 }

@@ -23,6 +23,8 @@ import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.base.PropertyTask;
+import kr.or.kashi.hde.device.BatchSwitch;
 import kr.or.kashi.hde.device.DoorLock;
 import kr.or.kashi.hde.device.GasValve;
 import kr.or.kashi.hde.ksx4506.KSAddress;
@@ -41,11 +43,16 @@ public class KSGasValve extends KSDeviceContextBase {
     public KSGasValve(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps, GasValve.class);
 
+        // Register the tasks to be performed when specific property changes.
         if (isMaster()) {
-            // Register the tasks to be performed when specific property changes.
             setPropertyTask(GasValve.PROP_CURRENT_STATES, mSingleControlTask);
             setPropertyTask(GasValve.PROP_CURRENT_ALARMS, mSingleControlTask);
             setPropertyTask(HomeDevice.PROP_ONOFF, mSingleControlTask);
+        } else {
+            final PropertyTask onSetCurrentStateTaskForSlave = this::onSetCurrentStateTaskForSlave;
+            setPropertyTask(GasValve.PROP_SUPPORTED_STATES, this::onSetSupportedStateTaskForSlave);
+            setPropertyTask(GasValve.PROP_CURRENT_STATES, onSetCurrentStateTaskForSlave);
+            setPropertyTask(HomeDevice.PROP_ONOFF, onSetCurrentStateTaskForSlave);
         }
     }
 
@@ -62,7 +69,7 @@ public class KSGasValve extends KSDeviceContextBase {
         final PropertyMap props = getReadPropertyMap();
         final ByteArrayBuffer data = new ByteArrayBuffer();
         data.append(0); // no error
-        makeGasValveStateByte(props, data);
+        data.append(makeGasValveStateByte(props));
         sendPacket(createPacket(CMD_STATUS_RSP, data.toArray()));
 
         return PARSE_OK_STATE_UPDATED;
@@ -94,13 +101,7 @@ public class KSGasValve extends KSDeviceContextBase {
         final PropertyMap props = getReadPropertyMap();
         final ByteArrayBuffer data = new ByteArrayBuffer();
         data.append(0); // no error
-
-        final long supportedAlarms = props.get(GasValve.PROP_SUPPORTED_ALARMS, Long.class);
-
-        int characData = 0;
-        if ((supportedAlarms & GasValve.Alarm.EXTINGUISHER_BUZZING) != 0) characData |= (1L << 0);
-        if ((supportedAlarms & GasValve.Alarm.GAS_LEAKAGE_DETECTED) != 0) characData |= (1L << 1);
-        data.append(characData);
+        data.append(makeCharacRspByte(props)); // data
 
         // Send response packet.
         sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
@@ -144,7 +145,7 @@ public class KSGasValve extends KSDeviceContextBase {
 
         final ByteArrayBuffer data = new ByteArrayBuffer();
         data.append(0); // no error
-        makeGasValveStateByte(outProps, data);
+        data.append(makeGasValveStateByte(outProps));
         // Send response packet.
         sendPacket(createPacket(CMD_SINGLE_CONTROL_RSP, data.toArray()));
 
@@ -170,17 +171,52 @@ public class KSGasValve extends KSDeviceContextBase {
         return PARSE_OK_ACTION_PERFORMED;
     }
 
-    protected void makeGasValveStateByte(PropertyMap props, ByteArrayBuffer outData) {
+    protected boolean onSetSupportedStateTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {
+        long supportedStates = reqProps.get(GasValve.PROP_SUPPORTED_STATES, Long.class);
+        supportedStates |= GasValve.State.GAS_VALVE;
+        outProps.put(GasValve.PROP_SUPPORTED_STATES, supportedStates);
+        return true;
+    }
+
+    protected boolean onSetCurrentStateTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {
+        long curStates = (Long) getProperty(GasValve.PROP_CURRENT_STATES).getValue();
+        long newStates = reqProps.get(GasValve.PROP_CURRENT_STATES, Long.class);
+        boolean curOnOff = (Boolean) getProperty(HomeDevice.PROP_ONOFF).getValue();
+        boolean newOnOff = reqProps.get(HomeDevice.PROP_ONOFF, Boolean.class);
+
+        if (curStates != newStates) {
+            newOnOff = ((newStates & GasValve.State.GAS_VALVE) != 0L);
+        } else if (curOnOff != newOnOff) {
+            if (newOnOff) newStates |= GasValve.State.GAS_VALVE;
+            else newStates &= ~GasValve.State.GAS_VALVE;
+        }
+
+        outProps.put(GasValve.PROP_CURRENT_STATES, newStates);
+        outProps.put(HomeDevice.PROP_ONOFF, newOnOff);
+        return true;
+    }
+
+    protected int makeCharacRspByte(PropertyMap props) {
+        final long supportedAlarms = props.get(GasValve.PROP_SUPPORTED_ALARMS, Long.class);
+        int data = 0;
+        if ((supportedAlarms & GasValve.Alarm.EXTINGUISHER_BUZZING) != 0) data |= (1L << 0);
+        if ((supportedAlarms & GasValve.Alarm.GAS_LEAKAGE_DETECTED) != 0) data |= (1L << 1);
+        return data;
+    }
+
+    protected int makeGasValveStateByte(PropertyMap props) {
         final long curStates = props.get(GasValve.PROP_CURRENT_STATES, Long.class);
         final long curAlarms = props.get(GasValve.PROP_CURRENT_ALARMS, Long.class);
 
-        int stateData = 0;
-        if ((curStates & GasValve.State.GAS_VALVE) != 0) stateData |= (1 << 0);
-        if ((curStates & GasValve.State.GAS_VALVE) == 0) stateData |= (1 << 1);
-        if ((curAlarms & GasValve.Alarm.EXTINGUISHER_BUZZING) != 0) stateData |= (1 << 3);
-        if ((curAlarms & GasValve.Alarm.GAS_LEAKAGE_DETECTED) != 0) stateData |= (1 << 4);
+        int stateByte = 0;
 
-        outData.append(stateData);
+        if ((curStates & GasValve.State.GAS_VALVE) != 0) stateByte |= (1 << 0); // bit0: valve opened
+        if ((curStates & GasValve.State.GAS_VALVE) == 0) stateByte |= (1 << 1); // bit1: valve closed
+                                                                                // bit2: valve working (ignored)
+        if ((curAlarms & GasValve.Alarm.EXTINGUISHER_BUZZING) != 0) stateByte |= (1 << 3); // bit3: buzzer on
+        if ((curAlarms & GasValve.Alarm.GAS_LEAKAGE_DETECTED) != 0) stateByte |= (1 << 4); // bit4: gas leaked
+
+        return stateByte;
     }
 
     protected void parseGasValveStateByte(byte stateByte, PropertyMap outProps) {
@@ -212,35 +248,55 @@ public class KSGasValve extends KSDeviceContextBase {
     @Override
     protected KSPacket makeControlReq(PropertyMap props) {
         long curStates = (Long) getProperty(GasValve.PROP_CURRENT_STATES).getValue();
-        long reqStates = props.get(GasValve.PROP_CURRENT_STATES, Long.class);
+        long reqStates = remapReqStates(props);
+        long difStates = curStates ^ reqStates;
+
+        long curAlarms = (Long) getProperty(GasValve.PROP_CURRENT_ALARMS).getValue();
+        long reqAlarms = props.get(GasValve.PROP_CURRENT_ALARMS, Long.class);
+        long difAlarms = curAlarms ^ reqAlarms;
+
+        byte controlData = makeControlReqData(reqStates, difStates, reqAlarms, difAlarms);
+
+        return createPacket(CMD_SINGLE_CONTROL_REQ, controlData);
+    }
+
+    protected long remapReqStates(PropertyMap reqProps) {
+        long curStates = (Long) getProperty(GasValve.PROP_CURRENT_STATES).getValue();
+        long reqStates = reqProps.get(GasValve.PROP_CURRENT_STATES, Long.class);
         long difStates = curStates ^ reqStates;
 
         if ((difStates & GasValve.State.GAS_VALVE) == 0) {
             // Check also changes of on/off state, and overide switch state if so.
             final boolean curOnOff = (Boolean) getProperty(HomeDevice.PROP_ONOFF).getValue();
-            final boolean reqOnOff = (Boolean) props.get(HomeDevice.PROP_ONOFF).getValue();
+            final boolean reqOnOff = (Boolean) reqProps.get(HomeDevice.PROP_ONOFF).getValue();
             if (reqOnOff != curOnOff) {
                 if (reqOnOff) reqStates |= GasValve.State.GAS_VALVE;
                 else reqStates &= ~GasValve.State.GAS_VALVE;
-                difStates = curStates ^ reqStates; // Recalulate diff of current and new.
             }
         }
 
-        long reqAlarms = props.get(GasValve.PROP_CURRENT_ALARMS, Long.class);
-
-        final byte controlData = makeControlReqData(reqStates, reqAlarms);
-        return createPacket(CMD_SINGLE_CONTROL_REQ, controlData);
+        return reqStates;
     }
 
-    protected byte makeControlReqData(long states, long alarms) {
+    protected byte makeControlReqData(long reqStates, long difStates, long reqAlarms, long difAlarms) {
         byte controlData = 0;
 
-        if ((states & GasValve.State.GAS_VALVE) == 0L) {
-            controlData |= (byte)(1 << 0);  // 1:close valve
+        if ((difStates & GasValve.State.GAS_VALVE) != 0L) {
+            if ((reqStates & GasValve.State.GAS_VALVE) == 0L) {
+                controlData |= (byte)(1 << 0);  // 1:close valve
+            }
         }
 
-        if ((alarms & GasValve.Alarm.EXTINGUISHER_BUZZING) == 0L) {
-            controlData |= (byte)(1 << 1);  // 1:stop buzzer
+        if ((difAlarms & GasValve.Alarm.EXTINGUISHER_BUZZING) != 0L) {
+            if ((reqAlarms & GasValve.Alarm.EXTINGUISHER_BUZZING) == 0L) {
+                controlData |= (byte)(1 << 1);  // 1:stop buzzer
+            }
+        }
+
+        if ((difAlarms & GasValve.Alarm.GAS_LEAKAGE_DETECTED) != 0L) {
+            if ((reqAlarms & GasValve.Alarm.GAS_LEAKAGE_DETECTED) == 0L) {
+                // No command to release the gas-leakage-detected alarm
+            }
         }
 
         return controlData;
@@ -250,8 +306,16 @@ public class KSGasValve extends KSDeviceContextBase {
         final boolean closeValve = ((controlData & (1 << 0)) != 0);
         final boolean stopBuzzing = ((controlData & (1 << 1)) != 0);
 
-        outProps.putBit(GasValve.PROP_CURRENT_STATES, GasValve.State.GAS_VALVE, !closeValve);
-        outProps.put(HomeDevice.PROP_ONOFF, !closeValve);
-        outProps.putBit(GasValve.PROP_CURRENT_ALARMS, GasValve.Alarm.EXTINGUISHER_BUZZING, !stopBuzzing);
+        final long supportedStates = (Long) getProperty(GasValve.PROP_SUPPORTED_STATES).getValue();
+        final long supportedAlarms = outProps.get(GasValve.PROP_SUPPORTED_ALARMS, Long.class);
+
+        if ((supportedStates & GasValve.State.GAS_VALVE) != 0) {
+            outProps.putBit(GasValve.PROP_CURRENT_STATES, GasValve.State.GAS_VALVE, !closeValve);
+            outProps.put(HomeDevice.PROP_ONOFF, !closeValve);
+        }
+
+        if (stopBuzzing && ((supportedAlarms & GasValve.Alarm.EXTINGUISHER_BUZZING) != 0)) {
+            outProps.putBit(GasValve.PROP_CURRENT_ALARMS, GasValve.Alarm.EXTINGUISHER_BUZZING, false);
+        }
     }
 }
