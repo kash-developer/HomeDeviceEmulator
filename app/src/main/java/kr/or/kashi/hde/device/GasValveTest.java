@@ -17,18 +17,25 @@
 
 package kr.or.kashi.hde.device;
 
+import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.test.DeviceTestCase;
 
 public class GasValveTest extends DeviceTestCase {
+    public void test_OnOff() throws Exception {
+        final long supports = device().getProperty(GasValve.PROP_SUPPORTED_STATES, Long.class);
+        if ((supports & GasValve.State.GAS_VALVE) == 0L && (supports & GasValve.State.INDUCTION) == 0L) {
+            throw new UnsupportedOperationException();
+        }
+        assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true);
+    }
+
     public void test_GasValve() throws Exception {
         assertSupported(GasValve.PROP_SUPPORTED_STATES, GasValve.State.GAS_VALVE);
 
         // NOTE: Only one-way setting is available.
         final long state = device().getProperty(GasValve.PROP_CURRENT_STATES, Long.class);
-        final long expected = (state | ~GasValve.State.GAS_VALVE);
-        device().setProperty(GasValve.PROP_CURRENT_STATES, Long.class, expected);
-        waitFor(1000);
-        assertEquals(GasValve.PROP_CURRENT_STATES, Long.class, expected);
+        final long expected = (state & ~GasValve.State.GAS_VALVE);
+        assertPropertyChanaged(GasValve.PROP_CURRENT_STATES, Long.class, state, expected);
     }
 
     public void test_Induction() throws Exception {
@@ -36,10 +43,8 @@ public class GasValveTest extends DeviceTestCase {
 
         // NOTE: Only one-way setting is available.
         final long state = device().getProperty(GasValve.PROP_CURRENT_STATES, Long.class);
-        final long expected = (state | ~GasValve.State.INDUCTION);
-        device().setProperty(GasValve.PROP_CURRENT_STATES, Long.class, expected);
-        waitFor(1000);
-        assertEquals(GasValve.PROP_CURRENT_STATES, Long.class, expected);
+        final long expected = (state & ~GasValve.State.INDUCTION);
+        assertPropertyChanaged(GasValve.PROP_CURRENT_STATES, Long.class, state, expected);
     }
 
     public void test_Extinguisher() throws Exception {
@@ -47,10 +52,8 @@ public class GasValveTest extends DeviceTestCase {
 
         // NOTE: Only one-way setting is available.
         final long state = device().getProperty(GasValve.PROP_CURRENT_ALARMS, Long.class);
-        final long expected = (state | ~GasValve.Alarm.EXTINGUISHER_BUZZING);
-        device().setProperty(GasValve.PROP_CURRENT_ALARMS, Long.class, expected);
-        waitFor(1000);
-        assertEquals(GasValve.PROP_CURRENT_ALARMS, Long.class, expected);
+        final long expected = (state & ~GasValve.Alarm.EXTINGUISHER_BUZZING);
+        assertPropertyChanaged(GasValve.PROP_CURRENT_ALARMS, Long.class, state, expected);
     }
 
     public void test_GasLeakage() throws Exception {

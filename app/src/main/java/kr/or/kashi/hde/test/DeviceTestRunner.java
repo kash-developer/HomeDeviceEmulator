@@ -29,6 +29,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -73,6 +74,11 @@ public class DeviceTestRunner implements Runnable {
         }
 
         mDevices.addAll(devices);
+        Collections.sort(mDevices, (Object o1, Object o2) -> {
+            HomeDevice d1 = (HomeDevice) o1;
+            HomeDevice d2 = (HomeDevice) o2;
+            return d1.getAddress().toString().compareTo(d2.getAddress().toString());
+        });
 
         mRun = true;
         mThread = new Thread(this, TAG + "." + DeviceTestRunner.class.getSimpleName());
@@ -167,7 +173,7 @@ public class DeviceTestRunner implements Runnable {
         Log.d(TAG, "thread started");
         callOnTestRunnerStarted();
 
-        for (int i=0; i<mDevices.size(); i++) {
+        for (int i=0; i<mDevices.size() && mRun; i++) {
             HomeDevice device = mDevices.get(i);
 
             // Test only single devices
@@ -179,7 +185,9 @@ public class DeviceTestRunner implements Runnable {
 
             int progress = (int) (((double)i / (double)mDevices.size()) * 100.0);
 
-            for (DeviceTestCase test: buildDeviceTestCases(device)) {
+            List<DeviceTestCase> testCases = buildDeviceTestCases(device);
+            for (int j=0; j<testCases.size() && mRun; j++) {
+                DeviceTestCase test = testCases.get(j);
                 TestResult result = new TestResult(); // TODO:
                 test.run(result);
                 callOnDeviceTestExecuted(device, test, result, progress);

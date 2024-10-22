@@ -27,21 +27,26 @@ import static kr.or.kashi.hde.device.Curtain.PROP_OPERATION;
 import static kr.or.kashi.hde.device.Curtain.PROP_STATE;
 import static kr.or.kashi.hde.device.Curtain.PROP_SUPPORTS;
 
+import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.test.DeviceTestCase;
 
 public class CurtainTest extends DeviceTestCase {
+    public void test_OnOff() throws Exception {
+        assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true);
+    }
+
     public void test_StateCheck() throws Exception {
         assertSupported(PROP_SUPPORTS, Curtain.Support.STATE);
 
         device().setProperty(PROP_OPERATION, Integer.class, Curtain.Operation.STOP);
-        waitFor(10);
+        waitFor(200);
 
         device().setProperty(PROP_OPERATION, Integer.class, Curtain.Operation.CLOSE);
-        waitForPropertyChanged();
+        waitForProperty(PROP_STATE, Integer.class, Curtain.OpState.CLOSED);
         assertEquals(PROP_STATE, Integer.class, Curtain.OpState.CLOSED);
 
         device().setProperty(PROP_OPERATION, Integer.class, Curtain.Operation.OPEN);
-        waitForPropertyChanged();
+        waitForProperty(PROP_STATE, Integer.class, Curtain.OpState.OPENED);
         assertEquals(PROP_STATE, Integer.class, Curtain.OpState.OPENED);
     }
 
@@ -55,11 +60,11 @@ public class CurtainTest extends DeviceTestCase {
 
         device().setProperty(PROP_OPERATION, Integer.class, Curtain.Operation.STOP);
         device().setProperty(PROP_CUR_OPEN_LEVEL, Integer.class, minOpenLevel);
-        waitFor(10);
+        waitFor(200);
 
         device().setProperty(PROP_CUR_OPEN_LEVEL, Integer.class, expOpenLevel);
         device().setProperty(PROP_OPERATION, Integer.class, Curtain.Operation.OPEN);
-        waitForPropertyChanged();
+        waitForProperty(PROP_CUR_OPEN_LEVEL, Integer.class, expOpenLevel);
         assertEquals(PROP_CUR_OPEN_LEVEL, Integer.class, expOpenLevel);
     }
 
@@ -73,11 +78,11 @@ public class CurtainTest extends DeviceTestCase {
 
         device().setProperty(PROP_OPERATION, Integer.class, Curtain.Operation.STOP);
         device().setProperty(PROP_CUR_OPEN_ANGLE, Integer.class, minOpenAngle);
-        waitFor(10);
+        waitFor(200);
 
         device().setProperty(PROP_CUR_OPEN_ANGLE, Integer.class, expOpenAngle);
         device().setProperty(PROP_OPERATION, Integer.class, Curtain.Operation.OPEN);
-        waitForPropertyChanged();
+        waitForProperty(PROP_CUR_OPEN_ANGLE, Integer.class, expOpenAngle);
         assertEquals(PROP_CUR_OPEN_ANGLE, Integer.class, expOpenAngle);
     }
 }

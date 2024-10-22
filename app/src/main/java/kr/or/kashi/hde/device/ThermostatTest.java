@@ -17,9 +17,14 @@
 
 package kr.or.kashi.hde.device;
 
+import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.test.DeviceTestCase;
 
 public class ThermostatTest extends DeviceTestCase {
+    public void test_OnOff() throws Exception {
+        assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true);
+    }
+
     public void test_Heating() throws Exception {
         doFunctionTest(Thermostat.Function.HEATING);
     }

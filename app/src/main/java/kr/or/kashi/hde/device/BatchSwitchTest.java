@@ -20,9 +20,14 @@ package kr.or.kashi.hde.device;
 import static kr.or.kashi.hde.device.BatchSwitch.PROP_SUPPORTED_SWITCHES;
 import static kr.or.kashi.hde.device.BatchSwitch.PROP_SWITCH_STATES;
 
+import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.test.DeviceTestCase;
 
 public class BatchSwitchTest extends DeviceTestCase {
+    public void test_OnOff() throws Exception {
+        assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true);
+    }
+
     public void test_BatchLightOff() throws Exception {
         final long supportedSwitches = device().getProperty(PROP_SUPPORTED_SWITCHES, Long.class);
         assertTrue((supportedSwitches & BatchSwitch.Switch.BATCH_LIGHT_OFF) != 0);

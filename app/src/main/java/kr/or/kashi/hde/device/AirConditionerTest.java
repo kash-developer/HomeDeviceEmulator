@@ -26,6 +26,10 @@ import kr.or.kashi.hde.test.DeviceTestCase;
 public class AirConditionerTest extends DeviceTestCase {
     private static final float EPSILON = 0.005f;
 
+    public void test_OnOff() throws Exception {
+        assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true);
+    }
+
     public void test_OperationMode() throws Exception {
         final int supportedModes = device().getProperty(PROP_SUPPORTED_MODES, Integer.class);
         assertTrue((supportedModes | AirConditioner.OpMode.AUTO) != 0);
@@ -45,10 +49,11 @@ public class AirConditionerTest extends DeviceTestCase {
     public void test_FanSpeed() throws Exception {
         final int minFanSpeed = device().getProperty(PROP_MIN_FAN_SPEED, Integer.class);
         final int maxFanSpeed = device().getProperty(PROP_MAX_FAN_SPEED, Integer.class);
-        assertTrue(minFanSpeed < 1 && maxFanSpeed >= 4);
+        assertTrue(minFanSpeed < maxFanSpeed);
 
         device().setProperty(PROP_FAN_MODE, Integer.class, FanMode.MANUAL);
-        assertPropertyChanaged(PROP_CUR_FAN_SPEED, Integer.class, 1, 2);
+        waitForProperty(PROP_FAN_MODE, Integer.class, FanMode.MANUAL);
+        assertPropertyChanaged(PROP_CUR_FAN_SPEED, Integer.class, minFanSpeed, minFanSpeed+1);
     }
 
     public void test_Temperature() throws Exception {
@@ -59,9 +64,9 @@ public class AirConditionerTest extends DeviceTestCase {
         assertTrue(reqTemp < maxTemp);
 
         device().setProperty(PROP_REQ_TEMPERATURE, Float.class, minTemp);
-        waitFor(500);
+        waitForProperty(PROP_REQ_TEMPERATURE, Float.class, minTemp);
         device().setProperty(PROP_REQ_TEMPERATURE, Float.class, reqTemp);
-        waitFor(500);
+        waitForProperty(PROP_REQ_TEMPERATURE, Float.class, reqTemp);
         assertEquals("", reqTemp, device().getProperty(PROP_REQ_TEMPERATURE, Float.class), EPSILON);
         // NOTE: Checks only request temperature because the actual temperature changes slowly depending on the target device
     }

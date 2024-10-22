@@ -20,6 +20,10 @@ package kr.or.kashi.hde.device;
 import kr.or.kashi.hde.test.DeviceTestCase;
 
 public class HouseMeterTest extends DeviceTestCase {
+    public void test_OnOff() throws Exception {
+        throw new UnsupportedOperationException();
+    }
+
     public void test_CheckKnownTypes() throws Exception {
         assertTrue(device().getProperty(HouseMeter.PROP_METER_TYPE, Integer.class) != HouseMeter.MeterType.UNKNOWN);
         assertTrue(device().getProperty(HouseMeter.PROP_CURRENT_METER_UNIT, Integer.class) != HouseMeter.MeterType.UNKNOWN);

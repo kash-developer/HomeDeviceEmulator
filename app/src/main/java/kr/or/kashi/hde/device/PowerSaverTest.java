@@ -17,15 +17,20 @@
 
 package kr.or.kashi.hde.device;
 
+import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.test.DeviceTestCase;
 
 public class PowerSaverTest extends DeviceTestCase {
+    public void test_OnOff() throws Exception {
+        assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true);
+    }
+
     public void test_StandbyPowerSetting() throws Exception {
         final float oldWatt = 5.0f;
         final float newWatt = oldWatt + 1.5f;
 
         device().setProperty(PowerSaver.PROP_STANDBY_CONSUMPTION, Float.class, oldWatt);
-        waitFor(2000);
+        waitFor(1000);
         device().setProperty(PowerSaver.PROP_STANDBY_CONSUMPTION, Float.class, newWatt);
         waitFor(2000);
         assertEquals("", newWatt, device().getProperty(PowerSaver.PROP_STANDBY_CONSUMPTION, Float.class), 0.005f /* epsilon */);

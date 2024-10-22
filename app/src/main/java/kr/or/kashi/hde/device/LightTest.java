@@ -17,9 +17,14 @@
 
 package kr.or.kashi.hde.device;
 
+import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.test.DeviceTestCase;
 
 public class LightTest extends DeviceTestCase {
+    public void test_OnOff() throws Exception {
+        assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true);
+    }
+
     public void test_Dimming() throws Exception {
         final Light light = (Light) device();
         if (!light.isDimSupported()) {
@@ -30,7 +35,7 @@ public class LightTest extends DeviceTestCase {
         assertPropertyChanaged(Light.PROP_CUR_DIM_LEVEL, Integer.class, ranges.minDim, ranges.minDim+1);
     }
 
-    public void test_ColorTemperature() throws Exception {
+    public void test_Color() throws Exception {
         final Light light = (Light) device();
         if (!light.isToneSupported()) {
             throw new UnsupportedOperationException();

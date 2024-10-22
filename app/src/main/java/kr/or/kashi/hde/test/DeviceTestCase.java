@@ -17,14 +17,18 @@
 
 package kr.or.kashi.hde.test;
 
+import android.util.Log;
+
 import junit.framework.TestCase;
 
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.base.PropertyMap;
+import kr.or.kashi.hde.device.LightView;
 
 public class DeviceTestCase<T> extends TestCase implements HomeDevice.Callback {
+    private static final String TAG = DeviceTestCase.class.getSimpleName();
+    private final Object mLock = new Object();
     private HomeDevice mDevice;
-    private boolean mWaitForCallback;
 
     public void setDevice(HomeDevice device) {
         mDevice = device;
@@ -44,20 +48,22 @@ public class DeviceTestCase<T> extends TestCase implements HomeDevice.Callback {
     protected void tearDown() throws Exception {
         super.tearDown();
         mDevice.removeCallback(this);
+        synchronized (mLock) {
+            mLock.notifyAll();
+        }
     }
 
     @Override
     public void onPropertyChanged(HomeDevice device, PropertyMap props) {
-        synchronized (mDevice) {
-            mWaitForCallback = false;
-            mDevice.notifyAll();
+        synchronized (mLock) {
+            mLock.notifyAll();
         }
     }
 
     @Override
     public void onErrorOccurred(HomeDevice device, @HomeDevice.Error int error) {
-        synchronized (mDevice) {
-            mDevice.notifyAll();
+        synchronized (mLock) {
+            mLock.notifyAll();
         }
     }
 
@@ -87,33 +93,23 @@ public class DeviceTestCase<T> extends TestCase implements HomeDevice.Callback {
 
     public <E> void assertPropertyChanaged(String propName, Class<E> valueClass, E fromValue, E toValue) throws Exception {
         mDevice.setProperty(propName, valueClass, fromValue);
-        wait_();
+        assertTrue(waitForProperty(propName, valueClass, fromValue));
         mDevice.setProperty(propName, valueClass, toValue);
-        waitForPropertyChanged();
-        assertEquals(toValue, mDevice.getProperty(propName, valueClass));
+        assertTrue(waitForProperty(propName, valueClass, toValue));
     }
 
-    protected void waitForPropertyChanged() throws Exception {
-        mWaitForCallback = true;
-        wait_();
-        if (mWaitForCallback) {
-            throw new Exception();
+    protected <E> boolean waitForProperty(String propName, Class<E> valueClass, E dstValue) throws Exception {
+        for (int i=0; i<5; i++) {
+            E curValue = mDevice.getProperty(propName, valueClass);
+            if (curValue.equals(dstValue)) return true;
+            waitFor(500);
         }
-    }
-
-    private void wait_() throws Exception {
-        synchronized (mDevice) {
-            mDevice.wait(2000);
-        }
+        return false;
     }
 
     protected void waitFor(long timeout) throws Exception {
-        synchronized (mDevice) {
-            mDevice.wait(timeout);
+        synchronized (mLock) {
+            mLock.wait(timeout);
         }
-    }
-
-    public void test_OnOff() throws Exception {
-        assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true);
     }
 }
