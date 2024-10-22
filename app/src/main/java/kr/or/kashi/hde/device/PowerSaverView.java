@@ -45,6 +45,8 @@ public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.O
     private RadioButton mStandbyBlockingOnRadio;
     private CheckBox mCurrentPowerCheck;
     private TextView mCurrentPowerText;
+    private EditText mCurrentPowerEdit;
+    private Button mCurrentPowerSetButton;
     private CheckBox mStandbyPowerCheck;
     private TextView mStandbyPowerText;
     private EditText mStandbyPowerEdit;
@@ -63,9 +65,11 @@ public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.O
         mStateCheck.setEnabled(true);
         mStateCheck.setClickable(false);
         mOverloadDetectedCheck = findViewById(R.id.overload_detected_check);
-        mOverloadDetectedCheck.setClickable(false);
+        if (isMaster()) mOverloadDetectedCheck.setClickable(false);
+        if (isSlave()) mOverloadDetectedCheck.setOnClickListener(this);
         mStandbyDetectedCheck = findViewById(R.id.standby_detected_check);
-        mStandbyDetectedCheck.setClickable(false);
+        if (isMaster()) mStandbyDetectedCheck.setClickable(false);
+        if (isSlave()) mStandbyDetectedCheck.setOnClickListener(this);
         mSettingCheck = findViewById(R.id.setting_check);
         mStandbyBlockingOffRadio = findViewById(R.id.standby_blocking_off_radio);
         mStandbyBlockingOffRadio.setOnClickListener(this);
@@ -73,6 +77,9 @@ public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.O
         mStandbyBlockingOnRadio.setOnClickListener(this);
         mCurrentPowerCheck = findViewById(R.id.current_power_check);
         mCurrentPowerText = findViewById(R.id.current_power_text);
+        mCurrentPowerEdit = findViewById(R.id.current_power_edit);
+        mCurrentPowerSetButton = findViewById(R.id.current_power_set_button);
+        mCurrentPowerSetButton.setOnClickListener(this);
         mStandbyPowerCheck = findViewById(R.id.standby_power_check);
         mStandbyPowerText = findViewById(R.id.standby_power_text);
         mStandbyPowerEdit = findViewById(R.id.standby_power_edit);
@@ -84,7 +91,7 @@ public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.O
     public void onUpdateProperty(PropertyMap props, PropertyMap changed) {
         final long supportedStates = props.get(PowerSaver.PROP_SUPPORTED_STATES, Long.class);
         mOverloadDetectedCheck.setEnabled((supportedStates & PowerSaver.State.OVERLOAD_DETECTED) != 0);
-        mStandbyDetectedCheck.setChecked((supportedStates & PowerSaver.State.STANDBY_DETECTED) != 0);
+        mStandbyDetectedCheck.setEnabled((supportedStates & PowerSaver.State.STANDBY_DETECTED) != 0);
 
         final long currentStates = props.get(PowerSaver.PROP_CURRENT_STATES, Long.class);
         mOverloadDetectedCheck.setChecked((currentStates & PowerSaver.State.OVERLOAD_DETECTED) != 0);
@@ -100,6 +107,7 @@ public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.O
 
         final float currentConsumption = props.get(PowerSaver.PROP_CURRENT_CONSUMPTION, Float.class);
         mCurrentPowerText.setText("" + currentConsumption);
+        if (!mCurrentPowerEdit.hasFocus()) mCurrentPowerEdit.setText("" + currentConsumption);
 
         final float standbyConsumption = props.get(PowerSaver.PROP_STANDBY_CONSUMPTION, Float.class);
         mStandbyPowerText.setText("" + standbyConsumption);
@@ -108,12 +116,28 @@ public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.O
 
     @Override
     public void onClick(View v) {
+        if (v == mOverloadDetectedCheck) {
+            long states = device().getProperty(PowerSaver.PROP_CURRENT_STATES, Long.class);
+            if (mOverloadDetectedCheck.isChecked()) states |= PowerSaver.State.OVERLOAD_DETECTED;
+            else states &= ~PowerSaver.State.OVERLOAD_DETECTED;
+            device().setProperty(PowerSaver.PROP_CURRENT_STATES, Long.class, states);
+        } else if (v == mStandbyDetectedCheck) {
+            long states = device().getProperty(PowerSaver.PROP_CURRENT_STATES, Long.class);
+            if (mStandbyDetectedCheck.isChecked()) states |= PowerSaver.State.STANDBY_DETECTED;
+            else states &= ~PowerSaver.State.STANDBY_DETECTED;
+            device().setProperty(PowerSaver.PROP_CURRENT_STATES, Long.class, states);
+        }
+
         if (v == mStandbyBlockingOffRadio) {
             final long currentSettings = device().getProperty(PowerSaver.PROP_CURRENT_SETTINGS, Long.class);
             device().setProperty(PowerSaver.PROP_CURRENT_SETTINGS, Long.class, currentSettings & ~PowerSaver.Setting.STANDBY_BLOCKING_ON);
         } else if (v == mStandbyBlockingOnRadio) {
             final long currentSettings = device().getProperty(PowerSaver.PROP_CURRENT_SETTINGS, Long.class);
             device().setProperty(PowerSaver.PROP_CURRENT_SETTINGS, Long.class, currentSettings | PowerSaver.Setting.STANDBY_BLOCKING_ON);
+        } else if (v == mCurrentPowerSetButton) {
+            final String editStr = mCurrentPowerEdit.getText().toString();
+            float currentConsumption = PropertyValue.newValueObject(Float.class, editStr);
+            device().setProperty(PowerSaver.PROP_CURRENT_CONSUMPTION, Float.class, currentConsumption);
         } else if (v == mStandbyPowerSetButton) {
             final String editStr = mStandbyPowerEdit.getText().toString();
             float standbyConsumption = PropertyValue.newValueObject(Float.class, editStr);

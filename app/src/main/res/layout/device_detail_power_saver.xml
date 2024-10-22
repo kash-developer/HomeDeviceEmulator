@@ -111,6 +111,32 @@
             android:layout_height="wrap_content"
             android:text="W" />
 
+        <Space
+            android:layout_width="10dp"
+            android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/current_power_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:inputType="number"
+            android:textSize="14dp"
+            android:text="0.0" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="W" />
+
+        <Button
+            android:id="@+id/current_power_set_button"
+            android:layout_width="70dp"
+            android:layout_height="40dp"
+            android:text="Set" />
+
     </LinearLayout>
 
     <LinearLayout
