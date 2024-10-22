@@ -74,7 +74,7 @@ public class KSPacket implements HomePacket {
 
         int calXorSum = 0;
         int calAddSum = 0;
-        for (int i = pos; i < packetSize; i++) {
+        for (int i = pos; i < pos + packetSize; i++) {
             int b = buffer.get(i) & 0xFF;
             calXorSum ^= b; // xor
             calAddSum += b; // add

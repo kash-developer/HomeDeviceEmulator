@@ -25,11 +25,7 @@ import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.base.PropertyTask;
 import kr.or.kashi.hde.device.Curtain;
-import kr.or.kashi.hde.ksx4506.KSAddress;
-import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
-import kr.or.kashi.hde.ksx4506.KSPacket;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,11 +54,27 @@ public class KSCurtain extends KSDeviceContextBase {
             final PropertyTask propTask = this::onCurtainStateUpdateTaskForSlave;
             setPropertyTask(HomeDevice.PROP_ONOFF, propTask);
             setPropertyTask(Curtain.PROP_STATE, propTask);
+
+            // Initialize some properties as specific values in slave mode.
+            int supportedFunctions = 0;
+            supportedFunctions |= Curtain.Support.STATE;
+            supportedFunctions |= Curtain.Support.OPEN_LEVEL;
+            supportedFunctions |= Curtain.Support.OPEN_ANGLE;
+            mRxPropertyMap.put(Curtain.PROP_SUPPORTS, supportedFunctions);
+            mRxPropertyMap.commit();
         }
     }
 
     protected int getCapabilities() {
         return CAP_STATUS_SINGLE | CAP_CHARAC_SINGLE;
+    }
+
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
+        switch (packet.commandType) {
+            case CMD_GROUP_CONTROL_REQ:
+                return parseGroupControlReq(packet, outProps);
+        }
+        return super.parsePayload(packet, outProps);
     }
 
     @Override
@@ -198,6 +210,18 @@ public class KSCurtain extends KSDeviceContextBase {
         parseExtendedCurtainStateByte(packet.data[2], outProps);
 
         return PARSE_OK_ACTION_PERFORMED;
+    }
+
+    protected @ParseResult int parseGroupControlReq(KSPacket packet, PropertyMap outProps) {
+        // Parse request packet.
+        parseCurtainControlReq(packet.data, outProps);
+
+        for (KSCurtain child: getChildren(KSCurtain.class)) {
+            child.parseGroupControlReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        return PARSE_OK_STATE_UPDATED;
     }
 
     private void makeBasicCurtainStateByte(PropertyMap props, ByteArrayBuffer outData) {

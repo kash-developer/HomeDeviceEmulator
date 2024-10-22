@@ -25,6 +25,7 @@ import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.device.GasValve;
 import kr.or.kashi.hde.device.Light;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
@@ -51,10 +52,14 @@ public class KSLight extends KSDeviceContextBase {
     public KSLight(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps, Light.class);
 
-        if (!isSlave()) { // TODO:
+        if (isMaster()) {
             // Register the tasks to be performed when specific property changes.
             setPropertyTask(HomeDevice.PROP_ONOFF, mSingleControlTask);
             setPropertyTask(Light.PROP_CUR_DIM_LEVEL, mSingleControlTask);
+        } else {
+            // Initialize some properties in slave mode
+            mRxPropertyMap.put(Light.PROP_DIM_SUPPORTED, true);
+            mRxPropertyMap.commit();
         }
     }
 
@@ -316,6 +321,8 @@ public class KSLight extends KSDeviceContextBase {
         final boolean isOn = ((data[0] & 0x01) == 1);
         final int dimLevel = ((data[0] >> 4) & 0x0F);
         outProps.put(HomeDevice.PROP_ONOFF, isOn);
-        outProps.put(Light.PROP_CUR_DIM_LEVEL, dimLevel);
+        if (isOn) {
+            outProps.put(Light.PROP_CUR_DIM_LEVEL, dimLevel);
+        }
     }
 }

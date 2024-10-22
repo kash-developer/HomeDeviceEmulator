@@ -53,12 +53,25 @@ public class KSGasValve extends KSDeviceContextBase {
             setPropertyTask(GasValve.PROP_SUPPORTED_STATES, this::onSetSupportedStateTaskForSlave);
             setPropertyTask(GasValve.PROP_CURRENT_STATES, onSetCurrentStateTaskForSlave);
             setPropertyTask(HomeDevice.PROP_ONOFF, onSetCurrentStateTaskForSlave);
+
+            // Initialize just as all supported.
+            mRxPropertyMap.put(GasValve.PROP_SUPPORTED_STATES, GasValve.State.GAS_VALVE);
+            mRxPropertyMap.put(GasValve.PROP_SUPPORTED_ALARMS, GasValve.Alarm.EXTINGUISHER_BUZZING | GasValve.Alarm.GAS_LEAKAGE_DETECTED);
+            mRxPropertyMap.commit();
         }
     }
 
     @Override
     protected int getCapabilities() {
         return CAP_STATUS_SINGLE | CAP_CHARAC_SINGLE;
+    }
+
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
+        switch (packet.commandType) {
+            case CMD_GROUP_CONTROL_REQ:
+                return parseGroupControlReq(packet, outProps);
+        }
+        return super.parsePayload(packet, outProps);
     }
 
     @Override
@@ -169,6 +182,18 @@ public class KSGasValve extends KSDeviceContextBase {
         parseGasValveStateByte(packet.data[1], outProps);
 
         return PARSE_OK_ACTION_PERFORMED;
+    }
+
+    protected @ParseResult int parseGroupControlReq(KSPacket packet, PropertyMap outProps) {
+        final int control = packet.data[0] & 0xFF;
+        parseControlReqData(control, outProps);
+
+        for (KSGasValve child: getChildren(KSGasValve.class)) {
+            child.parseGroupControlReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        return PARSE_OK_STATE_UPDATED;
     }
 
     protected boolean onSetSupportedStateTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {

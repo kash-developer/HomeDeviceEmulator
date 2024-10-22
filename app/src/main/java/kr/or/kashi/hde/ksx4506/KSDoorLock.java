@@ -60,6 +60,14 @@ public class KSDoorLock extends KSDeviceContextBase {
         return CAP_STATUS_SINGLE | CAP_CHARAC_SINGLE;
     }
 
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
+        switch (packet.commandType) {
+            case CMD_GROUP_CONTROL_REQ:
+                return parseGroupControlReq(packet, outProps);
+        }
+        return super.parsePayload(packet, outProps);
+    }
+
     @Override
     protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) {
         // No data to parse from request packet.
@@ -164,6 +172,19 @@ public class KSDoorLock extends KSDeviceContextBase {
         parseDoorLockStateByte(packet.data[1], outProps);
 
         return PARSE_OK_ACTION_PERFORMED;
+    }
+
+    protected @ParseResult int parseGroupControlReq(KSPacket packet, PropertyMap outProps) {
+        final int control = packet.data[0] & 0xFF;
+        outProps.putBit(DoorLock.PROP_CURRENT_STATES, DoorLock.State.DOOR_OPENED, (control == 1));
+        outProps.put(HomeDevice.PROP_ONOFF, (control == 1));
+
+        for (KSDoorLock child: getChildren(KSDoorLock.class)) {
+            child.parseGroupControlReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        return PARSE_OK_STATE_UPDATED;
     }
 
     private void makeDoorLockStateByte(PropertyMap props, ByteArrayBuffer outData) {

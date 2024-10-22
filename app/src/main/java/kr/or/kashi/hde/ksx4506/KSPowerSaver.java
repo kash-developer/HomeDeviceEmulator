@@ -19,11 +19,13 @@ package kr.or.kashi.hde.ksx4506;
 
 import android.util.Log;
 
+import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.PacketSchedule;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.device.DoorLock;
 import kr.or.kashi.hde.device.PowerSaver;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
@@ -52,9 +54,19 @@ public class KSPowerSaver extends KSDeviceContextBase {
     public KSPowerSaver(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps, PowerSaver.class);
 
-        setPropertyTask(HomeDevice.PROP_ONOFF, this::onStateControlTask);
-        setPropertyTask(PowerSaver.PROP_CURRENT_STATES, this::onStateControlTask);
-        setPropertyTask(PowerSaver.PROP_STANDBY_CONSUMPTION, this::onStandbyPowerSettingTask);
+        if (isMaster()) {
+            setPropertyTask(HomeDevice.PROP_ONOFF, this::onStateControlTask);
+            setPropertyTask(PowerSaver.PROP_CURRENT_STATES, this::onStateControlTask);
+            setPropertyTask(PowerSaver.PROP_STANDBY_CONSUMPTION, this::onStandbyPowerSettingTask);
+        } else {
+            // HACK: Initialize just as all supported.
+            long supportedState = 0;
+            supportedState |= PowerSaver.State.OVERLOAD_DETECTED;
+            supportedState |= PowerSaver.State.STANDBY_DETECTED;
+            mRxPropertyMap.put(PowerSaver.PROP_SUPPORTED_STATES, supportedState);
+            mRxPropertyMap.put(PowerSaver.PROP_SUPPORTED_SETTINGS, PowerSaver.Setting.STANDBY_BLOCKING_ON);
+            mRxPropertyMap.commit();
+        }
     }
 
     @Override
@@ -113,6 +125,28 @@ public class KSPowerSaver extends KSDeviceContextBase {
         }
         return super.parsePayload(packet, outProps);
     }
+
+
+// TODO: .............................................................................................................
+//    @Override
+//    protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) {
+//        // No data to parse from request packet.
+//
+//        final KSAddress devAddress = (KSAddress)getAddress();
+//        if (!devAddress.getDeviceSubId().isFullOfGroup()) {
+//            // Only full type of group device can parse the packet.
+//            return PARSE_OK_NONE;
+//        }
+//
+//        final ByteArrayBuffer data = new ByteArrayBuffer();
+//        makeStatusRspData(getReadPropertyMap(), data);
+//
+//        // Send response packet
+//        sendPacket(createPacket(CMD_STATUS_RSP, data.toArray()));
+//
+//        return PARSE_OK_STATE_UPDATED;
+//    }
+
 
     protected @ParseResult int parseStatusRsp(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length < 4) { // At least, 4 = error byte(1) + single channel data(3)
@@ -198,6 +232,23 @@ public class KSPowerSaver extends KSDeviceContextBase {
         outProps.put(PowerSaver.PROP_CURRENT_CONSUMPTION, currentWatt);
 
         return PARSE_OK_STATE_UPDATED;
+    }
+
+    private void makeChannelStateBytes(PropertyMap props, ByteArrayBuffer outData) {
+        final boolean isOn = props.get(HomeDevice.PROP_ONOFF, Boolean.class);
+        final long states = props.get(PowerSaver.PROP_CURRENT_STATES, Long.class);
+        final long settings = props.get(PowerSaver.PROP_CURRENT_SETTINGS, Long.class);
+        final float currentWatt = props.get(PowerSaver.PROP_CURRENT_CONSUMPTION, Float.class);
+
+
+
+        final int bcd1kw  = 0;        // 1000W
+        final int bcd100w = 0;   // 100W
+        final int bcd10w  = 0;        // 10W
+        final int bcd1w   = 0;   // 1W
+        final int bcd0d1w = 0;        // 0.1W
+
+
     }
 
     protected @ParseResult int parseCharacteristicRsp(KSPacket packet, PropertyMap outProps) {

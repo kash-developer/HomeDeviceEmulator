@@ -403,9 +403,15 @@ public class KSAirConditioner extends KSDeviceContextBase {
 
         int opState = packet.data[0] & 0xFF;
         outProps.put(Light.PROP_ONOFF, (opState != 0));
-        // TODO: Change also children states if this is parent of.
 
-        sendStatusOrControlRsp(CMD_OPERATION_STATE_RSP);
+        for (KSAirConditioner child: getChildren(KSAirConditioner.class)) {
+            child.parseOperationStateReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        if (isSingleDevice()) {
+            sendStatusOrControlRsp(CMD_OPERATION_STATE_RSP);
+        }
 
         return PARSE_OK_STATE_UPDATED;
     }
@@ -419,9 +425,15 @@ public class KSAirConditioner extends KSDeviceContextBase {
         float curTemp = KSUtils.parseTemperatureByte(packet.data[0]);
         outProps.put(AirConditioner.PROP_REQ_TEMPERATURE, curTemp);
         outProps.put(AirConditioner.PROP_CUR_TEMPERATURE, curTemp);
-        // TODO: Change also children states if this is parent of.
 
-        sendStatusOrControlRsp(CMD_TEMPERATURE_SETTING_RSP);
+        for (KSAirConditioner child: getChildren(KSAirConditioner.class)) {
+            child.parseTemperatureSettingReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        if (isSingleDevice()) {
+            sendStatusOrControlRsp(CMD_TEMPERATURE_SETTING_RSP);
+        }
 
         return PARSE_OK_STATE_UPDATED;
     }
@@ -442,9 +454,15 @@ public class KSAirConditioner extends KSDeviceContextBase {
             case 0x05: opMode = AirConditioner.OpMode.RESERVED; break;
         }
         outProps.put(AirConditioner.PROP_OPERATION_MODE, opMode);
-        // TODO: Change also children states if this is parent of.
 
-        sendStatusOrControlRsp(CMD_OPERATION_MODE_RSP);
+        for (KSAirConditioner child: getChildren(KSAirConditioner.class)) {
+            child.parseOperationModeReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        if (isSingleDevice()) {
+            sendStatusOrControlRsp(CMD_OPERATION_MODE_RSP);
+        }
 
         return PARSE_OK_STATE_UPDATED;
     }
@@ -460,9 +478,15 @@ public class KSAirConditioner extends KSDeviceContextBase {
         if (dirByte == 0x00) flowDir = AirConditioner.FlowDir.MANUAL;
         else if (dirByte == 0x01) flowDir = AirConditioner.FlowDir.AUTO;
         outProps.put(AirConditioner.PROP_FLOW_DIRECTION, flowDir);
-        // TODO: Change also children states if this is parent of.
 
-        sendStatusOrControlRsp(CMD_FLOW_DIRECTION_RSP);
+        for (KSAirConditioner child: getChildren(KSAirConditioner.class)) {
+            child.parseFlowDirectionReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        if (isSingleDevice()) {
+            sendStatusOrControlRsp(CMD_FLOW_DIRECTION_RSP);
+        }
 
         return PARSE_OK_STATE_UPDATED;
     }
@@ -485,9 +509,15 @@ public class KSAirConditioner extends KSDeviceContextBase {
         }
         outProps.put(AirConditioner.PROP_FAN_MODE, fanMode);
         outProps.put(AirConditioner.PROP_CUR_FAN_SPEED, fanSpeed);
-        // TODO: Change also children states if this is parent of.
 
-        sendStatusOrControlRsp(CMD_FAN_SPEED_RSP);
+        for (KSAirConditioner child: getChildren(KSAirConditioner.class)) {
+            child.parseFanSpeedReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        if (isSingleDevice()) {
+            sendStatusOrControlRsp(CMD_FAN_SPEED_RSP);
+        }
 
         return PARSE_OK_STATE_UPDATED;
     }

@@ -47,8 +47,13 @@ public class KSLight2 extends KSLight {
     public KSLight2(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps);
 
-        if (!isSlave()) {
+        if (isMaster()) {
+            // Register the tasks to be performed when specific property changes.
             setPropertyTask(Light.PROP_CUR_TONE_LEVEL, mSingleToneControlTask);
+        } else {
+            // Initialize some properties in slave mode
+            mRxPropertyMap.put(Light.PROP_TONE_SUPPORTED, true);
+            mRxPropertyMap.commit();
         }
     }
 

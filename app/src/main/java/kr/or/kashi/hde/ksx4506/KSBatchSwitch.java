@@ -111,6 +111,7 @@ public class KSBatchSwitch extends KSDeviceContextBase {
     @Override
     public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
         switch (packet.commandType) {
+            case CMD_FULL_CONTROL_REQ: return parseGroupControlReq(packet, outProps);
             case CMD_SWITCH_SETTING_RESULT_REQ: return parseSwitchSettingResultReq(packet, outProps);
             case CMD_SWITCH_SETTING_RESULT_RSP: return parseSwitchSettingResultRsp(packet, outProps);
             case CMD_ELEVATOR_FLOOR_DISPLAY_RSP: {
@@ -246,6 +247,18 @@ public class KSBatchSwitch extends KSDeviceContextBase {
         // parseStatusRspBytes(packet.data, outProps);
 
         return PARSE_OK_ACTION_PERFORMED;
+    }
+
+    protected int parseGroupControlReq(KSPacket packet, PropertyMap outProps) {
+        // Parse requst packet.
+        parseSingleControlReqData(packet.data, outProps);
+
+        for (KSBatchSwitch child: getChildren(KSBatchSwitch.class)) {
+            child.parseGroupControlReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        return PARSE_OK_STATE_UPDATED;
     }
 
     protected int parseSwitchSettingResultReq(KSPacket packet, PropertyMap outProps) {
