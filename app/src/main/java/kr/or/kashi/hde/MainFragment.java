@@ -247,6 +247,7 @@ public class MainFragment extends Fragment {
         ((Button)v.findViewById(R.id.add_selected_button)).setOnClickListener(view -> addSelectedDevices());
         ((Button)v.findViewById(R.id.add_range_button)).setOnClickListener(view -> addAllDevicesInRange());
         ((Button)v.findViewById(R.id.remove_all_button)).setOnClickListener(view -> removeAllDevices());
+        ((Button)v.findViewById(R.id.remove_all_button)).setOnLongClickListener(view -> removeAllDisconnectedDevices());
         ((Button)v.findViewById(R.id.load_button)).setOnClickListener(view -> loadDeviceList());
         ((Button)v.findViewById(R.id.save_button)).setOnClickListener(view -> saveDeviceList());
 
@@ -590,6 +591,17 @@ public class MainFragment extends Fragment {
         }
         mNetwork.removeAllDevices();
         updateDeviceList();
+    }
+
+    private boolean removeAllDisconnectedDevices() {
+        if (mNetwork == null) {
+            return false;
+        }
+        for (HomeDevice device: mNetwork.getAllDevices()) {
+            if (!device.isConnected()) mNetwork.removeDevice(device);
+        }
+        updateDeviceList();
+        return true;
     }
 
     private void loadDeviceList() {
