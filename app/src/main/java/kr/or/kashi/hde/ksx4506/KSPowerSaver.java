@@ -317,7 +317,7 @@ public class KSPowerSaver extends KSDeviceContextBase {
             final int thisSingleId = thisSubId.value() & 0x0F;
             final int thisSingleIndex = thisSingleId - 1;
             if (thisSingleIndex >= 0 && thisSingleIndex < mChannelCountInGroup) {
-                final int dataOffset = 1 + (thisSingleIndex * CHANNEL_CHARC_BYTES);
+                final int dataOffset = 2 + (thisSingleIndex * CHANNEL_CHARC_BYTES);
                 if (dataOffset < packet.data.length) {
                     parseChannelCapabilityByte(packet.data[dataOffset], outProps);
                     return PARSE_OK_PEER_DETECTED;
