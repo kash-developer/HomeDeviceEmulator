@@ -155,7 +155,7 @@ public class UartSchedSession extends NetworkSessionAdapter {
     @Override
     public void onWrite(byte[] b) {
         if (mUartSchedPort == null) return;
-        mUartSchedPort.schedulePacket(b, 0, 0, false);
+        mUartSchedPort.schedulePacket(b, 0, 0, false, false);
     }
 
     public boolean schedulePacket(PacketSchedule schedule) {
@@ -173,7 +173,7 @@ public class UartSchedSession extends NetworkSessionAdapter {
         final boolean allowSameRx = schedule.allowSameRx();
 
         final long scheduleId = mUartSchedPort.schedulePacket(
-                buf, repeatCount, repeatIntervalMs, allowSameRx);
+                buf, repeatCount, repeatIntervalMs, false, allowSameRx);
         if (scheduleId < 0) return false;
 
         synchronized (mPacketSchedules) {
