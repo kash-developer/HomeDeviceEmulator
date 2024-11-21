@@ -736,14 +736,14 @@ public class MainFragment extends Fragment {
             int subId = ids[i];
             if (subId == 0) {
                 subId = 0x01;
-                if (devId == 0x02 || devId == 0x0E || devId == 0x39 || devId == 0x36) {
+                if (devId == 0x0E || devId == 0x39 || devId == 0x36) {
                     subId += 0x10;
                 }
             } else {
                subId++;
                if ((subId & 0xF) == 0xF) subId += 2;
 
-               if (devId == 0x02 || devId == 0x0E || devId == 0x39 || devId == 0x36) {
+               if (devId == 0x0E || devId == 0x39 || devId == 0x36) {
                    if (subId >= 0xFF) subId = -1;
                } else {
                    if (subId >= 0x0F) subId = -1;
