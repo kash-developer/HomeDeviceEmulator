@@ -282,8 +282,9 @@ public class KSAirConditioner extends KSDeviceContextBase {
     protected @ParseResult int parseCharacteristicReq(KSPacket packet, PropertyMap outProps) {
         // No data to parse from request packet.
 
+        // HACK: Some device queries characteristics as single.
         final KSAddress.DeviceSubId thisSubId = ((KSAddress)getAddress()).getDeviceSubId();
-        if (thisSubId.isSingle() || thisSubId.isSingleOfGroup()) {
+        if (/* thisSubId.isSingle() || */ thisSubId.isSingleOfGroup()) {
             return PARSE_OK_NONE;
         }
 
@@ -317,7 +318,7 @@ public class KSAirConditioner extends KSDeviceContextBase {
         mMaxCoolingTemp = mMaxHeatingTemp = maxTemp; // TODO:
         mMinCoolingTemp = mMinHeatingTemp = minTemp; // TODO:
         mMaxFanSpeed = props.get(AirConditioner.PROP_MAX_FAN_SPEED, Integer.class);
-        mNumberOfDevices = getChildCount();
+        mNumberOfDevices = isSingleDevice() ? 1 : getChildCount();
 
         data.append(maxTempByte);
         data.append(minTempByte);
@@ -384,12 +385,15 @@ public class KSAirConditioner extends KSDeviceContextBase {
         outProps.put(AirConditioner.PROP_MIN_FAN_SPEED, minFanSpeed);
         outProps.put(AirConditioner.PROP_MAX_FAN_SPEED, maxFanSpeed);
 
-        final KSAddress.DeviceSubId ctxSubId = getDeviceSubId();
-        if (ctxSubId.isSingle() || ctxSubId.isSingleOfGroup()) {
-            int singleIndex = ctxSubId.singleId() - 1;
-            if (singleIndex >= 0 && singleIndex < mNumberOfDevices) {
-                return PARSE_OK_PEER_DETECTED;
-            }
+        // HACK: Some device responds characteristics as single.
+        if (isSingleDevice() && mNumberOfDevices > 0) {
+            return PARSE_OK_PEER_DETECTED;
+        }
+
+        final int thisSubId = getDeviceSubId().value() & 0x0F;
+        final int thisIndex = thisSubId-1;
+        if (thisSubId == 0xF || (thisIndex >= 0 && thisIndex < mNumberOfDevices)) {
+            return PARSE_OK_PEER_DETECTED;
         }
 
         return PARSE_OK_NONE;
