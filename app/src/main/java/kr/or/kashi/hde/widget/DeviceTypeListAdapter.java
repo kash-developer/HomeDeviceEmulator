@@ -18,43 +18,73 @@
 package kr.or.kashi.hde.widget;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.R;
 
-public class CheckableListAdapter<T> extends BaseAdapter {
+public class DeviceTypeListAdapter extends BaseAdapter {
     private Context mContext;
-    private Set<T> mSelectedItems;
-    private List<T> mAllItems;
-    private Runnable mChangeRunnable;
+    private Set<String> mSelectedTypes;
+    private List<String> mAllTypes;
+    private List<String> mAddresses;
+    private Callback mCallback;
 
-    public CheckableListAdapter(Context context, List<T> allItems, Set<T> selectedItems) {
-        mContext = context;
-        mAllItems = allItems;
-        mSelectedItems = selectedItems;
+    public interface Callback {
+        default void onCheckedChanged(String item, boolean checked) {}
+        default void onAddButtonClicked(String item) {}
     }
 
-    public void setChangeRunnable(Runnable runnable) {
-        mChangeRunnable = runnable;
+    public DeviceTypeListAdapter(Context context, List<String> allItems, Set<String> selectedItems) {
+        mContext = context;
+        mAllTypes = allItems;
+        mAddresses = new ArrayList<>(allItems.size());
+        mSelectedTypes = selectedItems;
+
+        for (int i=0; i<allItems.size(); i++) {
+            mAddresses.add("");
+        }
+    }
+
+    public String getAddress(int position) {
+        return mAddresses.get(position);
+    }
+
+    public String getAddress(String item) {
+        int pos = mAllTypes.indexOf(item);
+        if (pos < 0) return "";
+        return mAddresses.get(pos);
+    }
+
+    public void setAddress(int position, String addr) {
+        mAddresses.set(position, addr);
+        notifyDataSetChanged();
+    }
+
+    public void setCallback(Callback callback) {
+        mCallback = callback;
     }
 
     @Override
     public int getCount() {
-        return mAllItems.size();
+        return mAllTypes.size();
     }
 
     @Override
     public Object getItem(int position) {
-        return mAllItems.get(position);
+        return mAllTypes.get(position);
     }
 
     @Override
@@ -67,21 +97,25 @@ public class CheckableListAdapter<T> extends BaseAdapter {
         final ViewHolder holder;
         if (convertView == null ) {
             LayoutInflater layoutInflator = LayoutInflater.from(mContext);
-            convertView = layoutInflator.inflate(R.layout.checkable_list_item, parent, false);
+            convertView = layoutInflator.inflate(R.layout.device_type_list_item, parent, false);
 
             holder = new ViewHolder();
             holder.mTextView = convertView.findViewById(R.id.text);
             holder.mCheckBox = convertView.findViewById(R.id.checkbox);
+            holder.mAddrTextView = convertView.findViewById(R.id.address_text);
+            holder.mAddButton = convertView.findViewById(R.id.add_button);
+
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        final int listPos = position;
-        holder.mTextView.setText(mAllItems.get(listPos).toString());
+        final int pos = position;
+        holder.mTextView.setText(mAllTypes.get(pos).toString());
+        holder.mAddrTextView.setText(mAddresses.get(pos).toString());
 
-        final T item = mAllItems.get(listPos);
-        boolean isSel = mSelectedItems.contains(item);
+        final String item = mAllTypes.get(pos);
+        boolean isSel = mSelectedTypes.contains(item);
 
         holder.mCheckBox.setOnCheckedChangeListener(null);
         holder.mCheckBox.setChecked(isSel);
@@ -90,13 +124,13 @@ public class CheckableListAdapter<T> extends BaseAdapter {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    mSelectedItems.add(item);
+                    mSelectedTypes.add(item);
                 } else {
-                    mSelectedItems.remove(item);
+                    mSelectedTypes.remove(item);
                 }
 
-                if (mChangeRunnable != null) {
-                    mChangeRunnable.run();
+                if (mCallback != null) {
+                    mCallback.onCheckedChanged(item, isChecked);
                 }
             }
         });
@@ -108,11 +142,22 @@ public class CheckableListAdapter<T> extends BaseAdapter {
             }
         });
 
+        holder.mAddButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mCallback != null) {
+                    mCallback.onAddButtonClicked(item);
+                }
+            }
+        });
+
         return convertView;
     }
 
     private class ViewHolder {
-        private TextView mTextView;
         private CheckBox mCheckBox;
+        private TextView mTextView;
+        private TextView mAddrTextView;
+        private Button mAddButton;
     }
 }

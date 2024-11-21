@@ -45,6 +45,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,8 +58,7 @@ import kr.or.kashi.hde.test.DeviceTestCallback;
 import kr.or.kashi.hde.util.DebugLog;
 import kr.or.kashi.hde.util.LocalPreferences;
 import kr.or.kashi.hde.util.LocalPreferences.Pref;
-import kr.or.kashi.hde.util.Utils;
-import kr.or.kashi.hde.widget.CheckableListAdapter;
+import kr.or.kashi.hde.widget.DeviceTypeListAdapter;
 import kr.or.kashi.hde.widget.CustomLayoutManager;
 import kr.or.kashi.hde.widget.DebugLogView;
 import kr.or.kashi.hde.widget.DeviceInfoView;
@@ -125,6 +126,7 @@ public class MainFragment extends Fragment {
             // Wait for a while until new devices are up to date by polling its state
             new Handler().postDelayed(() -> {
                 updateDeviceList();
+                updateDeviceTypeList();
                 mDiscoveryProgress.setVisibility(View.GONE);
                 mDiscoveryToggle.setChecked(false);
             }, 1000);
@@ -210,11 +212,31 @@ public class MainFragment extends Fragment {
         mDiscoveryToggle.setEnabled(!mNetwork.isSlaveMode());
         mDiscoveryToggle.setOnClickListener(view -> setDiscoveryOn(((Checkable)view).isChecked()));
 
-        final CheckableListAdapter<String> deviceTypeListAdapter = new CheckableListAdapter<>(
+        final DeviceTypeListAdapter deviceTypeListAdapter = new DeviceTypeListAdapter(
                 mContext, new ArrayList(mDeviceToKsIdMap.keySet()), mSelectedDeviceTypes);
-        deviceTypeListAdapter.setChangeRunnable(() -> {
-            LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
+        deviceTypeListAdapter.setCallback(new DeviceTypeListAdapter.Callback() {
+            @Override
+            public void onCheckedChanged(String item, boolean checked) {
+                LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
+            }
+            @Override
+            public void onAddButtonClicked(String item) {
+                String address = deviceTypeListAdapter.getAddress(item);
+                if (address != null && !address.isEmpty()) {
+                    try {
+                        int deviceId = Integer.parseInt(address.substring(2, 4), 16);
+                        int groupId = Integer.parseInt(address.substring(4, 5), 16);
+                        int singleId = Integer.parseInt(address.substring(5, 6), 16);
+                        mNetwork.addDevice(createKsDevice(item, deviceId, groupId, singleId));
+                        updateDeviceList();
+                        updateDeviceTypeList();
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         });
+
         mDeviceTypeListView = (ListView) v.findViewById(R.id.device_types_list);
         mDeviceTypeListView.setAdapter(deviceTypeListAdapter);
 
@@ -317,6 +339,7 @@ public class MainFragment extends Fragment {
         }
 
         updateLogFilter();
+        updateDeviceTypeList();
 
         return v;
     }
@@ -328,7 +351,7 @@ public class MainFragment extends Fragment {
 
     private void selectAllTypes() {
         mSelectedDeviceTypes.addAll(mDeviceToKsIdMap.keySet());
-        final CheckableListAdapter<String> deviceTypeListAdapter = new CheckableListAdapter<>(
+        final DeviceTypeListAdapter deviceTypeListAdapter = new DeviceTypeListAdapter(
                 mContext, new ArrayList(mDeviceToKsIdMap.keySet()), mDeviceToKsIdMap.keySet());
         mDeviceTypeListView.setAdapter(deviceTypeListAdapter);
         LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
@@ -336,7 +359,7 @@ public class MainFragment extends Fragment {
 
     private void deselectAllTypes() {
         mSelectedDeviceTypes.clear();
-        final CheckableListAdapter<String> deviceTypeListAdapter = new CheckableListAdapter<>(
+        final DeviceTypeListAdapter deviceTypeListAdapter = new DeviceTypeListAdapter(
                 mContext, new ArrayList(mDeviceToKsIdMap.keySet()), mSelectedDeviceTypes);
         mDeviceTypeListView.setAdapter(deviceTypeListAdapter);
         LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
@@ -497,6 +520,7 @@ public class MainFragment extends Fragment {
             mNetwork.addDevice(device);
         }
         updateDeviceList();
+        updateDeviceTypeList();
     }
 
     private void addAllDevicesInRange() {
@@ -504,6 +528,7 @@ public class MainFragment extends Fragment {
             mNetwork.addDevice(device);
         }
         updateDeviceList();
+        updateDeviceTypeList();
     }
 
     private List<HomeDevice> createSelectedDevices() {
@@ -591,6 +616,7 @@ public class MainFragment extends Fragment {
         }
         mNetwork.removeAllDevices();
         updateDeviceList();
+        updateDeviceTypeList();
     }
 
     private boolean removeAllDisconnectedDevices() {
@@ -601,6 +627,7 @@ public class MainFragment extends Fragment {
             if (!device.isConnected()) mNetwork.removeDevice(device);
         }
         updateDeviceList();
+        updateDeviceTypeList();
         return true;
     }
 
@@ -616,6 +643,7 @@ public class MainFragment extends Fragment {
         if (mNetwork.loadDevicesFrom(fis)) {
             debug("Device list has been loaded successfully");
             updateDeviceList();
+            updateDeviceTypeList();
         } else {
             debug("Can't load the saved device list");
         }
@@ -672,12 +700,66 @@ public class MainFragment extends Fragment {
                 if (holder.device != null && mNetwork != null) {
                     mNetwork.removeDevice(holder.device);
                     updateDeviceList();
+                    updateDeviceTypeList();
                 }
             }
         });
 
         mDeviceCountText.setText(" " + adapter.getItemCount());
         mDeviceListView.setAdapter(adapter);
+    }
+
+    private void updateDeviceTypeList() {
+        int[] ids = new int[mDeviceToKsIdMap.size()];
+        Arrays.fill(ids, 0);
+
+        List<Integer> devIdList = new ArrayList<>(mDeviceToKsIdMap.values());
+
+        for (HomeDevice device: getCurrentDevices()) {
+            int devId = Integer.parseInt(device.getAddress().substring(2, 4), 16);
+            int subId = Integer.parseInt(device.getAddress().substring(4, 6), 16);
+
+            int pos = devIdList.indexOf(devId);
+            if (pos < 0 || pos >= ids.length)
+                continue;
+
+            if (ids[pos] < subId) {
+                ids[pos] = subId;
+            }
+        }
+
+        final DeviceTypeListAdapter deviceTypeListAdapter =
+                (DeviceTypeListAdapter) mDeviceTypeListView.getAdapter();
+
+        for (int i=0; i<ids.length; i++) {
+            int devId = devIdList.get(i);
+            int subId = ids[i];
+            if (subId == 0) {
+                subId = 0x01;
+                if (devId == 0x02 || devId == 0x0E || devId == 0x39 || devId == 0x36) {
+                    subId += 0x10;
+                }
+            } else {
+               subId++;
+               if ((subId & 0xF) == 0xF) subId += 2;
+
+               if (devId == 0x02 || devId == 0x0E || devId == 0x39 || devId == 0x36) {
+                   if (subId >= 0xFF) subId = -1;
+               } else {
+                   if (subId >= 0x0F) subId = -1;
+               }
+            }
+            ids[i] = subId;
+        }
+
+        for (int i=0; i<ids.length; i++) {
+            if (ids[i] > -1) {
+                String address = String.format("::%02X%02X", devIdList.get(i), ids[i]);
+                deviceTypeListAdapter.setAddress(i, address);
+            } else {
+                deviceTypeListAdapter.setAddress(i, "");
+            }
+        }
     }
 
     private List<HomeDevice> getCurrentDevices() {
