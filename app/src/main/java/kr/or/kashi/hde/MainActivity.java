@@ -36,6 +36,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -50,6 +51,7 @@ import kr.or.kashi.hde.session.UsbNetworkSession;
 import kr.or.kashi.hde.util.LocalPreferences;
 import kr.or.kashi.hde.util.LocalPreferences.Pref;
 import kr.or.kashi.hde.util.Utils;
+import kr.or.kashi.hde.BuildConfig;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -65,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private Handler mHandler;
     private InputMethodManager mInputMethodManager;
     private EmptyFragment mEmptyFragment;
-
+    private TextView mVersionText;
     private Button mStartButton;
     private Button mStopButton;
     private Spinner mPortsSpinner;
@@ -102,6 +104,9 @@ public class MainActivity extends AppCompatActivity {
 
         mHandler = new Handler(Looper.getMainLooper());
         mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+
+        mVersionText = findViewById(R.id.version_text);
+        mVersionText.setText(BuildConfig.VERSION_NAME);
 
         mStartButton = findViewById(R.id.start_button);
         mStartButton.setOnClickListener(v -> startEmulator());

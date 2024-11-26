@@ -21,6 +21,8 @@ android {
         versionCode = Integer.valueOf(date)
         versionName = "1.0-${date}"
 
+        buildConfigField("String", "VERSION_NAME", "\"$versionName\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -45,6 +47,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"

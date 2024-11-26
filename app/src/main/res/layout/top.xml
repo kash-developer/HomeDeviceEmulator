@@ -29,20 +29,38 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="5dp"
+        android:layout_margin="5dp"
         android:textSize="32sp"
         android:textColor="#FFBBBBBB"
         android:textStyle="bold"
         android:text="KASH" />
 
-    <TextView
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="5dp"
-        android:textSize="24sp"
-        android:textColor="#FF111111"
-        android:textStyle="bold"
-        android:text="HOME DEVICE EMULATOR" />
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_gravity="top"
+            android:textSize="22sp"
+            android:textColor="#FF998866"
+            android:textStyle="bold"
+            android:text="HOME DEVICE EMULATOR" />
+
+        <TextView
+            android:id="@+id/version_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:textSize="8sp"
+            android:textColor="#FF111111"
+            android:textStyle="italic"
+            android:text="" />
+
+    </LinearLayout>
 
     <Space
         android:layout_width="0dp"
