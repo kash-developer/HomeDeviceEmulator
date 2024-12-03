@@ -19,15 +19,21 @@ package kr.or.kashi.hde.util;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
+import android.net.Uri;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -168,5 +174,31 @@ public final class Utils {
     public static void hideKeyboard(Context context, View view) {
         InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
+    public static boolean copyFile(File srcFile, File dstFile) {
+        final byte[] buffer = new byte[16 * 1024];
+
+        try {
+            final FileInputStream fis = new FileInputStream(srcFile);
+            final FileOutputStream fos = new FileOutputStream(dstFile);
+
+            int len;
+            while ((len = fis.read(buffer)) >= 0) {
+                fos.write(buffer, 0, len);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    public static void installUnknownPackage(Context context, Uri uri) {
+        Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+        intent.setData(uri);
+        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        context.startActivity(intent);
     }
 }

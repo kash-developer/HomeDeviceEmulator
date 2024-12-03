@@ -17,16 +17,23 @@
 
 package kr.or.kashi.hde;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -39,11 +46,20 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import kr.or.kashi.hde.session.NetworkSession;
 import kr.or.kashi.hde.session.UartSchedSession;
@@ -76,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
 
     private HomeNetwork mHomeNetwork;
 
-    private BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver mUsbPermissionReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
@@ -91,6 +107,18 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private BroadcastReceiver mExternalMediaReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Intent.ACTION_MEDIA_MOUNTED.equals(intent.getAction())) {
+                Uri uri = intent.getData();
+                if (uri != null) {
+                    checkUpdateFile(uri.getPath());
+                }
+            }
+        }
+    };
+
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(Utils.createDensityAdjustedContextByHeight(newBase, 600));
@@ -100,7 +128,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.root);
-        registerReceiver(mUsbReceiver, new IntentFilter(ACTION_USB_PERMISSION));
+
+        registerReceiver(mUsbPermissionReceiver, new IntentFilter(ACTION_USB_PERMISSION));
+
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+        intentFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
+        intentFilter.addAction(Intent.ACTION_MEDIA_EJECT);
+        intentFilter.addDataScheme("file");
+        registerReceiver(mExternalMediaReceiver, intentFilter);
 
         mHandler = new Handler(Looper.getMainLooper());
         mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -148,7 +184,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(mUsbReceiver);
+        unregisterReceiver(mUsbPermissionReceiver);
+        unregisterReceiver(mExternalMediaReceiver);
     }
 
     private void setStateText(String text) {
@@ -295,5 +332,56 @@ public class MainActivity extends AppCompatActivity {
         view.getLocationOnScreen(loc);
         return ev.getRawX() > loc[0] && ev.getRawY() > loc[1] && ev.getRawX() < (loc[0] + view.getWidth())
             && ev.getRawY() < (loc[1] + view.getHeight());
+    }
+
+    private void checkUpdateFile(String rootPath) {
+        final String apkFileName = "HomeDeviceEmulator.apk";
+        final File srcApkFile = new File(rootPath, apkFileName);
+        if (!srcApkFile.exists()) {
+            Log.i(TAG, apkFileName + " file is not found on " + rootPath);
+            return;
+        }
+
+        if (!Environment.isExternalStorageManager()) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+            Uri uri = Uri.fromParts("package", getPackageName(), null);
+            intent.setData(uri);
+            startActivity(intent);
+            return;
+        }
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            final File tmpApkFile = new File(getFilesDir(), "tmp.apk");
+            if (Utils.copyFile(srcApkFile, tmpApkFile)) {
+                handler.post(() -> installUpdateFile(tmpApkFile));
+            } else {
+                Log.e(TAG, "Can't copy file! src:" + srcApkFile + " dst:" + tmpApkFile);
+            }
+        });
+    }
+
+    private void installUpdateFile(File apkFile) {
+        try {
+            final PackageManager packageManager = getPackageManager();
+            PackageInfo packageInfo = packageManager.getPackageArchiveInfo(apkFile.getPath(), PackageManager.GET_META_DATA);
+            if (packageInfo == null) {
+                Log.e(TAG, "Can't get package info");
+                return;
+            }
+
+            if (!getPackageName().equals(packageInfo.packageName)) {
+                Log.e(TAG, "Different package name: " + packageInfo.packageName);
+                return;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        final Uri uri = FileProvider.getUriForFile(this, "kr.or.kashi.hde.installapkprovider", apkFile);
+        Utils.installUnknownPackage(this, uri);
     }
 }
