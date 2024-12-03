@@ -403,10 +403,10 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
 
         // If the device is capable of multiple status, modify the sub-id to
         // query for all (0x?F) devices.
-        if (cmd == CMD_STATUS_REQ && isCapableOf(CAP_STATUS_MULTI)) {
+        if (cmd == CMD_STATUS_REQ && (subId & 0xF0) != 0x00 && isCapableOf(CAP_STATUS_MULTI)) {
             packet.deviceSubId |= 0x0F;
         }
-        if (cmd == CMD_CHARACTERISTIC_REQ && isCapableOf(CAP_CHARAC_MULTI)) {
+        if (cmd == CMD_CHARACTERISTIC_REQ && (subId & 0xF0) != 0x00 && isCapableOf(CAP_CHARAC_MULTI)) {
             packet.deviceSubId |= 0x0F;
         }
 
