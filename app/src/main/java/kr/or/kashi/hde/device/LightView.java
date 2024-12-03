@@ -139,7 +139,7 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
 
         final boolean dimSupported = props.get(Light.PROP_DIM_SUPPORTED, Boolean.class);
         mLightDimmingCheck.setChecked(dimSupported);
-        mLightDimmingSeekBar.setEnabled(dimSupported);
+        mLightDimmingSeekBar.setEnabled(dimSupported && onoff);
         if (dimSupported) {
             final int min = props.get(Light.PROP_MIN_DIM_LEVEL, Integer.class);
             final int max = props.get(Light.PROP_MAX_DIM_LEVEL, Integer.class);
@@ -154,7 +154,7 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
 
         final boolean toneSupported = props.get(Light.PROP_TONE_SUPPORTED, Boolean.class);
         mLightColorCheck.setChecked(toneSupported);
-        mLightColorSeekBar.setEnabled(toneSupported);
+        mLightColorSeekBar.setEnabled(toneSupported && onoff);
         if (toneSupported) {
             final int min = props.get(Light.PROP_MIN_TONE_LEVEL, Integer.class);
             final int max = props.get(Light.PROP_MAX_TONE_LEVEL, Integer.class);
