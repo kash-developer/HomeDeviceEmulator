@@ -221,19 +221,7 @@ public class MainFragment extends Fragment {
             }
             @Override
             public void onAddButtonClicked(String item) {
-                String address = deviceTypeListAdapter.getAddress(item);
-                if (address != null && !address.isEmpty()) {
-                    try {
-                        int deviceId = Integer.parseInt(address.substring(2, 4), 16);
-                        int groupId = Integer.parseInt(address.substring(4, 5), 16);
-                        int singleId = Integer.parseInt(address.substring(5, 6), 16);
-                        mNetwork.addDevice(createKsDevice(item, deviceId, groupId, singleId));
-                        updateDeviceList();
-                        updateDeviceTypeList();
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                    }
-                }
+                addSingleDevice(item);
             }
         });
 
@@ -351,17 +339,17 @@ public class MainFragment extends Fragment {
 
     private void selectAllTypes() {
         mSelectedDeviceTypes.addAll(mDeviceToKsIdMap.keySet());
-        final DeviceTypeListAdapter deviceTypeListAdapter = new DeviceTypeListAdapter(
-                mContext, new ArrayList(mDeviceToKsIdMap.keySet()), mDeviceToKsIdMap.keySet());
-        mDeviceTypeListView.setAdapter(deviceTypeListAdapter);
+        final DeviceTypeListAdapter deviceTypeListAdapter =
+                (DeviceTypeListAdapter) mDeviceTypeListView.getAdapter();
+        deviceTypeListAdapter.setSelctedItemsRef(mSelectedDeviceTypes);
         LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
     }
 
     private void deselectAllTypes() {
         mSelectedDeviceTypes.clear();
-        final DeviceTypeListAdapter deviceTypeListAdapter = new DeviceTypeListAdapter(
-                mContext, new ArrayList(mDeviceToKsIdMap.keySet()), mSelectedDeviceTypes);
-        mDeviceTypeListView.setAdapter(deviceTypeListAdapter);
+        final DeviceTypeListAdapter deviceTypeListAdapter =
+                (DeviceTypeListAdapter) mDeviceTypeListView.getAdapter();
+        deviceTypeListAdapter.setSelctedItemsRef(mSelectedDeviceTypes);
         LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
     }
 
@@ -515,6 +503,15 @@ public class MainFragment extends Fragment {
         mDeviceTestPart.setVisibility(testOn ? View.VISIBLE : View.GONE);
     }
 
+    private void addSingleDevice(String type) {
+        HomeDevice device = createSingleDeviceOfType(type);
+        if (device != null) {
+            mNetwork.addDevice(device);
+            updateDeviceList();
+            updateDeviceTypeList();
+        }
+    }
+
     private void addSelectedDevices() {
         for (HomeDevice device: createSelectedDevices()) {
             mNetwork.addDevice(device);
@@ -531,37 +528,37 @@ public class MainFragment extends Fragment {
         updateDeviceTypeList();
     }
 
+    private HomeDevice createSingleDeviceOfType(String type) {
+        final DeviceTypeListAdapter deviceTypeListAdapter =
+                (DeviceTypeListAdapter) mDeviceTypeListView.getAdapter();
+
+        String address = deviceTypeListAdapter.getAddress(type);
+        if (address != null && !address.isEmpty()) {
+            try {
+                int deviceId = Integer.parseInt(address.substring(2, 4), 16);
+                int groupId = Integer.parseInt(address.substring(4, 5), 16);
+                int singleId = Integer.parseInt(address.substring(5, 6), 16);
+                return createKsDevice(type, deviceId, groupId, singleId);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
     private List<HomeDevice> createSelectedDevices() {
         List<HomeDevice> devices = new ArrayList<>();
 
-        for (String deviceType: mSelectedDeviceTypes) {
-            if (!mDeviceToKsIdMap.containsKey(deviceType)) {
-                debug("No device type: " + deviceType);
+        for (String type: mSelectedDeviceTypes) {
+            if (!mDeviceToKsIdMap.containsKey(type)) {
+                debug("No device type: " + type);
                 continue;
             }
 
-            int deviceId = mDeviceToKsIdMap.get(deviceType);
-            int single = mSingleIdSeekBar.getProgress();
-            int group = mGroupIdSeekBar.getProgress();
-
-            if (mSingleIdCheckBox.isChecked()) {
-                devices.add(createKsDevice(deviceType, deviceId, 0, single));
-            }
-
-            if (mSingleFullToggle.isChecked() && mSingleIdCheckBox.isChecked()) {
-                devices.add(createKsDevice(deviceType, deviceId, 0, 0xF));
-            }
-
-            if (mGroupIdCheckBox.isChecked()) {
-                devices.add(createKsDevice(deviceType, deviceId, group, single));
-
-                if (mSingleFullToggle.isChecked() && mGroupIdCheckBox.isChecked()) {
-                    devices.add(createKsDevice(deviceType, deviceId, group, 0xF));
-                }
-            }
-
-            if (mGroupFullToggle.isChecked() && mSingleFullToggle.isChecked()) {
-                devices.add(createKsDevice(deviceType, deviceId, 0xF, 0xF));
+            final HomeDevice device = createSingleDeviceOfType(type);
+            if (device != null) {
+                devices.add(device);
             }
         }
 

@@ -47,15 +47,20 @@ public class DeviceTypeListAdapter extends BaseAdapter {
         default void onAddButtonClicked(String item) {}
     }
 
-    public DeviceTypeListAdapter(Context context, List<String> allItems, Set<String> selectedItems) {
+    public DeviceTypeListAdapter(Context context, List<String> allItems, Set<String> selectedItemsRef) {
         mContext = context;
         mAllTypes = allItems;
         mAddresses = new ArrayList<>(allItems.size());
-        mSelectedTypes = selectedItems;
+        mSelectedTypes = selectedItemsRef;
 
         for (int i=0; i<allItems.size(); i++) {
             mAddresses.add("");
         }
+    }
+
+    public void setSelctedItemsRef(Set<String> selectedItemsRef) {
+        mSelectedTypes = selectedItemsRef;
+        notifyDataSetChanged();
     }
 
     public String getAddress(int position) {
