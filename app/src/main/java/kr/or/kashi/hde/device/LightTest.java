@@ -32,6 +32,7 @@ public class LightTest extends DeviceTestCase {
         }
         final Light.LevelRanges ranges = light.getLevelRanges();
         assertTrue(ranges.minDim < ranges.maxDim);
+        assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true); // Ensure light's on for dimming control
         assertPropertyChanaged(Light.PROP_CUR_DIM_LEVEL, Integer.class, ranges.minDim, ranges.minDim+1);
     }
 
@@ -42,6 +43,7 @@ public class LightTest extends DeviceTestCase {
         }
         final Light.LevelRanges ranges = light.getLevelRanges();
         assertTrue(ranges.minTone < ranges.maxTone);
+        assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true); // Ensure light's on for tone control
         assertPropertyChanaged(Light.PROP_CUR_TONE_LEVEL, Integer.class, ranges.minTone, ranges.minTone+1);
     }
 }
