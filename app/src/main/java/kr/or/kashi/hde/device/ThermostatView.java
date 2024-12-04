@@ -50,7 +50,10 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
     private CheckBox mSettingTempCheck;
     private TextView mSettingTempText;
     private EditText mSettingTempEdit;
-    private Button mTempSettingButton;
+
+    private float mMinTemp = 0.0f;
+    private float mMaxTemp = 0.0f;
+    private float mTempRes = 0.0f;
 
     public ThermostatView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -79,8 +82,9 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
         mSettingTempCheck = findViewById(R.id.setting_temp_check);
         mSettingTempText = findViewById(R.id.setting_temp_text);
         mSettingTempEdit = findViewById(R.id.setting_temp_edit);
-        mTempSettingButton = findViewById(R.id.temp_setting_button);
-        mTempSettingButton.setOnClickListener(v -> setTemperature());
+        findViewById(R.id.temp_setting_button).setOnClickListener(v -> setTemperature());
+        findViewById(R.id.temp_plus_button).setOnClickListener(v -> incTemperature());
+        findViewById(R.id.temp_minus_button).setOnClickListener(v -> decTemperature());
     }
 
     @Override
@@ -99,10 +103,10 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
         mHotwaterOnlyCheck.setChecked((functionStates & Thermostat.Function.HOTWATER_ONLY) != 0);
         mReservedModeCheck.setChecked((functionStates & Thermostat.Function.RESERVED_MODE) != 0);
 
-        final float minTemp = props.get(Thermostat.PROP_MIN_TEMPERATURE, Float.class);
-        final float maxTemp = props.get(Thermostat.PROP_MAX_TEMPERATURE, Float.class);
-        final float tempRes = props.get(Thermostat.PROP_TEMP_RESOLUTION, Float.class);
-        mTempRangeText.setText("min:" + minTemp + ", max:" + maxTemp + ", res:" + tempRes);
+        mMinTemp = props.get(Thermostat.PROP_MIN_TEMPERATURE, Float.class);
+        mMaxTemp = props.get(Thermostat.PROP_MAX_TEMPERATURE, Float.class);
+        mTempRes = props.get(Thermostat.PROP_TEMP_RESOLUTION, Float.class);
+        mTempRangeText.setText("min:" + mMinTemp + ", max:" + mMaxTemp + ", res:" + mTempRes);
 
         final float curTemp = props.get(Thermostat.PROP_CURRENT_TEMPERATURE, Float.class);
         mCurrentTempText.setText("" + curTemp);
@@ -126,5 +130,32 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
         final String editStr = mSettingTempEdit.getText().toString();
         float reqTemp = PropertyValue.newValueObject(Float.class, editStr);
         device().setProperty(Thermostat.PROP_SETTING_TEMPERATURE, Float.class, reqTemp);
+    }
+
+    private void incTemperature() {
+        final String editStr = mSettingTempEdit.getText().toString();
+        float newTemp = PropertyValue.newValueObject(Float.class, editStr);
+        newTemp = roundTemp(newTemp + mTempRes);
+        mSettingTempEdit.setText("" + newTemp);
+        setTemperature();
+    }
+
+    private void decTemperature() {
+        final String editStr = mSettingTempEdit.getText().toString();
+        float newTemp = PropertyValue.newValueObject(Float.class, editStr);
+        newTemp = roundTemp(newTemp - mTempRes);
+        mSettingTempEdit.setText("" + newTemp);
+        setTemperature();
+    }
+
+    public float roundTemp(float value) {
+        value = roundToNearest(value, mTempRes);
+        value = Math.max(value, mMinTemp);
+        value = Math.min(value, mMaxTemp);
+        return value;
+    }
+
+    public static float roundToNearest(float value, float multiple) {
+        return Math.round(value / multiple) * multiple;
     }
 }

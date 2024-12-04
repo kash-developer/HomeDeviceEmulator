@@ -162,9 +162,21 @@
 
         <Button
             android:id="@+id/temp_setting_button"
-            android:layout_width="70dp"
+            android:layout_width="40dp"
             android:layout_height="40dp"
-            android:text="Set" />
+            android:text="\u23CE" />
+
+        <Button
+            android:id="@+id/temp_plus_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="+" />
+
+        <Button
+            android:id="@+id/temp_minus_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="-" />
 
     </LinearLayout>
 
