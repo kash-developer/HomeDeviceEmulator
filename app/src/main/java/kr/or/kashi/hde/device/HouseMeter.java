@@ -50,25 +50,6 @@ public class HouseMeter extends HomeDevice {
         int kWh         = 4;
     }
 
-    /**
-     * Measure units of meter
-     */
-    public static class MeterUnits {
-        /**
-         * One of {@link MeasureUnit} for current measurement
-         * @see #getMeterUnits()
-         * @see #getCurrentMeasure()
-         */ 
-        public @MeasureUnit int current;
-
-        /**
-         * One of {@link MeasureUnit} for total measurement
-         * @see #getMeterUnits()
-         * @see #getTotalMeasure()
-         */
-        public @MeasureUnit int total;
-    }
-
     /** Property: Indicating what type of device */
     @PropertyDef(valueClass=MeterType.class)
     public static final String PROP_METER_TYPE          = PROP_PREFIX + "meter_type";
@@ -105,49 +86,4 @@ public class HouseMeter extends HomeDevice {
         return HomeDevice.Type.HOUSE_METER;
     }
 
-    /**
-     * Gets the type of meter.
-     * @return One of {@link MeterType}
-     */
-    public @MeterType int getMeterType() {
-        return getProperty(PROP_METER_TYPE, Integer.class);
-    }
-
-    /**
-     * Whether this meter is enabled or not.
-     * @return {@code true} if meter is enabled.
-     */
-    public boolean isEnabled() {
-        return getProperty(PROP_METER_ENABLED, Boolean.class);
-    }
-
-    /**
-     * Returns {@link MeterUnits} that contains unit type of current and total
-     * measurments.
-     * @return {@link MeterUnits} object
-     */
-    public MeterUnits getMeterUnits() {
-        MeterUnits units = new MeterUnits();
-        units.current = getProperty(PROP_CURRENT_METER_UNIT, Integer.class);
-        units.total = getProperty(PROP_TOTAL_METER_UNIT, Integer.class);
-        return units;
-    }
-
-    /**
-     * Get the current measurement aginst this meter
-     * @see #getMeterUnits()
-     * @return {@code double} value in one unit of {@link MeasureUnit}.
-     */
-    public double getCurrentMeasure() {
-        return getProperty(PROP_CURRENT_METER_VALUE, Double.class);
-    }
-
-    /**
-     * Get the total measurement against this meter.
-     * @see #getMeterUnits()
-     * @return {@code double} value in one unit of {@link MeasureUnit}.
-     */
-    public double getTotalMeasure() {
-        return getProperty(PROP_TOTAL_METER_VALUE, Double.class);
-    }
 }

@@ -17,7 +17,6 @@
 
 package kr.or.kashi.hde.device;
 
-import kr.or.kashi.hde.base.PropertyValue;
 import kr.or.kashi.hde.base.PropertyDef;
 import kr.or.kashi.hde.DeviceContextBase;
 import kr.or.kashi.hde.HomeDevice;
@@ -82,85 +81,4 @@ public class BatchSwitch extends HomeDevice {
         return HomeDevice.Type.BATCH_SWITCH;
     }
 
-    /**
-     * Whether if a switch is equipped in the device.
-     * @return {@code true} if device has the switch.
-     */
-    public boolean hasSwitch(@Switch long switch_) {
-        return (getPropertyL(PROP_SUPPORTED_SWITCHES) & switch_) != 0L;
-    }
-
-    /**
-     * Get current on or off state of switch
-     * @return {@code true} if switch is on.
-     */
-    public boolean getSwitchState(@Switch long switch_) {
-        return (getSwitchStates() & switch_) != 0L;
-    }
-
-    /**
-     * Get all states of switches.
-     * @return {@code long} value interpereted as {@link Switch} bits.
-     */
-    public @Switch long getSwitchStates() {
-        return getPropertyL(PROP_SWITCH_STATES);
-    }
-
-    /**
-     * Set bits of on/off states for multiple switches.
-     * @param states {@code long} value interpereted as {@link Switch} bits.
-     * @param on {@code true} if switches of {@param states} should be on.
-     */
-    public void setSwitchStates(@Switch long states, boolean on) {
-        final long curStates = (Long) getStagedProperty(PROP_SWITCH_STATES, Long.class);
-        final long newStates = (on) ? (curStates | states) : (curStates & ~states);
-        setProperty(PROP_SWITCH_STATES, Long.class, newStates);
-    }
-
-    /**
-     * Whether if a life information is displayabble in the device.
-     * @return {@code true} if device can display the information.
-     */
-    public boolean hasDisplay(@Display long display) {
-        return (getPropertyL(PROP_SUPPORTED_DISPLAYS) & display) != 0L;
-    }
-
-    /**
-     * Gets if the information is displaying on device
-     * @param display The type of diaplayable information.
-     * @return {@code true} if the display is on.
-     */
-    public boolean getDisplayState(@Display long display) {
-        return (getDisplayStates() & display) != 0L;
-    }
-
-    /**
-     * Get all on/off states of displays.
-     * @return {@code long} value interpereted as {@link Display} bits.
-     */
-    public @Display long getDisplayStates() {
-        return getPropertyL(PROP_DISPLAY_STATES);
-    }
-
-    /**
-     * Set bits of on/off states for multiple displays.
-     * @param states {@code long} value interpereted as {@link Display} bits.
-     * @param on {@code true} if displays of {@param states} should be on.
-     */
-    public void setDisplayStates(@Display long states, boolean on) {
-        final long curStates = (Long) getStagedProperty(PROP_DISPLAY_STATES, Long.class);
-        final long newStates = (on) ? (curStates | states) : (curStates & ~states);
-        setProperty(PROP_DISPLAY_STATES, Long.class, newStates);
-    }
-
-    /**
-     * Send vendor-specific displayable data to the device.
-     * @param display The display id as {@link Display}.
-     * @param data Vendor-specific displayable data.
-     */
-    public void setDisplayData(@Display long display, byte[] data) {
-        flushProperties(); // Ensure there's no staged changes and ...
-        // Set extra data for only single display.
-        setPropertyNow(new PropertyValue<Long>(PROP_DISPLAY_STATES, display, data));
-    }
 }

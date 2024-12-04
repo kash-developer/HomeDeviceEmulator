@@ -38,26 +38,6 @@ public class Thermostat extends HomeDevice {
         long RESERVED_MODE = 1L << 4;
     }
 
-    /**
-     * Range of Temperature
-     */
-    public static class TempRange {
-        /**
-         * Resolution of temperatures, all the value of temperature is rounded by this.
-         */
-        public float res;
-
-        /**
-         * Minimum temperature, lowest value in setting a temperature
-         */
-        public float min;
-
-        /**
-         * Maximum temperature, highest value in setting a temperature
-         */
-        public float max;
-    }
-
     /** Property: Bits for indicating each {@link Function} is supported or not */
     @PropertyDef(valueClass=Function.class, formatHint="bits")
     public static final String PROP_SUPPORTED_FUNCTIONS     = PROP_PREFIX + "function.supports";
@@ -98,78 +78,4 @@ public class Thermostat extends HomeDevice {
         return HomeDevice.Type.THERMOSTAT;
     }
 
-    /**
-     * Whether if given function is supported.
-     * @param function One of {@link Function}
-     * @return {@code true} if the function is supported.
-     */
-    public boolean hasFunction(long function) {
-        return (getProperty(PROP_SUPPORTED_FUNCTIONS, Long.class) & function) != 0L;
-    }
-
-    /**
-     * Gets the working state of a function.
-     * @param function One of {@link Function}
-     * @return Whether if the function is working.
-     */
-    public boolean getFunctionState(@Function long function) {
-        return (getFunctionStates() & function) != 0L;
-    }
-
-    /**
-     * Retrieves all the states of functions.
-     * @return Bits of {@link Function} that is indicating each working or not.
-     */
-    public long getFunctionStates() {
-        return getProperty(PROP_FUNCTION_STATES, Long.class);
-    }
-
-    /**
-     * Sets working states for multiple functions.
-     * @param funcs Bits of {@link Function} that should be changed
-     * @param set {@code true} to set.
-     */
-    public void setFunctionStates(@Function long funcs, boolean set) {
-        final long curFuncs = (Long) getStagedProperty(PROP_FUNCTION_STATES, Long.class);
-        final long newFuncs = (set) ? (curFuncs | funcs) : (curFuncs & ~funcs);
-        setProperty(PROP_FUNCTION_STATES, Long.class, newFuncs);
-    }
-
-    /**
-     * Returns structure object that contains range factors of temperature.
-     * @return {@link TempRange} object.
-     */
-    public TempRange getTemperatureRange() {
-        TempRange range = new TempRange();
-        range.res = getProperty(PROP_TEMP_RESOLUTION, Float.class);
-        range.min = getProperty(PROP_MIN_TEMPERATURE, Float.class);
-        range.max = getProperty(PROP_MAX_TEMPERATURE, Float.class);
-        return range;
-    }
-
-    /**
-     * Get current temperature that is measured from device.
-     * @see #getTemperatureRange()
-     * @return {@code float} value as temperature degree.
-     */
-    public float getCurrentTemperature() {
-        return getProperty(PROP_CURRENT_TEMPERATURE, Float.class);
-    }
-
-    /**
-     * Get the temperature that has been requested to set on device.
-     * @see #getTemperatureRange()
-     * @return {@code float} value as temperature degree.
-     */
-    public float getSettingTemperature() {
-        return getProperty(PROP_SETTING_TEMPERATURE, Float.class);
-    }
-
-    /**
-     * Request new temperature to be set to the device.
-     * @param degree {@code float} value as temperature degree.
-     */
-    public void setTemperature(float degree) {
-        setProperty(PROP_SETTING_TEMPERATURE, Float.class, degree);
-    }
 }

@@ -21,9 +21,6 @@ import kr.or.kashi.hde.base.PropertyDef;
 import kr.or.kashi.hde.DeviceContextBase;
 import kr.or.kashi.hde.HomeDevice;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * A device class for the ventilation.
  */
@@ -60,25 +57,6 @@ public class Ventilation extends HomeDevice {
         long SMOKE_REMOVING     = 1L << 3; // Removing smoke is in progress
         long HIGH_CO2_LEVEL     = 1L << 4; // CO2 level is high
         long HEATER_RUNNING     = 1L << 5; // Heater is running
-    }
-
-    /**
-     * Range of Fan Speed
-     */
-    public static class SpeedRange {
-        /**
-         * Lowest level of fan speed.
-         * @see #getFanSpeedRange()
-         * @see #setFanSpeed(int)
-         */
-        public int min;
-
-        /**
-         * Highest level of fan speed.
-         * @see #getFanSpeedRange()
-         * @see #setFanSpeed(int)
-         */
-        public int max;
     }
 
     /** Property: Bits of supported {@link Mode}. */
@@ -122,33 +100,6 @@ public class Ventilation extends HomeDevice {
     }
 
     /**
-     * Returns the support state for a operation mode.
-     * @return {@code true} if given mode is supported.
-     */
-    public boolean isSupportedMode(@Mode long mode) {
-        final long supportedModes = getProperty(PROP_SUPPORTED_MODES, Long.class);
-        return (supportedModes & mode) != 0L;
-    }
-
-    /**
-     * Get the list of supported operation modes.
-     * @return {@code List<Long>} consist of {@link Mode}.
-     */
-    public List<Long> getSupportedModes() {
-        final long supportedModes = getProperty(PROP_SUPPORTED_MODES, Long.class);
-
-        List<Long> outModeList = new ArrayList<>();
-        for (int i=0; i<Long.SIZE; i++) {
-            long mode = (1 << i);
-            if ((supportedModes & mode) != 0L) {
-                outModeList.add(mode);
-            }
-        }
-
-        return outModeList;
-    }
-
-    /**
      * Gets current operation mode.
      * @return One of {@link Mode}
      */
@@ -166,50 +117,4 @@ public class Ventilation extends HomeDevice {
         setProperty(PROP_OPERATION_MODE, Long.class, mode);
     }
 
-    /**
-     * Check if given {@link Alarm} is detected or not.
-     * @param alarm One of {@link Alarm}
-     * @return {@code true} if the alarm is detected.
-     */
-    public boolean isAlarmed(@Alarm long alarm) {
-        return (getProperty(PROP_OPERATION_ALARM, Long.class) & alarm) != 0L;
-    }
-
-    /**
-     * Clear detected alarms. Only the bits of alarm that can be cleared may change.
-     * @param alarms {@code long} value interpereted as {@link Alarm} bits.
-     */
-    public void clearAlarms(@Alarm long alarms) {
-        final long curAlarms = (Long) getStagedProperty(PROP_OPERATION_ALARM, Long.class);
-        final long newAlarms = (curAlarms & ~alarms); // Clear bits
-        setProperty(PROP_OPERATION_ALARM, Long.class, newAlarms);
-    }
-
-    /**
-     * Retrieves the range of fan speed.
-     * @return {@link SpeedRange} object that contains lowest and hightest speed.
-     */
-    public SpeedRange getFanSpeedRange() {
-        SpeedRange range = new SpeedRange();
-        range.min = getProperty(PROP_MIN_FAN_SPEED, Integer.class);
-        range.max = getProperty(PROP_MAX_FAN_SPEED, Integer.class);
-        return range;
-    }
-
-    /**
-     * Gets current fan speed.
-     * @return The level of fan speed.
-     */
-    public int getFanSpeed() {
-        return getProperty(PROP_CUR_FAN_SPEED, Integer.class);
-    }
-
-    /**
-     * Sets new speed of fan that should be with in the range.
-     * @param speed The level of fan speed.
-     * @see #getFanSpeedRange()
-     */
-    public void setFanSpeed(int speed) {
-        setProperty(PROP_CUR_FAN_SPEED, Integer.class, speed);
-    }
 }

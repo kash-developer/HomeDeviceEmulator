@@ -17,14 +17,9 @@
 
 package kr.or.kashi.hde.device;
 
-import android.annotation.IntDef;
-
 import kr.or.kashi.hde.base.PropertyDef;
 import kr.or.kashi.hde.DeviceContextBase;
 import kr.or.kashi.hde.HomeDevice;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 
 /**
  * A device class for controlling the switchs or device of light.
@@ -119,14 +114,6 @@ public class Light extends HomeDevice {
      */
     public boolean isToneSupported() {
         return getProperty(PROP_TONE_SUPPORTED, Boolean.class);
-    }
-
-    /**
-     * Whether if the switch is connected in 3-way.
-     * @return true if the switch is 3-way type.
-     */
-    public boolean is3WaySwitch() {
-        return getProperty(PROP_IS_3WAY_SWITCH, Boolean.class);
     }
 
     /**

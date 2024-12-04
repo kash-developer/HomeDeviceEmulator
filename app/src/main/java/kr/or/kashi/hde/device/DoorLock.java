@@ -56,24 +56,6 @@ public class DoorLock extends HomeDevice {
     }
 
     /**
-     * Returns {@code true} if given state is supported.
-     * @param state One of {@link State} as {@code long}.
-     * @return True if supported.
-     */
-    public boolean isSupportedState(@State long state) {
-        return (getPropertyL(PROP_SUPPORTED_STATES) & state) != 0L;
-    }
-
-    /**
-     * Gets the activation state.
-     * @param state One of {@link State} as {@code long}.
-     * @return True if activated.
-     */
-    public boolean getState(@State long state) {
-        return (getStates() & state) != 0L;
-    }
-
-    /**
      * Returns all states of activation.
      * @return Bits of {@link State} as {@code long}.
      */
@@ -81,14 +63,4 @@ public class DoorLock extends HomeDevice {
         return getPropertyL(PROP_CURRENT_STATES);
     }
 
-    /**
-     * Control or change a funtion of device by setting {@link State}.
-     * @param states Bits of {@link State}.
-     * @param set True if given state(s) have to be set or performed.
-     */
-    public void setStates(@State long states, boolean set) {
-        final long curStates = (Long) getStagedProperty(PROP_CURRENT_STATES, Long.class);
-        final long newStates = (set) ? (curStates | states) : (curStates & ~states);
-        setProperty(PROP_CURRENT_STATES, Long.class, newStates);
-    }
 }
