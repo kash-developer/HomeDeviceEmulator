@@ -55,7 +55,7 @@ public class DoorLockView extends HomeDeviceView<DoorLock> implements View.OnCli
         super.onFinishInflate();
 
         mDoorCheck = findViewById(R.id.door_check);
-        mDoorCheck.setEnabled(false);
+        mDoorCheck.setEnabled(false); // supported in forced (see. spec)
         mDoorCheck.setOnClickListener(this);
         mDoorGroup = findViewById(R.id.door_group);
         mDoorOpenedRadio = findViewById(R.id.door_opened_radio);
@@ -64,15 +64,15 @@ public class DoorLockView extends HomeDeviceView<DoorLock> implements View.OnCli
         mDoorClosedRadio.setOnClickListener(this);
 
         mEmergencyCheck = findViewById(R.id.emergency_check);
-        mEmergencyCheck.setEnabled(false);
+        mEmergencyCheck.setEnabled(false); // supported in forced (see. spec)
         mEmergencyCheck.setOnClickListener(this);
         mEmergencyGroup = findViewById(R.id.emergency_group);
         mEmergencyAlarmedRadio = findViewById(R.id.emergency_alarmed_radio);
-        mEmergencyAlarmedRadio.setEnabled(isSlave());
-        mEmergencyAlarmedRadio.setOnClickListener(this);
+        mEmergencyAlarmedRadio.setClickable(isSlave());
+        if (isSlave()) mEmergencyAlarmedRadio.setOnClickListener(this);
         mEmergencyNormalRadio = findViewById(R.id.emergency_normal_radio);
-        mEmergencyNormalRadio.setEnabled(isSlave());
-        mEmergencyNormalRadio.setOnClickListener(this);
+        mEmergencyNormalRadio.setClickable(isSlave());
+        if (isSlave()) mEmergencyNormalRadio.setOnClickListener(this);
     }
 
     @Override
@@ -82,8 +82,8 @@ public class DoorLockView extends HomeDeviceView<DoorLock> implements View.OnCli
         mEmergencyCheck.setChecked((supports & DoorLock.State.EMERGENCY_ALARMED) != 0);
         mDoorOpenedRadio.setEnabled(mDoorCheck.isChecked());
         mDoorClosedRadio.setEnabled(mDoorCheck.isChecked());
-        mEmergencyAlarmedRadio.setEnabled(isSlave() && mDoorCheck.isChecked());
-        mEmergencyNormalRadio.setEnabled(isSlave() && mDoorCheck.isChecked());
+        mEmergencyAlarmedRadio.setEnabled(mEmergencyCheck.isChecked());
+        mEmergencyNormalRadio.setEnabled(mEmergencyCheck.isChecked());
 
         final long states = props.get(DoorLock.PROP_CURRENT_STATES, Long.class);
         final boolean opened = (states & DoorLock.State.DOOR_OPENED) != 0;
