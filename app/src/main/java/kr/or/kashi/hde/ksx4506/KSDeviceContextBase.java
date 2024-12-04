@@ -410,6 +410,10 @@ public abstract class KSDeviceContextBase extends DeviceContextBase {
             packet.deviceSubId |= 0x0F;
         }
 
+        if (devId == 0x30) {    // HACK for House Meter
+            packet.deviceSubId |= 0x0F;
+        }
+
         return packet;
     }
 
