@@ -48,6 +48,7 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
     private TextView mTempRangeText;
     private CheckBox mCurrentTempCheck;
     private TextView mCurrentTempText;
+    private EditText mCurrentTempEdit;
     private CheckBox mSettingTempCheck;
     private TextView mSettingTempText;
     private EditText mSettingTempEdit;
@@ -76,16 +77,31 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
         mHotwaterOnlyCheck.setOnClickListener(v -> setFunctions());
         mReservedModeCheck = findViewById(R.id.function_reserved_mode_check);
         mReservedModeCheck.setOnClickListener(v -> setFunctions());
+
         mTempRangeCheck = findViewById(R.id.temp_range_check);
         mTempRangeText = findViewById(R.id.temp_range_text);
+
         mCurrentTempCheck = findViewById(R.id.current_temp_check);
         mCurrentTempText = findViewById(R.id.current_temp_text);
+        mCurrentTempEdit = findViewById(R.id.current_temp_edit);
+        mCurrentTempEdit.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
+        findViewById(R.id.current_temp_set_button).setOnClickListener(v -> setCurrentTemperature());
+        findViewById(R.id.current_temp_set_button).setVisibility(isSlave() ? View.VISIBLE : View.GONE);
+        findViewById(R.id.current_temp_plus_button).setOnClickListener(v -> incCurrentTemperature());
+        findViewById(R.id.current_temp_plus_button).setVisibility(isSlave() ? View.VISIBLE : View.GONE);
+        findViewById(R.id.current_temp_minus_button).setOnClickListener(v -> decCurrentTemperature());
+        findViewById(R.id.current_temp_minus_button).setVisibility(isSlave() ? View.VISIBLE : View.GONE);
+
         mSettingTempCheck = findViewById(R.id.setting_temp_check);
         mSettingTempText = findViewById(R.id.setting_temp_text);
         mSettingTempEdit = findViewById(R.id.setting_temp_edit);
-        findViewById(R.id.temp_setting_button).setOnClickListener(v -> setTemperature());
-        findViewById(R.id.temp_plus_button).setOnClickListener(v -> incTemperature());
-        findViewById(R.id.temp_minus_button).setOnClickListener(v -> decTemperature());
+        mSettingTempEdit.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
+        findViewById(R.id.setting_temp_set_button).setOnClickListener(v -> setSettingTemperature());
+        findViewById(R.id.setting_temp_set_button).setVisibility(isMaster() ? View.VISIBLE : View.GONE);
+        findViewById(R.id.setting_temp_plus_button).setOnClickListener(v -> incSettingTemperature());
+        findViewById(R.id.setting_temp_plus_button).setVisibility(isMaster() ? View.VISIBLE : View.GONE);
+        findViewById(R.id.setting_temp_minus_button).setOnClickListener(v -> decSettingTemperature());
+        findViewById(R.id.setting_temp_minus_button).setVisibility(isMaster() ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -111,6 +127,7 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
 
         final float curTemp = props.get(Thermostat.PROP_CURRENT_TEMPERATURE, Float.class);
         mCurrentTempText.setText("" + curTemp);
+        if (!mCurrentTempEdit.hasFocus()) mCurrentTempEdit.setText("" + curTemp);
 
         final float setTemp = props.get(Thermostat.PROP_SETTING_TEMPERATURE, Float.class);
         mSettingTempText.setText("" + setTemp);
@@ -127,26 +144,48 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
         device().setProperty(Thermostat.PROP_FUNCTION_STATES, Long.class,  functions);
     }
 
-    private void setTemperature() {
+    private void setCurrentTemperature() {
+        final String editStr = mCurrentTempEdit.getText().toString();
+        float reqTemp = PropertyValue.newValueObject(Float.class, editStr);
+        device().setProperty(Thermostat.PROP_CURRENT_TEMPERATURE, Float.class, reqTemp);
+    }
+
+    private void incCurrentTemperature() {
+        final String editStr = mCurrentTempEdit.getText().toString();
+        float newTemp = PropertyValue.newValueObject(Float.class, editStr);
+        newTemp = roundTemp(newTemp + mTempRes);
+        mCurrentTempEdit.setText("" + newTemp);
+        setCurrentTemperature();
+    }
+
+    private void decCurrentTemperature() {
+        final String editStr = mCurrentTempEdit.getText().toString();
+        float newTemp = PropertyValue.newValueObject(Float.class, editStr);
+        newTemp = roundTemp(newTemp - mTempRes);
+        mCurrentTempEdit.setText("" + newTemp);
+        setCurrentTemperature();
+    }
+
+    private void setSettingTemperature() {
         final String editStr = mSettingTempEdit.getText().toString();
         float reqTemp = PropertyValue.newValueObject(Float.class, editStr);
         device().setProperty(Thermostat.PROP_SETTING_TEMPERATURE, Float.class, reqTemp);
     }
 
-    private void incTemperature() {
+    private void incSettingTemperature() {
         final String editStr = mSettingTempEdit.getText().toString();
         float newTemp = PropertyValue.newValueObject(Float.class, editStr);
         newTemp = roundTemp(newTemp + mTempRes);
         mSettingTempEdit.setText("" + newTemp);
-        setTemperature();
+        setSettingTemperature();
     }
 
-    private void decTemperature() {
+    private void decSettingTemperature() {
         final String editStr = mSettingTempEdit.getText().toString();
         float newTemp = PropertyValue.newValueObject(Float.class, editStr);
         newTemp = roundTemp(newTemp - mTempRes);
         mSettingTempEdit.setText("" + newTemp);
-        setTemperature();
+        setSettingTemperature();
     }
 
     public float roundTemp(float value) {

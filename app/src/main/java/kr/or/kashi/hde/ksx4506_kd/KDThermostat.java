@@ -21,6 +21,7 @@ import android.util.Log;
 
 import kr.or.kashi.hde.DeviceContextBase;
 import kr.or.kashi.hde.DeviceStatePollee;
+import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
@@ -48,14 +49,20 @@ public class KDThermostat extends KSThermostat {
 
     public boolean mFirstStatusRetreived = false;
     public boolean mPowerControlSupported = false;
+    public long mSavedFunctionState = 0;
 
     public KDThermostat(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps);
     }
 
     private void resetInternalStates() {
-        mFirstStatusRetreived = false;
-        mPowerControlSupported = false;
+        if (isMaster()) {
+            mFirstStatusRetreived = false;
+            mPowerControlSupported = false;
+        } else {
+            mFirstStatusRetreived = true;
+            mPowerControlSupported = true;
+        }
     }
 
     @Override
@@ -77,6 +84,20 @@ public class KDThermostat extends KSThermostat {
         KSPacket ksPacket = (KSPacket) packet;
 
         switch (ksPacket.commandType) {
+            case CMD_POWER_OFF_REQ: {
+                if (packet.data().length < 1) return PARSE_OK_NONE;
+                final boolean newOn = (packet.data()[0] == 0);
+                outProps.put(HomeDevice.PROP_ONOFF, newOn);
+                syncOnOffToFunctionState(outProps, outProps);
+
+                // HACK/WTF: Must response as only group packet form!
+                final KDThermostat device = (getParent() != null) ? ((KDThermostat)getParent()) : (this);
+                final ByteArrayBuffer data = new ByteArrayBuffer();
+                device.makeStatusRspData(getReadPropertyMap(), data);
+                sendPacket(createPacket(CMD_POWER_OFF_RSP, data.toArray()));
+                return PARSE_OK_ACTION_PERFORMED;
+            }
+
             case CMD_POWER_OFF_RSP: {
                 if (!mPowerControlSupported) {
                     mPowerControlSupported = true;
@@ -87,7 +108,12 @@ public class KDThermostat extends KSThermostat {
             }
         }
 
-        return super.parsePayload(packet, outProps);
+        int res = super.parsePayload(packet, outProps); // call super
+
+        mSavedFunctionState = outProps.get(Thermostat.PROP_FUNCTION_STATES, Long.class);
+        outProps.put(HomeDevice.PROP_ONOFF, (mSavedFunctionState != 0L));
+
+        return res;
     }
 
     @Override
@@ -116,6 +142,34 @@ public class KDThermostat extends KSThermostat {
         super.onPowerControlTask(reqProps, outProps); // call super
         sendOnOffControlPacket(reqProps);
         return true;
+    }
+
+    @Override
+    protected boolean onPowerControlTaskInSlave(PropertyMap reqProps, PropertyMap outProps) {
+        super.onPowerControlTaskInSlave(reqProps, outProps); // call super
+        syncOnOffToFunctionState(reqProps, outProps);
+        return true;
+    }
+
+    protected boolean onFunctionControlTaskInSlave(PropertyMap reqProps, PropertyMap outProps) {
+        super.onFunctionControlTask(reqProps, outProps); // call super
+        mSavedFunctionState = reqProps.get(Thermostat.PROP_FUNCTION_STATES, Long.class);
+        outProps.put(Thermostat.PROP_FUNCTION_STATES, mSavedFunctionState);
+        outProps.put(HomeDevice.PROP_ONOFF, (mSavedFunctionState != 0L));
+        return true;
+    }
+
+    private void syncOnOffToFunctionState(PropertyMap reqProps, PropertyMap outProps) {
+        final boolean onoff = reqProps.get(HomeDevice.PROP_ONOFF, Boolean.class);
+        if (onoff) {
+            if (mSavedFunctionState == 0L) mSavedFunctionState |= Thermostat.Function.HEATING;
+            outProps.put(Thermostat.PROP_FUNCTION_STATES, mSavedFunctionState);
+            outProps.put(HomeDevice.PROP_ONOFF, true);
+        } else {
+            mSavedFunctionState = outProps.get(Thermostat.PROP_FUNCTION_STATES, Long.class);
+            outProps.put(Thermostat.PROP_FUNCTION_STATES, 0L);
+            outProps.put(HomeDevice.PROP_ONOFF, false);
+        }
     }
 
     private void syncVendorPropsToParentAndSiblings(PropertyMap props) {

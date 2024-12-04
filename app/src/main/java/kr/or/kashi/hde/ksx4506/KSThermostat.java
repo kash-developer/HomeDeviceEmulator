@@ -81,6 +81,9 @@ public class KSThermostat extends KSDeviceContextBase {
             mRxPropertyMap.put(Thermostat.PROP_SETTING_TEMPERATURE, 10.0f);
             mRxPropertyMap.put(Thermostat.PROP_CURRENT_TEMPERATURE, 10.0f);
             mRxPropertyMap.commit();
+
+            setPropertyTask(HomeDevice.PROP_ONOFF, this::onPowerControlTaskInSlave);
+            setPropertyTask(Thermostat.PROP_FUNCTION_STATES, this::onFunctionControlTaskInSlave);
         }
     }
 
@@ -412,6 +415,10 @@ public class KSThermostat extends KSDeviceContextBase {
         return false;
     }
 
+    protected boolean onPowerControlTaskInSlave(PropertyMap reqProps, PropertyMap outProps) {
+        return false; // NOOP
+    }
+
     protected boolean onFunctionControlTask(PropertyMap reqProps, PropertyMap outProps) {
         long curStates = (Long) getProperty(Thermostat.PROP_FUNCTION_STATES).getValue();
         long reqStates = (Long) reqProps.get(Thermostat.PROP_FUNCTION_STATES).getValue();
@@ -448,6 +455,10 @@ public class KSThermostat extends KSDeviceContextBase {
         }
 
         return consumed;
+    }
+
+    protected boolean onFunctionControlTaskInSlave(PropertyMap reqProps, PropertyMap outProps) {
+        return false; // NOOP
     }
 
     protected boolean onTemperatureControlTask(PropertyMap reqProps, PropertyMap outProps) {

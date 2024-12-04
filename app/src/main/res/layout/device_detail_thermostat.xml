@@ -116,6 +116,39 @@
             android:layout_height="wrap_content"
             android:text="\u2103" />
 
+        <Space
+            android:layout_width="10dp"
+            android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/current_temp_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:inputType="number"
+            android:textSize="14dp"
+            android:text="0.0" />
+
+        <Button
+            android:id="@+id/current_temp_set_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="\u23CE" />
+
+        <Button
+            android:id="@+id/current_temp_plus_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="+" />
+
+        <Button
+            android:id="@+id/current_temp_minus_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="-" />
+
     </LinearLayout>
 
     <LinearLayout
@@ -155,25 +188,20 @@
             android:textSize="14dp"
             android:text="0.0" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="\u2103" />
-
         <Button
-            android:id="@+id/temp_setting_button"
+            android:id="@+id/setting_temp_set_button"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:text="\u23CE" />
 
         <Button
-            android:id="@+id/temp_plus_button"
+            android:id="@+id/setting_temp_plus_button"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:text="+" />
 
         <Button
-            android:id="@+id/temp_minus_button"
+            android:id="@+id/setting_temp_minus_button"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:text="-" />
