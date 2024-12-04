@@ -123,6 +123,10 @@ public final class Utils {
         return sb.toString();
     }
 
+    public static float roundToNearest(float value, float multiple) {
+        return Math.round(value / multiple) * multiple;
+    }
+
     public static Point getDisplaySize(Context context) {
         Point size = new Point(0, 0);
         DisplayManager dm = (DisplayManager)context.getSystemService(Context.DISPLAY_SERVICE);

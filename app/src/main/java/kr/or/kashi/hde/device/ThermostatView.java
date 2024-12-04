@@ -31,6 +31,7 @@ import androidx.annotation.Nullable;
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyValue;
+import kr.or.kashi.hde.util.Utils;
 import kr.or.kashi.hde.widget.HomeDeviceView;
 
 public class ThermostatView extends HomeDeviceView<Thermostat> {
@@ -149,13 +150,9 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
     }
 
     public float roundTemp(float value) {
-        value = roundToNearest(value, mTempRes);
+        value = Utils.roundToNearest(value, mTempRes);
         value = Math.max(value, mMinTemp);
         value = Math.min(value, mMaxTemp);
         return value;
-    }
-
-    public static float roundToNearest(float value, float multiple) {
-        return Math.round(value / multiple) * multiple;
     }
 }
