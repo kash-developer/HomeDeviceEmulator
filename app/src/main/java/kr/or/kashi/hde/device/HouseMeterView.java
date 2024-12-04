@@ -74,11 +74,15 @@ public class HouseMeterView extends HomeDeviceView<HouseMeter> {
     private EditText mCurrentMeterEdit;
     private Spinner mCurrentMeterSpinner;
     private Button mCurrentMeterSetButton;
+    private Button mCurrentMeterPlusButton;
+    private Button mCurrentMeterMinusButton;
     private CheckBox mTotalMeterCheck;
     private TextView mTotalMeterText;
     private EditText mTotalMeterEdit;
     private Spinner mTotalMeterSpinner;
     private Button mTotalMeterSetButton;
+    private Button mTotalMeterPlusButton;
+    private Button mTotalMeterMinusButton;
 
     public HouseMeterView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -124,6 +128,12 @@ public class HouseMeterView extends HomeDeviceView<HouseMeter> {
         mCurrentMeterSetButton = findViewById(R.id.current_meter_set_button);
         mCurrentMeterSetButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         mCurrentMeterSetButton.setOnClickListener(view -> setCurrentMeterValue());
+        mCurrentMeterPlusButton = findViewById(R.id.current_meter_plus_button);
+        mCurrentMeterPlusButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
+        mCurrentMeterPlusButton.setOnClickListener(view -> incCurrentMeterValue());
+        mCurrentMeterMinusButton = findViewById(R.id.current_meter_minus_button);
+        mCurrentMeterMinusButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
+        mCurrentMeterMinusButton.setOnClickListener(view -> decCurrentMeterValue());
 
         mTotalMeterCheck = findViewById(R.id.total_meter_check);
         mTotalMeterText = findViewById(R.id.total_meter_text);
@@ -137,6 +147,12 @@ public class HouseMeterView extends HomeDeviceView<HouseMeter> {
         mTotalMeterSetButton = findViewById(R.id.total_meter_set_button);
         mTotalMeterSetButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         mTotalMeterSetButton.setOnClickListener(view -> setTotalMeterValue());
+        mTotalMeterPlusButton = findViewById(R.id.total_meter_plus_button);
+        mTotalMeterPlusButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
+        mTotalMeterPlusButton.setOnClickListener(view -> incTotalMeterValue());
+        mTotalMeterMinusButton = findViewById(R.id.total_meter_minus_button);
+        mTotalMeterMinusButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
+        mTotalMeterMinusButton.setOnClickListener(view -> decTotalMeterValue());
     }
 
     @Override
@@ -184,8 +200,36 @@ public class HouseMeterView extends HomeDeviceView<HouseMeter> {
         device().setProperty(HouseMeter.PROP_CURRENT_METER_VALUE, Double.class, currentMeter);
     }
 
+    private void incCurrentMeterValue() {
+        final double currentMeter = Double.valueOf(mCurrentMeterEdit.getText().toString()).doubleValue();
+        mCurrentMeterEdit.setText("" + (currentMeter + 1.0));
+        setCurrentMeterValue();
+    }
+
+    private void decCurrentMeterValue() {
+        final double currentMeter = Double.valueOf(mCurrentMeterEdit.getText().toString()).doubleValue();
+        if (currentMeter >= 1.0) {
+            mCurrentMeterEdit.setText("" + (currentMeter - 1.0));
+        }
+        setCurrentMeterValue();
+    }
+
     private void setTotalMeterValue() {
         final double totalMeter = Double.valueOf(mTotalMeterEdit.getText().toString()).doubleValue();
         device().setProperty(HouseMeter.PROP_TOTAL_METER_VALUE, Double.class, totalMeter);
+    }
+
+    private void incTotalMeterValue() {
+        final double totalMeter = Double.valueOf(mTotalMeterEdit.getText().toString()).doubleValue();
+        mTotalMeterEdit.setText("" + (totalMeter + 1.0));
+        setTotalMeterValue();
+    }
+
+    private void decTotalMeterValue() {
+        final double totalMeter = Double.valueOf(mTotalMeterEdit.getText().toString()).doubleValue();
+        if (totalMeter >= 1.0) {
+            mTotalMeterEdit.setText("" + (totalMeter - 1.0));
+        }
+        setTotalMeterValue();
     }
 }
