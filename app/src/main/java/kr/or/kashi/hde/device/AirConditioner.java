@@ -79,15 +79,15 @@ public class AirConditioner extends HomeDevice {
     public static final String PROP_CUR_FAN_SPEED   = PROP_PREFIX + "fan_speed.current";
 
     /** Property: Resolution of temperature (defaut: 1.0) */
-    @PropertyDef(valueClass=Float.class, defValueF=1.0f)
+    @PropertyDef(valueClass=Float.class, defValueF=0.5f)
     public static final String PROP_TEMP_RESOLUTION = PROP_PREFIX + "temperature.resolution";
 
     /** Property: Lowest temperature */
-    @PropertyDef(valueClass=Float.class)
+    @PropertyDef(valueClass=Float.class, defValueF=5.0f)
     public static final String PROP_MIN_TEMPERATURE = PROP_PREFIX + "temperature.minimum";
 
     /** Property: Highest temperature */
-    @PropertyDef(valueClass=Float.class, defValueF=100.0f)
+    @PropertyDef(valueClass=Float.class, defValueF=30.0f)
     public static final String PROP_MAX_TEMPERATURE = PROP_PREFIX + "temperature.maximum";
 
     /** Property: Last temperature that is requested */

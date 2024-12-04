@@ -202,7 +202,14 @@
             android:id="@+id/fan_speed_seek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:layout_gravity="center" />
+
+        <TextView
+            android:id="@+id/fan_speed_text"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:text="" />
 
     </LinearLayout>
 
@@ -221,7 +228,14 @@
             android:id="@+id/req_temp_seek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:layout_gravity="center" />
+
+        <TextView
+            android:id="@+id/req_temp_text"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:text="" />
 
     </LinearLayout>
 
@@ -240,7 +254,14 @@
             android:id="@+id/cur_temp_seek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:layout_gravity="center" />
+
+        <TextView
+            android:id="@+id/cur_temp_text"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:text="" />
 
     </LinearLayout>
 
