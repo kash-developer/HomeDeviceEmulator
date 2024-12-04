@@ -87,7 +87,6 @@ public class CurtainView extends HomeDeviceView<Curtain>
         mStateCheck.setOnClickListener(this);
         mStateGroup = findViewById(R.id.state_group);
         mStateGroup.setEnabled(isSlave());
-        mStateGroup.setOnCheckedChangeListener(this);
         mStateOpenedRadio = findViewById(R.id.state_opened_radio);
         mStateClosedRadio = findViewById(R.id.state_closed_radio);
         mStateOpeningRadio = findViewById(R.id.state_opening_radio);
@@ -114,7 +113,9 @@ public class CurtainView extends HomeDeviceView<Curtain>
         else if (state == Curtain.OpState.CLOSED)  stateResId = R.id.state_closed_radio;
         else if (state == Curtain.OpState.OPENING) stateResId = R.id.state_opening_radio;
         else if (state == Curtain.OpState.CLOSING) stateResId = R.id.state_closing_radio;
+        mStateGroup.setOnCheckedChangeListener(null);
         mStateGroup.check(stateResId);
+        mStateGroup.setOnCheckedChangeListener(this);
 
         int supports = props.get(Curtain.PROP_SUPPORTS, Integer.class);
         mStateCheck.setChecked((supports & Curtain.Support.STATE) != 0);

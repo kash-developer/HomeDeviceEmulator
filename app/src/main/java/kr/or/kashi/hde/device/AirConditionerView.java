@@ -66,19 +66,15 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
         mOpStateCheck = findViewById(R.id.op_state_check);
         mOpStateCheck.setChecked(true);
         mOpStateGroup = findViewById(R.id.op_state_group);
-        mOpStateGroup.setOnCheckedChangeListener(this);
 
         mOpModeCheck = findViewById(R.id.op_mode_check);
         mOpModeGroup = findViewById(R.id.op_mode_group);
-        mOpModeGroup.setOnCheckedChangeListener(this);
 
         mFlowDirCheck = findViewById(R.id.flow_dir_check);
         mFlowDirGroup = findViewById(R.id.flow_dir_group);
-        mFlowDirGroup.setOnCheckedChangeListener(this);
 
         mFlowModeCheck = findViewById(R.id.fan_mode_check);
         mFlowModeGroup = findViewById(R.id.fan_mode_group);
-        mFlowModeGroup.setOnCheckedChangeListener(this);
 
         mFanSpeedCheck = findViewById(R.id.fan_speed_check);
         mFanSpeedSeek = findViewById(R.id.fan_speed_seek);
@@ -98,7 +94,9 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
     @Override
     public void onUpdateProperty(PropertyMap props, PropertyMap changed) {
         final boolean onoff = props.get(HomeDevice.PROP_ONOFF, Boolean.class);
+        mOpStateGroup.setOnCheckedChangeListener(null);
         mOpStateGroup.check((onoff) ? R.id.op_state_on_radio : R.id.op_state_off_radio);
+        mOpStateGroup.setOnCheckedChangeListener(this);
 
         int opModeId = R.id.op_mode_auto_radio;
         int opMode = props.get(AirConditioner.PROP_OPERATION_MODE, Integer.class);
@@ -108,20 +106,26 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
         else if (opMode == AirConditioner.OpMode.BLOWING) opModeId = R.id.op_mode_blowing_radio;
         else if (opMode == AirConditioner.OpMode.DEHUMID) opModeId = R.id.op_mode_dehumid_radio;
         else if (opMode == AirConditioner.OpMode.RESERVED) opModeId = R.id.op_mode_reserved_radio;
+        mOpModeGroup.setOnCheckedChangeListener(null);
         mOpModeGroup.check(opModeId);
+        mOpModeGroup.setOnCheckedChangeListener(this);
 
         int flowDirId = R.id.flow_dir_manual_radio;
         int flowDir = props.get(AirConditioner.PROP_FLOW_DIRECTION, Integer.class);
         if (flowDir == AirConditioner.FlowDir.MANUAL) flowDirId = R.id.flow_dir_manual_radio;
         else if (flowDir == AirConditioner.FlowDir.AUTO) flowDirId = R.id.flow_dir_auto_radio;
+        mFlowDirGroup.setOnCheckedChangeListener(null);
         mFlowDirGroup.check(flowDirId);
+        mFlowDirGroup.setOnCheckedChangeListener(this);
 
         int fanModeId = R.id.fan_mode_manual_radio;
         int fanMode = props.get(AirConditioner.PROP_FAN_MODE, Integer.class);
         if (fanMode == AirConditioner.FanMode.MANUAL) fanModeId = R.id.fan_mode_manual_radio;
         else if (fanMode == AirConditioner.FanMode.AUTO) fanModeId = R.id.fan_mode_auto_radio ;
         else if (fanMode == AirConditioner.FanMode.NATURAL) fanModeId = R.id.fan_mode_natural_radio;
+        mFlowModeGroup.setOnCheckedChangeListener(null);
         mFlowModeGroup.check(fanModeId);
+        mFlowModeGroup.setOnCheckedChangeListener(this);
 
         mFanSpeedSeek.setMin(props.get(AirConditioner.PROP_MIN_FAN_SPEED, Integer.class));
         mFanSpeedSeek.setMax(props.get(AirConditioner.PROP_MAX_FAN_SPEED, Integer.class));
