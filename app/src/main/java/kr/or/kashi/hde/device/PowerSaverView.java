@@ -47,10 +47,14 @@ public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.O
     private TextView mCurrentPowerText;
     private EditText mCurrentPowerEdit;
     private Button mCurrentPowerSetButton;
+    private Button mCurrentPowerPlusButton;
+    private Button mCurrentPowerMinusButton;
     private CheckBox mStandbyPowerCheck;
     private TextView mStandbyPowerText;
     private EditText mStandbyPowerEdit;
     private Button mStandbyPowerSetButton;
+    private Button mStandbyPowerPlusButton;
+    private Button mStandbyPowerMinusButton;
 
     public PowerSaverView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -78,13 +82,29 @@ public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.O
         mCurrentPowerCheck = findViewById(R.id.current_power_check);
         mCurrentPowerText = findViewById(R.id.current_power_text);
         mCurrentPowerEdit = findViewById(R.id.current_power_edit);
+        mCurrentPowerEdit.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         mCurrentPowerSetButton = findViewById(R.id.current_power_set_button);
         mCurrentPowerSetButton.setOnClickListener(this);
+        mCurrentPowerSetButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
+        mCurrentPowerPlusButton = findViewById(R.id.current_power_plus_button);
+        mCurrentPowerPlusButton.setOnClickListener(this);
+        mCurrentPowerPlusButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
+        mCurrentPowerMinusButton = findViewById(R.id.current_power_minus_button);
+        mCurrentPowerMinusButton.setOnClickListener(this);
+        mCurrentPowerMinusButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         mStandbyPowerCheck = findViewById(R.id.standby_power_check);
         mStandbyPowerText = findViewById(R.id.standby_power_text);
         mStandbyPowerEdit = findViewById(R.id.standby_power_edit);
+        mStandbyPowerEdit.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         mStandbyPowerSetButton = findViewById(R.id.standby_power_set_button);
         mStandbyPowerSetButton.setOnClickListener(this);
+        mStandbyPowerSetButton.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
+        mStandbyPowerPlusButton = findViewById(R.id.standby_power_plus_button);
+        mStandbyPowerPlusButton.setOnClickListener(this);
+        mStandbyPowerPlusButton.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
+        mStandbyPowerMinusButton = findViewById(R.id.standby_power_minus_button);
+        mStandbyPowerMinusButton.setOnClickListener(this);
+        mStandbyPowerMinusButton.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -138,9 +158,33 @@ public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.O
             final String editStr = mCurrentPowerEdit.getText().toString();
             float currentConsumption = PropertyValue.newValueObject(Float.class, editStr);
             device().setProperty(PowerSaver.PROP_CURRENT_CONSUMPTION, Float.class, currentConsumption);
+        } else if (v == mCurrentPowerPlusButton) {
+            final String editStr = mCurrentPowerEdit.getText().toString();
+            float currentConsumption = PropertyValue.newValueObject(Float.class, editStr);
+            currentConsumption += 1.0f;
+            mCurrentPowerEdit.setText("" + currentConsumption);
+            device().setProperty(PowerSaver.PROP_CURRENT_CONSUMPTION, Float.class, currentConsumption);
+        } else if (v == mCurrentPowerMinusButton) {
+            final String editStr = mCurrentPowerEdit.getText().toString();
+            float currentConsumption = PropertyValue.newValueObject(Float.class, editStr);
+            if (currentConsumption >= 1.0f) currentConsumption -= 1.0f;
+            mCurrentPowerEdit.setText("" + currentConsumption);
+            device().setProperty(PowerSaver.PROP_CURRENT_CONSUMPTION, Float.class, currentConsumption);
         } else if (v == mStandbyPowerSetButton) {
             final String editStr = mStandbyPowerEdit.getText().toString();
             float standbyConsumption = PropertyValue.newValueObject(Float.class, editStr);
+            device().setProperty(PowerSaver.PROP_STANDBY_CONSUMPTION, Float.class, standbyConsumption);
+        } else if (v == mStandbyPowerPlusButton) {
+            final String editStr = mStandbyPowerEdit.getText().toString();
+            float standbyConsumption = PropertyValue.newValueObject(Float.class, editStr);
+            standbyConsumption += 1.0f;
+            mStandbyPowerEdit.setText("" + standbyConsumption);
+            device().setProperty(PowerSaver.PROP_STANDBY_CONSUMPTION, Float.class, standbyConsumption);
+        } else if (v == mStandbyPowerMinusButton) {
+            final String editStr = mStandbyPowerEdit.getText().toString();
+            float standbyConsumption = PropertyValue.newValueObject(Float.class, editStr);
+            if (standbyConsumption >= 1.0f) standbyConsumption -= 1.0f;
+            mStandbyPowerEdit.setText("" + standbyConsumption);
             device().setProperty(PowerSaver.PROP_STANDBY_CONSUMPTION, Float.class, standbyConsumption);
         }
     }

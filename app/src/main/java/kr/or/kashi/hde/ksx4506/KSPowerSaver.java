@@ -24,6 +24,7 @@ import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.PacketSchedule;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.base.PropertyTask;
 import kr.or.kashi.hde.device.PowerSaver;
 import kr.or.kashi.hde.util.Utils;
 
@@ -51,8 +52,9 @@ public class KSPowerSaver extends KSDeviceContextBase {
         super(mainContext, defaultProps, PowerSaver.class);
 
         if (isMaster()) {
-            setPropertyTask(HomeDevice.PROP_ONOFF, this::onStateControlTask);
-            setPropertyTask(PowerSaver.PROP_CURRENT_STATES, this::onStateControlTask);
+            final PropertyTask onChannelControlTask = this::onChannelControlTask;
+            setPropertyTask(HomeDevice.PROP_ONOFF, onChannelControlTask);
+            setPropertyTask(PowerSaver.PROP_CURRENT_SETTINGS, onChannelControlTask);
             setPropertyTask(PowerSaver.PROP_STANDBY_CONSUMPTION, this::onStandbyPowerSettingTask);
         } else {
             // HACK: Initialize just as all supported.
@@ -580,7 +582,7 @@ public class KSPowerSaver extends KSDeviceContextBase {
         return PARSE_OK_STATE_UPDATED;
     }
 
-    protected boolean onStateControlTask(PropertyMap reqProps, PropertyMap outProps) {
+    protected boolean onChannelControlTask(PropertyMap reqProps, PropertyMap outProps) {
         boolean consumed = false;
 
         final KSAddress.DeviceSubId thisSubId = ((KSAddress)getAddress()).getDeviceSubId();
