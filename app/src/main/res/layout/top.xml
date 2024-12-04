@@ -77,16 +77,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FFBBBBBB"
+            android:textColor="#FF000000"
             android:textSize="10sp"
             android:text="PORT:" />
 
         <Spinner
             android:id="@+id/ports_spinner"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="@android:color/white" />
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 
@@ -100,15 +98,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FFBBBBBB"
+            android:textColor="#FF000000"
             android:textSize="10sp"
             android:text="PROTOCOL:" />
 
         <Spinner
             android:id="@+id/protocols_spinner"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/white" />
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 
@@ -122,15 +119,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FFBBBBBB"
+            android:textColor="#FF000000"
             android:textSize="10sp"
             android:text="MODE:" />
 
         <Spinner
             android:id="@+id/modes_spinner"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/white" />
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 

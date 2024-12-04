@@ -155,21 +155,26 @@ public class MainActivity extends AppCompatActivity {
         portTypes.add(PORT_TYPE_USB);
         portTypes.add(PORT_TYPE_INTERNAL);
         mPortsSpinner = findViewById(R.id.ports_spinner);
-        mPortsSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item, portTypes));
+        mPortsSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item_white, portTypes));
         mPortsSpinner.setSelection(LocalPreferences.getInt(Pref.PORT_INDEX));
+        ((ArrayAdapter)mPortsSpinner.getAdapter()).setDropDownViewResource(android.R.layout.simple_spinner_item);
 
         List<String> protocolTypes = new ArrayList<>();
         protocolTypes.add(PROTOCOL_TYPE_KSX4506);
         mProtocalsSpinner = findViewById(R.id.protocols_spinner);
-        mProtocalsSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item, protocolTypes));
+        mProtocalsSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item_white, protocolTypes));
         mProtocalsSpinner.setSelection(LocalPreferences.getInt(Pref.PROTOCOL_INDEX));
+        ((ArrayAdapter)mProtocalsSpinner.getAdapter()).setDropDownViewResource(android.R.layout.simple_spinner_item);
 
         List<String> modeTypes = new ArrayList<>();
         modeTypes.add(MODE_TYPE_MASTER);
         modeTypes.add(MODE_TYPE_SLAVE);
         mModesSpinner = findViewById(R.id.modes_spinner);
-        mModesSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item, modeTypes));
+        mModesSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_item_white, modeTypes));
         mModesSpinner.setSelection(LocalPreferences.getInt(Pref.MODE_INDEX));
+        ((ArrayAdapter)mModesSpinner.getAdapter()).setDropDownViewResource(android.R.layout.simple_spinner_item);
+
+
 
         mEmptyFragment = new EmptyFragment();
         setStateText("STOPPED");
