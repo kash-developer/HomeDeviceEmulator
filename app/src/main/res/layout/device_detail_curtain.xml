@@ -40,19 +40,19 @@
         <Button
             android:id="@+id/op_open_button"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:text="Open" />
 
         <Button
             android:id="@+id/op_close_button"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:text="Close" />
 
         <Button
             android:id="@+id/op_stop_button"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:text="Stop" />
 
     </LinearLayout>
@@ -117,7 +117,14 @@
             android:id="@+id/open_level_seek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:layout_gravity="center" />
+
+        <TextView
+            android:id="@+id/open_level_text"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:text="" />
 
     </LinearLayout>
 
@@ -136,7 +143,14 @@
             android:id="@+id/open_angle_seek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:layout_gravity="center" />
+
+        <TextView
+            android:id="@+id/open_angle_text"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:text="" />
 
     </LinearLayout>
 

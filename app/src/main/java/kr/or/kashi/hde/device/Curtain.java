@@ -60,11 +60,11 @@ public class Curtain extends HomeDevice {
     public static final String PROP_SUPPORTS        = PROP_PREFIX + "supports";
 
     /** Property: Current {@link OpState} of device */
-    @PropertyDef(valueClass=OpState.class)
+    @PropertyDef(valueClass=OpState.class, defValueI=OpState.CLOSED)
     public static final String PROP_STATE           = PROP_PREFIX + "operation.state";
 
     /** Property: The {@link Operation} to request to device */
-    @PropertyDef(valueClass=Operation.class)
+    @PropertyDef(valueClass=Operation.class, defValueI=Operation.STOP)
     public static final String PROP_OPERATION       = PROP_PREFIX + "requested_operation";
 
     /** Property for the minimum level of opening */

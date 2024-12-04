@@ -27,6 +27,7 @@ import android.widget.CheckBox;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.Nullable;
@@ -55,8 +56,15 @@ public class CurtainView extends HomeDeviceView<Curtain>
     private RadioButton mStateClosingRadio;
     private CheckBox mOpenLevelCheck;
     private SeekBar mOpenLevelSeek;
+    private TextView mOpenLevelText;
     private CheckBox mOpenAngleCheck;
     private SeekBar mOpenAngleSeek;
+    private TextView mOpenAngleText;
+
+    private int mMinOpenLevel = 0;
+    private int mMaxOpenLevel = 0;
+    private int mMinOpenAngle = 0;
+    private int mMaxOpenAngle = 0;
 
     public CurtainView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -88,21 +96,27 @@ public class CurtainView extends HomeDeviceView<Curtain>
         mStateGroup = findViewById(R.id.state_group);
         mStateGroup.setEnabled(isSlave());
         mStateOpenedRadio = findViewById(R.id.state_opened_radio);
+        mStateOpenedRadio.setClickable(isSlave());
         mStateClosedRadio = findViewById(R.id.state_closed_radio);
+        mStateClosedRadio.setClickable(isSlave());
         mStateOpeningRadio = findViewById(R.id.state_opening_radio);
+        mStateOpeningRadio.setClickable(isSlave());
         mStateClosingRadio = findViewById(R.id.state_closing_radio);
+        mStateClosingRadio.setClickable(isSlave());
 
         mOpenLevelCheck = findViewById(R.id.open_level_check);
         mOpenLevelCheck.setEnabled(isSlave());
         mOpenLevelCheck.setOnClickListener(this);
         mOpenLevelSeek = findViewById(R.id.open_level_seek);
         mOpenLevelSeek.setOnSeekBarChangeListener(this);
+        mOpenLevelText = findViewById(R.id.open_level_text);
 
         mOpenAngleCheck = findViewById(R.id.open_angle_check);
         mOpenAngleCheck.setEnabled(isSlave());
         mOpenAngleCheck.setOnClickListener(this);
         mOpenAngleSeek = findViewById(R.id.open_angle_seek);
         mOpenAngleSeek.setOnSeekBarChangeListener(this);
+        mOpenAngleText = findViewById(R.id.open_angle_text);
     }
 
     @Override
@@ -128,15 +142,21 @@ public class CurtainView extends HomeDeviceView<Curtain>
         mStateOpeningRadio.setEnabled(mStateCheck.isChecked());
         mStateClosingRadio.setEnabled(mStateCheck.isChecked());
 
+        mMinOpenLevel = props.get(Curtain.PROP_MIN_OPEN_LEVEL, Integer.class);
+        mMaxOpenLevel = props.get(Curtain.PROP_MAX_OPEN_LEVEL, Integer.class);
         mOpenLevelSeek.setEnabled(mOpenLevelCheck.isChecked());
-        mOpenLevelSeek.setMin(props.get(Curtain.PROP_MIN_OPEN_LEVEL, Integer.class));
-        mOpenLevelSeek.setMax(props.get(Curtain.PROP_MAX_OPEN_LEVEL, Integer.class));
+        mOpenLevelSeek.setMin(mMinOpenLevel);
+        mOpenLevelSeek.setMax(mMaxOpenLevel);
         mOpenLevelSeek.setProgress(props.get(Curtain.PROP_CUR_OPEN_LEVEL, Integer.class));
+        mOpenLevelText.setText(formatProgressText(mOpenLevelSeek));
 
+        mMinOpenAngle = props.get(Curtain.PROP_MIN_OPEN_ANGLE, Integer.class);
+        mMaxOpenAngle = props.get(Curtain.PROP_MAX_OPEN_ANGLE, Integer.class);
         mOpenAngleSeek.setEnabled(mOpenAngleCheck.isChecked());
-        mOpenAngleSeek.setMin(props.get(Curtain.PROP_MIN_OPEN_ANGLE, Integer.class));
-        mOpenAngleSeek.setMax(props.get(Curtain.PROP_MAX_OPEN_ANGLE, Integer.class));
+        mOpenAngleSeek.setMin(mMinOpenAngle);
+        mOpenAngleSeek.setMax(mMaxOpenAngle);
         mOpenAngleSeek.setProgress(props.get(Curtain.PROP_CUR_OPEN_ANGLE, Integer.class));
+        mOpenAngleText.setText(formatProgressText(mOpenAngleSeek));
     }
 
     @Override
@@ -182,13 +202,25 @@ public class CurtainView extends HomeDeviceView<Curtain>
         }
     }
 
-    @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
+    @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        if (seekBar == mOpenLevelSeek) {
+            mOpenLevelText.setText(formatProgressText(mOpenLevelSeek));
+        } else if (seekBar == mOpenAngleSeek) {
+            mOpenAngleText.setText(formatProgressText(mOpenAngleSeek));
+        }
+    }
     @Override public void onStartTrackingTouch(SeekBar seekBar) { }
     @Override public void onStopTrackingTouch(SeekBar seekBar) {
         if (seekBar == mOpenLevelSeek) {
             device().setProperty(Curtain.PROP_CUR_OPEN_LEVEL, Integer.class, seekBar.getProgress());
+            if (isMaster()) setOperation(Curtain.Operation.OPEN);
         } else if (seekBar == mOpenAngleSeek) {
             device().setProperty(Curtain.PROP_CUR_OPEN_ANGLE, Integer.class, seekBar.getProgress());
+            if (isMaster()) setOperation(Curtain.Operation.OPEN);
         }
+    }
+
+    private String formatProgressText(SeekBar seekBar) {
+        return seekBar.getProgress() + " [" + seekBar.getMin() + "~" + seekBar.getMax() + "]";
     }
 }
