@@ -19,16 +19,21 @@ package kr.or.kashi.hde.ksx4506;
 
 import android.util.Log;
 
+import kr.or.kashi.hde.DeviceContextBase;
+import kr.or.kashi.hde.DeviceStatePollee;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.base.PropertyValue;
 import kr.or.kashi.hde.device.Thermostat;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
 import kr.or.kashi.hde.ksx4506.KSPacket;
 import kr.or.kashi.hde.ksx4506.KSUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,29 +44,127 @@ public class KDThermostat extends KSThermostat {
     private static final boolean DBG = true;
 
     public static final int CMD_POWER_OFF_REQ = 0x50;
+    public static final int CMD_POWER_OFF_RSP = 0xD0;
+
+    public boolean mFirstStatusRetreived = false;
+    public boolean mPowerControlSupported = false;
 
     public KDThermostat(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps);
     }
 
+    private void resetInternalStates() {
+        mFirstStatusRetreived = false;
+        mPowerControlSupported = false;
+    }
+
+    @Override
+    public void onAttachedToStream() {
+        resetInternalStates();
+        super.onAttachedToStream(); // call super
+    }
+
+    @Override
+    public void setPollPhase(@DeviceStatePollee.Phase int phase, long interval) {
+        super.setPollPhase(phase, interval); // call super
+        if (phase == DeviceStatePollee.Phase.NAPPING) {
+            resetInternalStates();
+        }
+    }
+
+    @Override
+    public @ParseResult int parsePayload(HomePacket packet, PropertyMap outProps) {
+        KSPacket ksPacket = (KSPacket) packet;
+
+        switch (ksPacket.commandType) {
+            case CMD_POWER_OFF_RSP: {
+                if (!mPowerControlSupported) {
+                    mPowerControlSupported = true;
+                    syncVendorPropsToParentAndSiblings(outProps);
+                    updateOnOffProperty(outProps);
+                }
+                return PARSE_OK_ACTION_PERFORMED;
+            }
+        }
+
+        return super.parsePayload(packet, outProps);
+    }
+
     @Override
     protected @ParseResult int parseStatusRsp(KSPacket packet, PropertyMap outProps) {
         @ParseResult int result = super.parseStatusRsp(packet, outProps); // call super
-        if (result == PARSE_OK_STATE_UPDATED) {
-            // HACK: No field to get the state of power off, so let's guess it from
-            // each state of functions.
-            final long states = outProps.get(Thermostat.PROP_FUNCTION_STATES, Long.class);
-            outProps.put(HomeDevice.PROP_ONOFF, (states != 0L));
+        if (result > PARSE_OK_NONE) {
+            if (isSingleDevice()) {
+                final boolean onoff = updateOnOffProperty(outProps);
+                if (!mFirstStatusRetreived) {
+                    mFirstStatusRetreived = true;
+                    syncVendorPropsToParentAndSiblings(outProps);
+                    sendControlPacket(CMD_POWER_OFF_REQ, (byte)(onoff ? 0x00 : 0x01));
+                }
+            } else {
+                if (!mFirstStatusRetreived) {
+                    mFirstStatusRetreived = true;
+                    syncVendorPropsFromFirstChild();
+                }
+            }
         }
         return result;
     }
 
     @Override
     protected boolean onPowerControlTask(PropertyMap reqProps, PropertyMap outProps) {
-        final boolean isOn = (Boolean) reqProps.get(HomeDevice.PROP_ONOFF).getValue();
-        final KSAddress devAddress = (KSAddress)getAddress();
-        final long repeatCount = devAddress.getDeviceSubId().hasFull() ? 3L : 0L;
-        sendPacket(createPacket(CMD_POWER_OFF_REQ, (byte)(isOn ? 0x00 : 0x01)), repeatCount);
+        super.onPowerControlTask(reqProps, outProps); // call super
+        sendOnOffControlPacket(reqProps);
         return true;
+    }
+
+    private void syncVendorPropsToParentAndSiblings(PropertyMap props) {
+        final DeviceContextBase parent = getParent();
+        if (parent == null) return;
+        syncVendorPropsToOther(props, parent);
+        for (DeviceContextBase sibling: parent.getChildren()) {
+            syncVendorPropsToOther(props, sibling);
+        }
+    }
+
+    private void syncVendorPropsFromFirstChild() {
+        KDThermostat firstChild = getChildAt(KDThermostat.class, 0);
+        if (firstChild != null) {
+            syncVendorPropsToOther(firstChild.getReadPropertyMap(), this);
+        }
+    }
+
+    private void syncVendorPropsToOther(PropertyMap props, DeviceContextBase other) {
+        if (props == null || other == null) return;
+
+        if (other instanceof KDThermostat) {
+            final KDThermostat otherKdt = (KDThermostat) other;
+            otherKdt.mFirstStatusRetreived = mFirstStatusRetreived;
+            otherKdt.mPowerControlSupported = mPowerControlSupported;
+        }
+
+        List<PropertyValue> otherProps = new ArrayList<>();
+        otherProps.add(props.get(HomeDevice.PROP_VENDOR_CODE));
+        otherProps.add(props.get(HomeDevice.PROP_VENDOR_NAME));
+        other.updateProperties(otherProps);
+    }
+
+    private boolean updateOnOffProperty(PropertyMap outProps) {
+        // HACK: No field to get the state of power off in standard,
+        // so let's guess it from each state of functions.
+        final long states = outProps.get(Thermostat.PROP_FUNCTION_STATES, Long.class);
+        final boolean onoff = mPowerControlSupported ? (states != 0L) : ((states & Thermostat.Function.HEATING) != 0);
+        outProps.put(HomeDevice.PROP_ONOFF, onoff);
+        return onoff;
+    }
+
+    private void sendOnOffControlPacket(PropertyMap reqProps) {
+        if (mPowerControlSupported) {
+            final boolean isOn = (Boolean) reqProps.get(HomeDevice.PROP_ONOFF).getValue();
+            sendControlPacket(CMD_POWER_OFF_REQ, (byte)(isOn ? 0x00 : 0x01));
+        } else {
+            byte state = (byte) (reqProps.get(HomeDevice.PROP_ONOFF, Boolean.class) ? 1 : 0);
+            sendControlPacket(CMD_HEATING_STATE_REQ, state);
+        }
     }
 }

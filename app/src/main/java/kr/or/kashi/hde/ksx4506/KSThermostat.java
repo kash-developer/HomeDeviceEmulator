@@ -421,7 +421,7 @@ public class KSThermostat extends KSDeviceContextBase {
 
         if ((difStates & Thermostat.Function.HEATING) != 0) {
             byte state = (byte) ((reqStates & Thermostat.Function.HEATING) != 0 ? 1 : 0);
-            sendControlPacket3x(CMD_HEATING_STATE_REQ, state);
+            sendControlPacket(CMD_HEATING_STATE_REQ, state);
             consumed |= true;
         }
 
@@ -431,19 +431,19 @@ public class KSThermostat extends KSDeviceContextBase {
 
         if ((difStates & Thermostat.Function.OUTING_SETTING) != 0) {
             byte state = (byte) ((reqStates & Thermostat.Function.OUTING_SETTING) != 0 ? 1 : 0);
-            sendControlPacket3x(CMD_OUTING_SETTING_REQ, state);
+            sendControlPacket(CMD_OUTING_SETTING_REQ, state);
             consumed |= true;
         }
 
         if ((difStates & Thermostat.Function.HOTWATER_ONLY) != 0) {
             byte state = (byte) ((reqStates & Thermostat.Function.HOTWATER_ONLY) != 0 ? 1 : 0);
-            sendControlPacket3x(CMD_HOTWATER_ONLY_REQ, state);
+            sendControlPacket(CMD_HOTWATER_ONLY_REQ, state);
             consumed |= true;
         }
 
         if ((difStates & Thermostat.Function.RESERVED_MODE) != 0) {
             byte state = (byte) ((reqStates & Thermostat.Function.RESERVED_MODE) != 0 ? 1 : 0);
-            sendControlPacket3x(CMD_RESERVED_MODE_REQ, state);
+            sendControlPacket(CMD_RESERVED_MODE_REQ, state);
             consumed |= true;
         }
 
@@ -453,12 +453,13 @@ public class KSThermostat extends KSDeviceContextBase {
     protected boolean onTemperatureControlTask(PropertyMap reqProps, PropertyMap outProps) {
         float reqTemp = (Float) reqProps.get(Thermostat.PROP_SETTING_TEMPERATURE).getValue();
         byte tempByte = KSUtils.makeTemperatureByte(reqTemp, mMinTemperature, mMaxTemperature, mSupportHalfDegree);
-        sendControlPacket3x(CMD_TEMPERATURE_REQ, tempByte);
+        sendControlPacket(CMD_TEMPERATURE_REQ, tempByte);
         return true;
     }
 
-    protected void sendControlPacket3x(int cmd, byte data) {
+    protected void sendControlPacket(int cmd, byte data) {
         KSPacket packet = createPacket(cmd, data);
-        sendPacket(packet, 3); // WTF! repeat 3 times. (see. spec.)
+        long repeatCount = getDeviceSubId().hasFull() ? 3L : 0L;
+        sendPacket(packet, repeatCount);
     }
 }
