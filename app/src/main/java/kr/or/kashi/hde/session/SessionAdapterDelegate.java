@@ -86,8 +86,13 @@ public class SessionAdapterDelegate implements NetworkSession {
 
         public void addBuffer(byte[] b) {
             synchronized (mByteBuffer) {
-                mByteBuffer.put(b);
-                mByteBuffer.notifyAll();
+                try {
+                    mByteBuffer.put(b);
+                    mByteBuffer.notifyAll();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    mByteBuffer.clear();
+                }
             }
         }
 
