@@ -37,6 +37,7 @@ import java.util.List;
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
+import kr.or.kashi.hde.base.PropertyValue;
 
 public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Holder> {
     private static final String TAG = "DeviceListAdapter";
@@ -46,7 +47,6 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Ho
     private final Listener mListener;
     private Holder mSelectedHolder = null;
     private HomeDevice mSelectedDevice = null;
-    private long mControlRequestTime = -1;
 
     public DeviceListAdapter(Context context, List<HomeDevice> deviceList, Listener listener) {
         mContext = context;
@@ -103,6 +103,7 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Ho
         public final Switch onoffSwitch;
         public final Button removeButton;
         public HomeDevice device;
+        private long mOnOffReqTime = -1;
 
         public Holder(View itemView) {
             super(itemView);
@@ -128,11 +129,18 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Ho
             }
 
             updateStates();
+
+            mOnOffReqTime = -1;
+            this.elapsedText.setText("");
         }
 
         public void setSelected(boolean selected) {
             String selectedColor = selected ? "#FFAAAAAA" : "#00000000";
             this.rootView.setBackgroundColor(Color.parseColor(selectedColor));
+            if (!selected) {
+                mOnOffReqTime = -1;
+                this.elapsedText.setText("");
+            }
         }
 
         public void setConnected(boolean conntected) {
@@ -146,17 +154,9 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Ho
                     this.device.getName();
             this.deviceText.setText(text);
 
-            this.elapsedText.setText("");
-
-            if (mControlRequestTime != -1) {
-                long elapsedTime = SystemClock.uptimeMillis() - mControlRequestTime;
-                this.elapsedText.setText(elapsedTime + "ms");
-                mControlRequestTime = -1;
-            } else {
-                this.elapsedText.setText("");
-            }
-
             this.onoffSwitch.setChecked(this.device.isOn());
+
+//            this.elapsedText.setText("");
 
             setConnected(this.device.isConnected());
         }
@@ -168,7 +168,7 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Ho
                 mListener.onItemClicked(this);
             } else if (v == onoffSwitch) {
                 mListener.onItemSwitchClicked(this, onoffSwitch.isChecked());
-                mControlRequestTime = SystemClock.uptimeMillis();
+                mOnOffReqTime = SystemClock.uptimeMillis();
             } else if (v == removeButton) {
                 mListener.onItemRemoveClicked(this);
             }
@@ -177,6 +177,13 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Ho
         @Override
         public void onPropertyChanged(HomeDevice device, PropertyMap props) {
             updateStates();
+
+            if (mOnOffReqTime != -1 && props.get(HomeDevice.PROP_ONOFF) != null) {
+                long elapsedTime = SystemClock.uptimeMillis() - mOnOffReqTime;
+                if (elapsedTime < (2L * 1000L)) {
+                    this.elapsedText.setText(elapsedTime + "ms");
+                }
+            }
         }
 
         @Override
