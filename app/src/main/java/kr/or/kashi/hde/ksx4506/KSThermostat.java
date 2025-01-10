@@ -342,11 +342,19 @@ public class KSThermostat extends KSDeviceContextBase {
             outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.OUTING_SETTING);
         }
 
-        final ByteArrayBuffer data = new ByteArrayBuffer();
-        makeStatusRspData(outProps, data); // Encode response packet same with status.
+        for (KSThermostat child: getChildren(KSThermostat.class)) {
+            child.parseHeatingStateReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
 
-        // Send response packet
-        sendPacket(createPacket(CMD_HEATING_STATE_RSP, data.toArray()));
+        final KSAddress.DeviceSubId ctxSubId = ((KSAddress)getAddress()).getDeviceSubId();
+        final KSAddress.DeviceSubId pktSubId = KSAddress.toDeviceSubId(packet.deviceSubId);
+        if (ctxSubId.isSingle() && pktSubId.isSingle()) {
+            final ByteArrayBuffer data = new ByteArrayBuffer();
+            makeStatusRspData(outProps, data); // Encode response packet same with status.
+            // Send response packet (against only single control)
+            sendPacket(createPacket(CMD_HEATING_STATE_RSP, data.toArray()));
+        }
 
         return PARSE_OK_STATE_UPDATED;
     }
@@ -357,11 +365,19 @@ public class KSThermostat extends KSDeviceContextBase {
         outProps.put(Thermostat.PROP_SETTING_TEMPERATURE, temp);
         outProps.put(Thermostat.PROP_CURRENT_TEMPERATURE, temp); // TODO: This should be changed by some simulated logic.
 
-        final ByteArrayBuffer data = new ByteArrayBuffer();
-        makeStatusRspData(outProps, data); // Encode response packet same with status.
+        for (KSThermostat child: getChildren(KSThermostat.class)) {
+            child.parseTemperatureReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
 
-        // Send response packet
-        sendPacket(createPacket(CMD_TEMPERATURE_RSP, data.toArray()));
+        final KSAddress.DeviceSubId ctxSubId = ((KSAddress)getAddress()).getDeviceSubId();
+        final KSAddress.DeviceSubId pktSubId = KSAddress.toDeviceSubId(packet.deviceSubId);
+        if (ctxSubId.isSingle() && pktSubId.isSingle()) {
+            final ByteArrayBuffer data = new ByteArrayBuffer();
+            makeStatusRspData(outProps, data); // Encode response packet same with status.
+            // Send response packet (against only single control)
+            sendPacket(createPacket(CMD_TEMPERATURE_RSP, data.toArray()));
+        }
 
         return PARSE_OK_STATE_UPDATED;
     }
@@ -375,11 +391,19 @@ public class KSThermostat extends KSDeviceContextBase {
             outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HEATING);
         }
 
-        final ByteArrayBuffer data = new ByteArrayBuffer();
-        makeStatusRspData(outProps, data); // Encode response packet same with status.
+        for (KSThermostat child: getChildren(KSThermostat.class)) {
+            child.parseReservedModeReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
 
-        // Send response packet
-        sendPacket(createPacket(CMD_RESERVED_MODE_RSP, data.toArray()));
+        final KSAddress.DeviceSubId ctxSubId = ((KSAddress)getAddress()).getDeviceSubId();
+        final KSAddress.DeviceSubId pktSubId = KSAddress.toDeviceSubId(packet.deviceSubId);
+        if (ctxSubId.isSingle() && pktSubId.isSingle()) {
+            final ByteArrayBuffer data = new ByteArrayBuffer();
+            makeStatusRspData(outProps, data); // Encode response packet same with status.
+            // Send response packet (against only single control)
+            sendPacket(createPacket(CMD_RESERVED_MODE_RSP, data.toArray()));
+        }
 
         return PARSE_OK_STATE_UPDATED;
     }
@@ -393,11 +417,19 @@ public class KSThermostat extends KSDeviceContextBase {
             outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HEATING);
         }
 
-        final ByteArrayBuffer data = new ByteArrayBuffer();
-        makeStatusRspData(outProps, data); // Encode response packet same with status.
+        for (KSThermostat child: getChildren(KSThermostat.class)) {
+            child.parseOutingSettingReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
 
-        // Send response packet
-        sendPacket(createPacket(CMD_OUTING_SETTING_RSP, data.toArray()));
+        final KSAddress.DeviceSubId ctxSubId = ((KSAddress)getAddress()).getDeviceSubId();
+        final KSAddress.DeviceSubId pktSubId = KSAddress.toDeviceSubId(packet.deviceSubId);
+        if (ctxSubId.isSingle() && pktSubId.isSingle()) {
+            final ByteArrayBuffer data = new ByteArrayBuffer();
+            makeStatusRspData(outProps, data); // Encode response packet same with status.
+            // Send response packet (against only single control)
+            sendPacket(createPacket(CMD_OUTING_SETTING_RSP, data.toArray()));
+        }
 
         return PARSE_OK_STATE_UPDATED;
     }
@@ -411,11 +443,19 @@ public class KSThermostat extends KSDeviceContextBase {
             outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HEATING);
         }
 
-        final ByteArrayBuffer data = new ByteArrayBuffer();
-        makeStatusRspData(outProps, data); // Encode response packet same with status.
+        for (KSThermostat child: getChildren(KSThermostat.class)) {
+            child.parseHotwaterOnlyReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
 
-        // Send response packet
-        sendPacket(createPacket(CMD_HOTWATER_ONLY_RSP, data.toArray()));
+        final KSAddress.DeviceSubId ctxSubId = ((KSAddress)getAddress()).getDeviceSubId();
+        final KSAddress.DeviceSubId pktSubId = KSAddress.toDeviceSubId(packet.deviceSubId);
+        if (ctxSubId.isSingle() && pktSubId.isSingle()) {
+            final ByteArrayBuffer data = new ByteArrayBuffer();
+            makeStatusRspData(outProps, data); // Encode response packet same with status.
+            // Send response packet (against only single control)
+            sendPacket(createPacket(CMD_HOTWATER_ONLY_RSP, data.toArray()));
+        }
 
         return PARSE_OK_STATE_UPDATED;
     }

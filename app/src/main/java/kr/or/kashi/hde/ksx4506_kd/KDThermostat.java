@@ -159,7 +159,7 @@ public class KDThermostat extends KSThermostat {
         return true;
     }
 
-    private void syncOnOffToFunctionState(PropertyMap reqProps, PropertyMap outProps) {
+    protected void syncOnOffToFunctionState(PropertyMap reqProps, PropertyMap outProps) {
         final boolean onoff = reqProps.get(HomeDevice.PROP_ONOFF, Boolean.class);
         if (onoff) {
             if (mSavedFunctionState == 0L) mSavedFunctionState |= Thermostat.Function.HEATING;
@@ -169,6 +169,11 @@ public class KDThermostat extends KSThermostat {
             mSavedFunctionState = outProps.get(Thermostat.PROP_FUNCTION_STATES, Long.class);
             outProps.put(Thermostat.PROP_FUNCTION_STATES, 0L);
             outProps.put(HomeDevice.PROP_ONOFF, false);
+        }
+
+        for (KDThermostat child: getChildren(KDThermostat.class)) {
+            child.syncOnOffToFunctionState(reqProps, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
         }
     }
 
