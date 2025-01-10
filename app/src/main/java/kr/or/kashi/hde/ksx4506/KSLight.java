@@ -63,6 +63,13 @@ public class KSLight extends KSDeviceContextBase {
         }
     }
 
+    public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
+        switch (packet.commandType) {
+            case CMD_GROUP_CONTROL_REQ: return parseGroupControlReq(packet, outProps);
+        }
+        return super.parsePayload(packet, outProps);
+    }
+
     @Override
     protected @ParseResult int parseStatusReq(KSPacket packet, PropertyMap outProps) {
         ByteArrayBuffer data = new ByteArrayBuffer();
@@ -258,6 +265,18 @@ public class KSLight extends KSDeviceContextBase {
         parseSingleLightStateByte(state, outProps);
 
         return PARSE_OK_ACTION_PERFORMED;
+    }
+
+    protected @ParseResult int parseGroupControlReq(KSPacket packet, PropertyMap outProps) {
+        final boolean isOn = ((packet.data[0] & 0xFF) == 0x01);
+        outProps.put(HomeDevice.PROP_ONOFF, isOn);
+
+        for (KSLight child: getChildren(KSLight.class)) {
+            child.parseGroupControlReq(packet, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        return PARSE_OK_STATE_UPDATED;
     }
 
     private int makeSingleLightStateByte(PropertyMap props) {
