@@ -336,7 +336,11 @@ public class KSThermostat extends KSDeviceContextBase {
     protected @ParseResult int parseHeatingStateReq(KSPacket packet, PropertyMap outProps) {
         // Parse request packet
         final boolean heatingOn = ((packet.data[0] & 0xFF) == 0x01);
-        outProps.putBit(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HEATING, heatingOn);
+        if (heatingOn) {
+            outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HEATING);
+        } else {
+            outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.OUTING_SETTING);
+        }
 
         final ByteArrayBuffer data = new ByteArrayBuffer();
         makeStatusRspData(outProps, data); // Encode response packet same with status.
@@ -365,7 +369,11 @@ public class KSThermostat extends KSDeviceContextBase {
     protected @ParseResult int parseReservedModeReq(KSPacket packet, PropertyMap outProps) {
         // Parse request packet
         final boolean reservedMode = ((packet.data[0] & 0xFF) == 0x01);
-        outProps.putBit(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.RESERVED_MODE, reservedMode);
+        if (reservedMode) {
+            outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.RESERVED_MODE);
+        } else {
+            outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HEATING);
+        }
 
         final ByteArrayBuffer data = new ByteArrayBuffer();
         makeStatusRspData(outProps, data); // Encode response packet same with status.
@@ -379,7 +387,11 @@ public class KSThermostat extends KSDeviceContextBase {
     protected @ParseResult int parseOutingSettingReq(KSPacket packet, PropertyMap outProps) {
         // Parse request packet
         final boolean outinggOn = ((packet.data[0] & 0xFF) == 0x01);
-        outProps.putBit(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.OUTING_SETTING, outinggOn);
+        if (outinggOn) {
+            outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.OUTING_SETTING);
+        } else {
+            outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HEATING);
+        }
 
         final ByteArrayBuffer data = new ByteArrayBuffer();
         makeStatusRspData(outProps, data); // Encode response packet same with status.
@@ -393,7 +405,11 @@ public class KSThermostat extends KSDeviceContextBase {
     protected @ParseResult int parseHotwaterOnlyReq(KSPacket packet, PropertyMap outProps) {
         // Parse request packet
         final boolean hotwaterOnly = ((packet.data[0] & 0xFF) == 0x01);
-        outProps.putBit(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HOTWATER_ONLY, hotwaterOnly);
+        if (hotwaterOnly) {
+            outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HOTWATER_ONLY);
+        } else {
+            outProps.put(Thermostat.PROP_FUNCTION_STATES, Thermostat.Function.HEATING);
+        }
 
         final ByteArrayBuffer data = new ByteArrayBuffer();
         makeStatusRspData(outProps, data); // Encode response packet same with status.
