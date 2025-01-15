@@ -749,14 +749,16 @@ public class MainFragment extends Fragment {
             ids[i] = subId;
         }
 
+        final String[] addresses = new String[ids.length];
         for (int i=0; i<ids.length; i++) {
             if (ids[i] > -1) {
-                String address = String.format("::%02X%02X", devIdList.get(i), ids[i]);
-                deviceTypeListAdapter.setAddress(i, address);
+                addresses[i] = String.format("::%02X%02X", devIdList.get(i), ids[i]);
             } else {
-                deviceTypeListAdapter.setAddress(i, "");
+                addresses[i] = "";
             }
         }
+
+        deviceTypeListAdapter.setAddresses(addresses);
     }
 
     private List<HomeDevice> getCurrentDevices() {
