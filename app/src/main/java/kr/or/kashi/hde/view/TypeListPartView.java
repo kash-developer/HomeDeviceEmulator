@@ -20,6 +20,7 @@ package kr.or.kashi.hde.view;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.ArrayMap;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.CheckBox;
@@ -67,6 +68,7 @@ public class TypeListPartView extends LinearLayout {
     private TextView mRangeTextView;
 
     private Map<String, Integer> mDeviceToKsIdMap = new TreeMap<>();
+    private Map<Integer, int[]> mMaxSingleIdsMap = new ArrayMap<>();
     private Set<String> mSelectedDeviceTypes = new HashSet<>();
 
     private DeviceDiscovery.Callback mDiscoveryCallback = new DeviceDiscovery.Callback() {
@@ -89,8 +91,14 @@ public class TypeListPartView extends LinearLayout {
         mNetwork = network;
         mNetwork.getDeviceDiscovery().addCallback(mDiscoveryCallback);
         mNetwork.addCallback(new HomeNetwork.Callback() {
-            @Override public void onDeviceAdded(List<HomeDevice> devices) { updateDeviceTypeList(); }
-            @Override public void onDeviceRemoved(List<HomeDevice> devices) { updateDeviceTypeList(); }
+            @Override public void onDeviceAdded(List<HomeDevice> devices) {
+                updateMaxSingleIdsMap();
+                updateCandidateAddresses();
+            }
+            @Override public void onDeviceRemoved(List<HomeDevice> devices) {
+                updateMaxSingleIdsMap();
+                updateCandidateAddresses();
+            }
         });
 
         mDeviceToKsIdMap.put("AirConditioner", 0x02);
@@ -120,6 +128,14 @@ public class TypeListPartView extends LinearLayout {
             @Override
             public void onCheckedChanged(String item, boolean checked) {
                 LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
+            }
+            @Override
+            public void onPrevButtonClicked(String item) {
+                updateGroupShiftedInAddress(item, true);
+            }
+            @Override
+            public void onNextButtonClicked(String item) {
+                updateGroupShiftedInAddress(item, false);
             }
             @Override
             public void onAddButtonClicked(String item) {
@@ -166,7 +182,8 @@ public class TypeListPartView extends LinearLayout {
             loadRanges();
         }
 
-        updateDeviceTypeList();
+        updateMaxSingleIdsMap();
+        updateCandidateAddresses();
     }
 
     private void debug(String text) {
@@ -331,18 +348,15 @@ public class TypeListPartView extends LinearLayout {
         HomeDevice device = createSingleDeviceOfType(type);
         if (device != null) {
             mNetwork.addDevice(device);
-            updateDeviceTypeList();
         }
     }
 
     private void addSelectedDevices() {
         mNetwork.addDevice(createSelectedDevices());
-        updateDeviceTypeList();
     }
 
     private void addAllDevicesInRange() {
         mNetwork.addDevice(createDevicesInRange());
-        updateDeviceTypeList();
     }
 
     private HomeDevice createSingleDeviceOfType(String type) {
@@ -439,58 +453,147 @@ public class TypeListPartView extends LinearLayout {
         return mNetwork.createDevice(address, area, name);
     }
 
-    private void updateDeviceTypeList() {
-        int[] ids = new int[mDeviceToKsIdMap.size()];
-        Arrays.fill(ids, 0);
-
-        List<Integer> devIdList = new ArrayList<>(mDeviceToKsIdMap.values());
+    private void updateMaxSingleIdsMap() {
+        mMaxSingleIdsMap.clear();
 
         for (HomeDevice device: mNetwork.getAllDevices()) {
             int devId = Integer.parseInt(device.getAddress().substring(2, 4), 16);
+
+            final int[] ids = getMaxSingleIdsRef(devId);
             int subId = Integer.parseInt(device.getAddress().substring(4, 6), 16);
+            int grpId = (subId & 0xF0) >> 4;
+            int sglId = (subId & 0x0F);
 
-            int pos = devIdList.indexOf(devId);
-            if (pos < 0 || pos >= ids.length)
-                continue;
-
-            if (ids[pos] < subId) {
-                ids[pos] = subId;
+            if (sglId != 0xF && ids[grpId] < sglId) {
+                ids[grpId] = sglId;
             }
         }
+    }
 
-        final TypeListAdapter deviceTypeListAdapter =
-                (TypeListAdapter) mDeviceTypeListView.getAdapter();
+    private int[] getMaxSingleIdsRef(int devId) {
+        int[] ids = mMaxSingleIdsMap.get(devId);
+        if (ids == null) {
+            ids = new int[0xF];
+            mMaxSingleIdsMap.put(devId, ids);
+            Arrays.fill(ids, 0);
+        }
+        return ids;
+    }
 
-        for (int i=0; i<ids.length; i++) {
-            int devId = devIdList.get(i);
-            int subId = ids[i];
-            if (subId == 0) {
-                subId = 0x01;
-                if (devId == 0x0E || devId == 0x39 || devId == 0x36) {
-                    subId += 0x10;
-                }
+    private void updateCandidateAddresses() {
+        final TypeListAdapter listAdapter = (TypeListAdapter) mDeviceTypeListView.getAdapter();
+        final List<Integer> devIdList = new ArrayList<>(mDeviceToKsIdMap.values());
+
+        final String[] addresses = new String[devIdList.size()];
+
+        for (int i=0; i<devIdList.size(); i++) {
+            String addr = listAdapter.getAddress(i);
+            if (addr.length() < 6) addr = getInitialAddress(devIdList.get(i));
+
+            final int devId = Integer.parseInt(addr.substring(2, 4), 16);
+            final int subId = Integer.parseInt(addr.substring(4, 6), 16);
+
+            final int[] ids = getMaxSingleIdsRef(devId);
+
+            final int grpId = (subId & 0xF0) >> 4;
+            final int sglId = ids[grpId] + 1;
+
+            if (sglId < 0xF) {
+                addresses[i] = idToAddress(devId, grpId, sglId);
             } else {
-                subId++;
-                if ((subId & 0xF) == 0xF) subId += 2;
-
-                if (devId == 0x0E || devId == 0x39 || devId == 0x36) {
-                    if (subId >= 0xFF) subId = -1;
-                } else {
-                    if (subId >= 0x0F) subId = -1;
-                }
+                addresses[i] = getNextAddress(devId, grpId, sglId);
             }
-            ids[i] = subId;
         }
 
-        final String[] addresses = new String[ids.length];
-        for (int i=0; i<ids.length; i++) {
-            if (ids[i] > -1) {
-                addresses[i] = String.format("::%02X%02X", devIdList.get(i), ids[i]);
+        listAdapter.setAddresses(addresses);
+    }
+
+    private String getNextAddress(String address) {
+        if (address == null || address.length() < 6) return "";
+        final int devId = Integer.parseInt(address.substring(2, 4), 16);
+        final int subId = Integer.parseInt(address.substring(4, 6), 16);
+        final int grpId = (subId & 0xF0) >> 4;
+        final int sglId = (subId & 0x0F);
+        return getNextAddress(devId, grpId, sglId);
+    }
+
+    private String getNextAddress(int devId, int grpId, int sglId) {
+        int[] ids = getMaxSingleIdsRef(devId);
+        if (ids == null) {
+            return getInitialAddress(devId);
+        }
+
+        int newGrpId = grpId;
+        int newSglId = sglId + 1;
+
+        if (newSglId < 0xF) {
+            return idToAddress(devId, newGrpId, newSglId);
+        }
+
+        for (int i=0; i<0xF; i++) {
+            if (++newGrpId >= 0xF) newGrpId = 0;
+            newSglId = ids[newGrpId] + 1;
+            if (newSglId < 0xF) {
+                return idToAddress(devId, newGrpId, newSglId);
+            }
+        }
+
+        return "";
+    }
+
+    private void updateGroupShiftedInAddress(String type, boolean reversed) {
+        final List<String> keyList = new ArrayList<>(mDeviceToKsIdMap.keySet());
+        final int index = keyList.indexOf(type);
+        if (index < 0) return;
+
+        final TypeListAdapter deviceTypeListAdapter = (TypeListAdapter) mDeviceTypeListView.getAdapter();
+        final String address = deviceTypeListAdapter.getAddress(type);
+        if (address == null || address.length() < 6) return;
+
+        final int devId = Integer.parseInt(address.substring(2, 4), 16);
+        final int subId = Integer.parseInt(address.substring(4, 6), 16);
+        final int grpId = (subId & 0xF0) >> 4;
+        final int sglId = (subId & 0x0F);
+
+        int newGrpId = grpId;
+        int newSglId = 0;
+
+        int[] ids = mMaxSingleIdsMap.get(devId);
+        if (ids == null) return;
+
+        for (int i=0; i<0xF; i++) {
+            if (reversed) {
+                if (--newGrpId < 0) newGrpId = 0xE;
             } else {
-                addresses[i] = "";
+                if (++newGrpId > 0xE) newGrpId = 0;
+            }
+
+            int nxtSglId = ids[newGrpId] + 1;
+            if (nxtSglId < 0xF) {
+                newSglId = nxtSglId;
+                break;
             }
         }
 
-        deviceTypeListAdapter.setAddresses(addresses);
+        if (newSglId > 0) {
+            final String newAddr = String.format("::%02X%01X%01X", devId, newGrpId, newSglId);
+            deviceTypeListAdapter.setAddress(index, newAddr);
+        }
+    }
+
+    private static String idToAddress(int devId, int grpId, int sglId) {
+        return idToAddress(devId, ((grpId & 0x0F) << 4) | (sglId & 0x0F));
+    }
+
+    private static String idToAddress(int devId, int subId) {
+        return String.format("::%02X%02X", devId, subId);
+    }
+
+    private String getInitialAddress(int devId) {
+        int subId = 0x01;
+        if (devId == 0x0E || devId == 0x39 || devId == 0x36) {
+            subId += 0x10;
+        }
+        return idToAddress(devId, subId);
     }
 }

@@ -28,7 +28,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -46,6 +45,9 @@ public class TypeListAdapter extends BaseAdapter {
 
     public interface Callback {
         default void onCheckedChanged(String item, boolean checked) {}
+        default void onAddressClicked(String item) {}
+        default void onPrevButtonClicked(String item) {}
+        default void onNextButtonClicked(String item) {}
         default void onAddButtonClicked(String item) {}
     }
 
@@ -118,6 +120,8 @@ public class TypeListAdapter extends BaseAdapter {
             holder.mTextView = convertView.findViewById(R.id.text);
             holder.mCheckBox = convertView.findViewById(R.id.checkbox);
             holder.mAddrTextView = convertView.findViewById(R.id.address_text);
+            holder.mPrevButton = convertView.findViewById(R.id.prev_button);
+            holder.mNextButton = convertView.findViewById(R.id.next_button);
             holder.mAddButton = convertView.findViewById(R.id.add_button);
 
             convertView.setTag(holder);
@@ -144,34 +148,43 @@ public class TypeListAdapter extends BaseAdapter {
         holder.mCheckBox.setOnCheckedChangeListener(null);
         holder.mCheckBox.setChecked(isSel);
 
-        holder.mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    mSelectedTypes.add(item);
-                } else {
-                    mSelectedTypes.remove(item);
-                }
+        holder.mCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                mSelectedTypes.add(item);
+            } else {
+                mSelectedTypes.remove(item);
+            }
 
-                if (mCallback != null) {
-                    mCallback.onCheckedChanged(item, isChecked);
-                }
+            if (mCallback != null) {
+                mCallback.onCheckedChanged(item, isChecked);
             }
         });
 
-        holder.mTextView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                holder.mCheckBox.toggle();
+        holder.mTextView.setOnClickListener(view -> {
+            holder.mCheckBox.toggle();
+        });
+
+        holder.mPrevButton.setOnClickListener(view -> {
+            if (mCallback != null) {
+                mCallback.onPrevButtonClicked(item);
             }
         });
 
-        holder.mAddButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mCallback != null) {
-                    mCallback.onAddButtonClicked(item);
-                }
+        holder.mNextButton.setOnClickListener(view -> {
+            if (mCallback != null) {
+                mCallback.onNextButtonClicked(item);
+            }
+        });
+
+        holder.mAddrTextView.setOnClickListener(view -> {
+            if (mCallback != null) {
+                mCallback.onAddressClicked(item);
+            }
+        });
+
+        holder.mAddButton.setOnClickListener(view -> {
+            if (mCallback != null) {
+                mCallback.onAddButtonClicked(item);
             }
         });
 
@@ -182,6 +195,8 @@ public class TypeListAdapter extends BaseAdapter {
         private CheckBox mCheckBox;
         private TextView mTextView;
         private TextView mAddrTextView;
+        private Button mPrevButton;
+        private Button mNextButton;
         private Button mAddButton;
     }
 }
