@@ -118,6 +118,27 @@ public class DeviceListPartView extends LinearLayout {
         }
     };
 
+    private DeviceListAdapter mDeviceListAdapter = new DeviceListAdapter(new DeviceListAdapter.Listener() {
+        @Override
+        public void onItemClicked(DeviceListAdapter.Holder holder) {
+            selectDevice(holder.device);
+        }
+        @Override
+        public void onItemSwitchClicked(DeviceListAdapter.Holder holder, boolean isChecked) {
+            if (holder.device != null) {
+                holder.device.setOn(isChecked);
+                selectDevice(holder.device);
+            }
+        }
+        @Override
+        public void onItemRemoveClicked(DeviceListAdapter.Holder holder) {
+            if (holder.device != null && mNetwork != null) {
+                mNetwork.removeDevice(holder.device);
+                updateDeviceList();
+            }
+        }
+    });
+
     public DeviceListPartView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
@@ -191,7 +212,7 @@ public class DeviceListPartView extends LinearLayout {
 
         mDeviceListView = findViewById(R.id.device_list);
         mDeviceListView.setLayoutManager(new CustomLayoutManager(mContext));
-        mDeviceListView.setAdapter(new NullRecyclerViewAdapter());
+        mDeviceListView.setAdapter(mDeviceListAdapter);
 
         mDiscoveryProgress = findViewById(R.id.discovery_progress);
     }
@@ -259,30 +280,8 @@ public class DeviceListPartView extends LinearLayout {
 
     private void updateDeviceList() {
         selectDevice(null);
-
-        RecyclerView.Adapter adapter = new DeviceListAdapter(mContext, getCurrentDevices(), new DeviceListAdapter.Listener() {
-            @Override
-            public void onItemClicked(DeviceListAdapter.Holder holder) {
-                selectDevice(holder.device);
-            }
-            @Override
-            public void onItemSwitchClicked(DeviceListAdapter.Holder holder, boolean isChecked) {
-                if (holder.device != null) {
-                    holder.device.setOn(isChecked);
-                    selectDevice(holder.device);
-                }
-            }
-            @Override
-            public void onItemRemoveClicked(DeviceListAdapter.Holder holder) {
-                if (holder.device != null && mNetwork != null) {
-                    mNetwork.removeDevice(holder.device);
-                    updateDeviceList();
-                }
-            }
-        });
-
-        mDeviceCountText.setText(" " + adapter.getItemCount());
-        mDeviceListView.setAdapter(adapter);
+        mDeviceListAdapter.update(getCurrentDevices());
+        mDeviceCountText.setText("" + mDeviceListAdapter.getItemCount());
     }
 
     private void selectDevice(HomeDevice device) {

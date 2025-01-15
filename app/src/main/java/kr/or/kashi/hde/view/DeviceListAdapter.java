@@ -40,27 +40,40 @@ import kr.or.kashi.hde.base.PropertyMap;
 public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Holder> {
     private static final String TAG = "DeviceListAdapter";
 
-    private final Context mContext;
     private final List<HomeDevice> mDeviceList;
     private final Listener mListener;
     private Holder mSelectedHolder = null;
     private HomeDevice mSelectedDevice = null;
 
-    public DeviceListAdapter(Context context, List<HomeDevice> deviceList, Listener listener) {
-        mContext = context;
-        mDeviceList = new ArrayList<>(deviceList);
+    public DeviceListAdapter(Listener listener) {
+        mDeviceList = new ArrayList<>();
         mListener = listener;
+    }
+
+    public void update(List<HomeDevice> deviceList) {
+        mDeviceList.clear();
+        mDeviceList.addAll(deviceList);
+
+        if (mSelectedDevice != null && !mDeviceList.contains(mSelectedDevice)) {
+            mSelectedDevice = null;
+            if (mSelectedHolder != null) {
+                mSelectedHolder.setSelected(false);
+                mSelectedHolder = null;
+            }
+        }
 
         Collections.sort(mDeviceList, (Object o1, Object o2) -> {
             HomeDevice d1 = (HomeDevice) o1;
             HomeDevice d2 = (HomeDevice) o2;
             return d1.getAddress().toString().compareTo(d2.getAddress().toString());
         });
+
+        notifyDataSetChanged();
     }
 
     @Override
     public Holder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(mContext).inflate(R.layout.device_list_item, parent, false);
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.device_list_item, parent, false);
         return new Holder(itemView);
     }
 
