@@ -18,6 +18,10 @@
 package kr.or.kashi.hde.widget;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -78,6 +82,14 @@ public class DeviceTypeListAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
+    public void setAddresses(String[] addresses) {
+        final int count = Math.min(addresses.length, mAddresses.size());
+        for (int i=0; i<count; i++) {
+            mAddresses.set(i, addresses[i]);
+        }
+        notifyDataSetChanged();
+    }
+
     public void setCallback(Callback callback) {
         mCallback = callback;
     }
@@ -115,11 +127,20 @@ public class DeviceTypeListAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        final int pos = position;
-        holder.mTextView.setText(mAllTypes.get(pos).toString());
-        holder.mAddrTextView.setText(mAddresses.get(pos).toString());
+        holder.mTextView.setText(mAllTypes.get(position).toString());
 
-        final String item = mAllTypes.get(pos);
+        final String address = mAddresses.get(position).toString();
+        if (address.length() == 6) {
+            SpannableString spanAddrStr = new SpannableString(address.substring(2));
+            spanAddrStr.setSpan(new ForegroundColorSpan(Color.BLACK), 0, 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spanAddrStr.setSpan(new ForegroundColorSpan(Color.BLACK), 2, 3, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spanAddrStr.setSpan(new ForegroundColorSpan(Color.BLACK), 3, 4, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            holder.mAddrTextView.setText(spanAddrStr);
+        } else {
+            holder.mAddrTextView.setText(address);
+        }
+
+        final String item = mAllTypes.get(position);
         boolean isSel = mSelectedTypes.contains(item);
 
         holder.mCheckBox.setOnCheckedChangeListener(null);
