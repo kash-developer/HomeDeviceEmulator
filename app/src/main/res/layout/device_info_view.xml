@@ -18,7 +18,7 @@
  */
 -->
 
-<kr.or.kashi.hde.widget.DeviceInfoView
+<kr.or.kashi.hde.view.DeviceInfoView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -73,4 +73,4 @@
         android:layout_width="20dp"
         android:layout_height="wrap_content"/>
 
-</kr.or.kashi.hde.widget.DeviceInfoView>
+</kr.or.kashi.hde.view.DeviceInfoView>

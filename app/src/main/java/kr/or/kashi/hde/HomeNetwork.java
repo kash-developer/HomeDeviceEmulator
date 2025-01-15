@@ -20,7 +20,9 @@ package kr.or.kashi.hde;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.ArraySet;
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,12 +30,17 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import kr.or.kashi.hde.base.BasicPropertyMap;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyValue;
+import kr.or.kashi.hde.base.ReadOnlyPropertyMap;
 import kr.or.kashi.hde.session.NetworkSession;
 import kr.or.kashi.hde.ksx4506_kd.KDMainContext;
 import kr.or.kashi.hde.stream.StreamProcessor;
@@ -47,6 +54,9 @@ public class HomeNetwork {
     private final Handler mEventHandler;
     private final boolean mIsSlaveMode;
 
+    private final Object mLock = new Object();
+    private final ArraySet<Callback> mCallbacks = new ArraySet<>();
+
     private final MainContext mMainContext;
     private final StreamProcessor mStreamProcessor;
     private final DeviceDiscovery mDeviceDiscovery;
@@ -55,6 +65,14 @@ public class HomeNetwork {
 
     private int mRetryCount = 0;
     private Runnable mStreamErrorRunable = this::retryStart;
+
+
+    public interface Callback {
+        default void onNetworkStarted() {}
+        default void onNetworkStopped(int error) {}
+        default void onDeviceAdded(List<HomeDevice> devices) {}
+        default void onDeviceRemoved(List<HomeDevice> devices) {}
+    }
 
     public HomeNetwork(Context context, boolean isSlaveMode) {
         mContext = context;
@@ -79,6 +97,18 @@ public class HomeNetwork {
 
     public boolean isSlaveMode() {
         return mIsSlaveMode;
+    }
+
+    public void addCallback(HomeNetwork.Callback callback) {
+        synchronized (mLock) {
+            mCallbacks.add(callback);
+        }
+    }
+
+    public void removeCallback(HomeNetwork.Callback callback) {
+        synchronized (mLock) {
+            mCallbacks.remove(callback);
+        }
     }
 
     public DeviceStatePoller getDeviceStatePoller() {
@@ -113,6 +143,8 @@ public class HomeNetwork {
 
         Log.d(TAG, " network has been started");
 
+        dispatchNetworkStarted();
+
         mRetryCount = 0;
 
         return true;
@@ -130,6 +162,8 @@ public class HomeNetwork {
         mStreamProcessor.stopStream();
 
         Log.d(TAG, " network has been stopped");
+
+        dispatchNetworkStopped();
     }
 
     public void retryStart() {
@@ -169,7 +203,7 @@ public class HomeNetwork {
         return mMainContext.createDevice(defaultProps.toMap());
     }
 
-    public void addDevice(HomeDevice device) {
+    private void addSingleDevice(HomeDevice device) {
         // Append a deivce to the main context and other pollers.
         boolean added = mMainContext.addDevice(device);
         if (added) {
@@ -177,15 +211,79 @@ public class HomeNetwork {
         }
     }
 
-    public void removeDevice(HomeDevice device) {
+    private void removeSingleDevice(HomeDevice device) {
         // Remove a device from the main context and so on.
         mMainContext.removeDevice(device);
         mDeviceStatePoller.removePollee(device.dc());
     }
 
+    public void addDevice(HomeDevice device) {
+        addDevice(new ArrayList<>(List.of(device)));
+    }
+
+    public void addDevice(List<HomeDevice> devices) {
+        for (HomeDevice device: devices) {
+            addSingleDevice(device);
+        }
+        dispatchDeviceAdded(devices);
+    }
+
+    public void removeDevice(HomeDevice device) {
+        removeDevice(new ArrayList<>(List.of(device)));
+    }
+
+    public void removeDevice(List<HomeDevice> devices) {
+        for (HomeDevice device: devices) {
+            removeSingleDevice(device);
+        }
+        dispatchDeviceRemoved(devices);
+    }
+
     public void removeAllDevices() {
-        for (HomeDevice device: getAllDevices()) {
-            removeDevice(device);
+        removeDevice(getAllDevices());
+    }
+
+    public void dispatchNetworkStarted() {
+        Collection<HomeNetwork.Callback> callbacks;
+        synchronized (mLock) {
+            if (mCallbacks.isEmpty()) return;
+            callbacks = new ArraySet<>(mCallbacks);
+        }
+        for (HomeNetwork.Callback cb : callbacks) {
+            mEventHandler.post(() -> cb.onNetworkStarted());
+        }
+    }
+
+    public void dispatchNetworkStopped() {
+        Collection<HomeNetwork.Callback> callbacks;
+        synchronized (mLock) {
+            if (mCallbacks.isEmpty()) return;
+            callbacks = new ArraySet<>(mCallbacks);
+        }
+        for (HomeNetwork.Callback cb : callbacks) {
+            mEventHandler.post(() -> cb.onNetworkStopped(0));
+        }
+    }
+
+    public void dispatchDeviceAdded(final List<HomeDevice> devices) {
+        Collection<HomeNetwork.Callback> callbacks;
+        synchronized (mLock) {
+            if (mCallbacks.isEmpty()) return;
+            callbacks = new ArraySet<>(mCallbacks);
+        }
+        for (HomeNetwork.Callback cb : callbacks) {
+            mEventHandler.post(() -> cb.onDeviceAdded(devices));
+        }
+    }
+
+    public void dispatchDeviceRemoved(final List<HomeDevice> devices) {
+        Collection<HomeNetwork.Callback> callbacks;
+        synchronized (mLock) {
+            if (mCallbacks.isEmpty()) return;
+            callbacks = new ArraySet<>(mCallbacks);
+        }
+        for (HomeNetwork.Callback cb : callbacks) {
+            mEventHandler.post(() -> cb.onDeviceRemoved(devices));
         }
     }
 

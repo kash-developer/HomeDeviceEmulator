@@ -18,9 +18,9 @@
 package kr.or.kashi.hde.device;
 
 import kr.or.kashi.hde.HomeDevice;
-import kr.or.kashi.hde.test.DeviceTestCase;
+import kr.or.kashi.hde.test.HomeDeviceTestCase;
 
-public class LightTest extends DeviceTestCase {
+public class LightTest extends HomeDeviceTestCase {
     public void test_OnOff() throws Exception {
         assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true);
     }

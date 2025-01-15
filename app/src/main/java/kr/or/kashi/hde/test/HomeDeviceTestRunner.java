@@ -34,31 +34,30 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 import kr.or.kashi.hde.HomeDevice;
-import kr.or.kashi.hde.device.LightTest;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 
-public class DeviceTestRunner implements Runnable {
-    private static final String TAG = DeviceTestRunner.class.getSimpleName();
+public class HomeDeviceTestRunner implements Runnable {
+    private static final String TAG = HomeDeviceTestRunner.class.getSimpleName();
 
     private final Handler mHandler;
     private final Executor mHandlerExecutor;
-    private final List<DeviceTestCallback> mCallbacks = new ArrayList<>();
+    private final List<HomeDeviceTestCallback> mCallbacks = new ArrayList<>();
     private List<HomeDevice> mDevices = new ArrayList<>();
     private Thread mThread = null;
     private boolean mRun = true;
 
-    public DeviceTestRunner(Handler handler) {
+    public HomeDeviceTestRunner(Handler handler) {
         mHandler = handler;
         mHandlerExecutor = mHandler::post;
     }
 
-    public void addCallback(DeviceTestCallback callback) {
+    public void addCallback(HomeDeviceTestCallback callback) {
         synchronized (mCallbacks) {
             mCallbacks.add(callback);
         }
     }
 
-    public void removeCallback(DeviceTestCallback callback) {
+    public void removeCallback(HomeDeviceTestCallback callback) {
         synchronized (mCallbacks) {
             mCallbacks.remove(callback);
         }
@@ -81,7 +80,7 @@ public class DeviceTestRunner implements Runnable {
         });
 
         mRun = true;
-        mThread = new Thread(this, TAG + "." + DeviceTestRunner.class.getSimpleName());
+        mThread = new Thread(this, TAG + "." + HomeDeviceTestRunner.class.getSimpleName());
         mThread.start();
 
         return true;
@@ -104,66 +103,66 @@ public class DeviceTestRunner implements Runnable {
     }
 
     private void callOnTestRunnerStarted() {
-        Collection<DeviceTestCallback> callbacks;
+        Collection<HomeDeviceTestCallback> callbacks;
 
         synchronized (mCallbacks) {
             if (mCallbacks.isEmpty()) return;
             callbacks = new ArraySet<>(mCallbacks);
         }
 
-        for (DeviceTestCallback cb : callbacks) {
+        for (HomeDeviceTestCallback cb : callbacks) {
             mHandlerExecutor.execute(cb::onTestRunnerStarted);
         }
     }
 
     private void callOnTestRunnerFinished() {
-        Collection<DeviceTestCallback> callbacks;
+        Collection<HomeDeviceTestCallback> callbacks;
 
         synchronized (mCallbacks) {
             if (mCallbacks.isEmpty()) return;
             callbacks = new ArraySet<>(mCallbacks);
         }
 
-        for (DeviceTestCallback cb : callbacks) {
+        for (HomeDeviceTestCallback cb : callbacks) {
             mHandlerExecutor.execute(cb::onTestRunnerFinished);
         }
     }
 
     private void callOnDeviceTestStarted(HomeDevice device) {
-        Collection<DeviceTestCallback> callbacks;
+        Collection<HomeDeviceTestCallback> callbacks;
 
         synchronized (mCallbacks) {
             if (mCallbacks.isEmpty()) return;
             callbacks = new ArraySet<>(mCallbacks);
         }
 
-        for (DeviceTestCallback cb : callbacks) {
+        for (HomeDeviceTestCallback cb : callbacks) {
             mHandlerExecutor.execute(() -> cb.onDeviceTestStarted(device));
         }
     }
 
     private void callOnDeviceTestExecuted(HomeDevice device, TestCase test, TestResult result, int progress) {
-        Collection<DeviceTestCallback> callbacks;
+        Collection<HomeDeviceTestCallback> callbacks;
 
         synchronized (mCallbacks) {
             if (mCallbacks.isEmpty()) return;
             callbacks = new ArraySet<>(mCallbacks);
         }
 
-        for (DeviceTestCallback cb : callbacks) {
+        for (HomeDeviceTestCallback cb : callbacks) {
             mHandlerExecutor.execute(() -> cb.onDeviceTestExecuted(device, test, result, progress));
         }
     }
 
     private void callOnDeviceTestFinished(HomeDevice device) {
-        Collection<DeviceTestCallback> callbacks;
+        Collection<HomeDeviceTestCallback> callbacks;
 
         synchronized (mCallbacks) {
             if (mCallbacks.isEmpty()) return;
             callbacks = new ArraySet<>(mCallbacks);
         }
 
-        for (DeviceTestCallback cb : callbacks) {
+        for (HomeDeviceTestCallback cb : callbacks) {
             mHandlerExecutor.execute(() -> cb.onDeviceTestFinished(device));
         }
     }
@@ -185,9 +184,9 @@ public class DeviceTestRunner implements Runnable {
 
             int progress = (int) (((double)i / (double)mDevices.size()) * 100.0);
 
-            List<DeviceTestCase> testCases = buildDeviceTestCases(device);
+            List<HomeDeviceTestCase> testCases = buildDeviceTestCases(device);
             for (int j=0; j<testCases.size() && mRun; j++) {
-                DeviceTestCase test = testCases.get(j);
+                HomeDeviceTestCase test = testCases.get(j);
                 TestResult result = new TestResult(); // TODO:
                 test.run(result);
                 callOnDeviceTestExecuted(device, test, result, progress);
@@ -201,7 +200,7 @@ public class DeviceTestRunner implements Runnable {
         Log.d(TAG, "thread finished");
     }
 
-    private List<DeviceTestCase> buildDeviceTestCases(HomeDevice device) {
+    private List<HomeDeviceTestCase> buildDeviceTestCases(HomeDevice device) {
         String testPackage = device.getClass().getPackage().getName();
         String testClassName = device.getClass().getSimpleName() + "Test";
 
@@ -215,16 +214,16 @@ public class DeviceTestRunner implements Runnable {
             return new ArrayList<>();
         }
 
-        List<DeviceTestCase> tests = createTestsFromClass(testClass);
-        for (DeviceTestCase t: tests) {
-            if (t instanceof DeviceTestCase) {
-                ((DeviceTestCase)t).setDevice(device);
+        List<HomeDeviceTestCase> tests = createTestsFromClass(testClass);
+        for (HomeDeviceTestCase t: tests) {
+            if (t instanceof HomeDeviceTestCase) {
+                ((HomeDeviceTestCase)t).setDevice(device);
             }
         }
         return tests;
     }
 
-    private List<DeviceTestCase> createTestsFromClass(final Class<?> testClass) {
+    private List<HomeDeviceTestCase> createTestsFromClass(final Class<?> testClass) {
         List tests = new ArrayList<>();
 
         try {
@@ -240,9 +239,9 @@ public class DeviceTestRunner implements Runnable {
         }
 
         Class<?> clazz = testClass;
-        while (DeviceTestCase.class.isAssignableFrom(clazz)) {
+        while (HomeDeviceTestCase.class.isAssignableFrom(clazz)) {
             for (Method m : clazz.getDeclaredMethods()) {
-                DeviceTestCase test = createTestByMethod(testClass, m);
+                HomeDeviceTestCase test = createTestByMethod(testClass, m);
                 if (test != null) tests.add(test);
             }
             clazz = clazz.getSuperclass();
@@ -260,14 +259,14 @@ public class DeviceTestRunner implements Runnable {
         return testClass.getConstructor(new Class[0]);
     }
 
-    private static DeviceTestCase createTestByMethod(Class<?> testClass, Method testMethod) {
+    private static HomeDeviceTestCase createTestByMethod(Class<?> testClass, Method testMethod) {
         if (!isTestMethod(testMethod)) {
             return null;
         }
         return createTest(testClass, testMethod.getName());
     }
 
-    private static DeviceTestCase createTest(Class<?> testClass, String testName) {
+    private static HomeDeviceTestCase createTest(Class<?> testClass, String testName) {
         Constructor<?> constructor;
         try {
             constructor = getTestConstructor(testClass);
@@ -276,14 +275,14 @@ public class DeviceTestRunner implements Runnable {
             return null;
         }
 
-        DeviceTestCase test = null;
+        HomeDeviceTestCase test = null;
 
         try {
             if (constructor.getParameterTypes().length == 0) {
-                test = (DeviceTestCase) constructor.newInstance(new Object[0]);
+                test = (HomeDeviceTestCase) constructor.newInstance(new Object[0]);
                 if (test instanceof TestCase) ((TestCase)test).setName(testName);
             } else {
-                test = (DeviceTestCase) constructor.newInstance(new Object[]{testName});
+                test = (HomeDeviceTestCase) constructor.newInstance(new Object[]{testName});
             }
         } catch (Exception e) {
             e.printStackTrace();

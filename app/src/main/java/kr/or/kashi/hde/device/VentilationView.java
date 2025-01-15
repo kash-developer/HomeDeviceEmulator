@@ -28,7 +28,7 @@ import androidx.annotation.Nullable;
 
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
-import kr.or.kashi.hde.widget.HomeDeviceView;
+import kr.or.kashi.hde.view.HomeDeviceView;
 
 public class VentilationView extends HomeDeviceView<Ventilation> {
     private static final String TAG = VentilationView.class.getSimpleName();

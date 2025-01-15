@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package kr.or.kashi.hde.widget;
+package kr.or.kashi.hde.view;
 
 import android.content.Context;
 import android.util.AttributeSet;

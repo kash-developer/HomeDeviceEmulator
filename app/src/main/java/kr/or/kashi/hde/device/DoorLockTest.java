@@ -20,9 +20,9 @@ package kr.or.kashi.hde.device;
 import static kr.or.kashi.hde.device.DoorLock.PROP_CURRENT_STATES;
 
 import kr.or.kashi.hde.HomeDevice;
-import kr.or.kashi.hde.test.DeviceTestCase;
+import kr.or.kashi.hde.test.HomeDeviceTestCase;
 
-public class DoorLockTest extends DeviceTestCase {
+public class DoorLockTest extends HomeDeviceTestCase {
     public void test_OnOff() throws Exception {
         assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true);
     }

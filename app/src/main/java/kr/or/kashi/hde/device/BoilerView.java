@@ -22,7 +22,7 @@ import android.util.AttributeSet;
 
 import androidx.annotation.Nullable;
 
-import kr.or.kashi.hde.widget.HomeDeviceView;
+import kr.or.kashi.hde.view.HomeDeviceView;
 
 public class BoilerView extends HomeDeviceView<Thermostat> {
     private static final String TAG = BoilerView.class.getSimpleName();

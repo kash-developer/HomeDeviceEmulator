@@ -18,11 +18,7 @@
 package kr.or.kashi.hde.device;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 
@@ -30,7 +26,7 @@ import androidx.annotation.Nullable;
 
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
-import kr.or.kashi.hde.widget.HomeDeviceView;
+import kr.or.kashi.hde.view.HomeDeviceView;
 
 public class BatchSwitchView extends HomeDeviceView<BatchSwitch> {
     private static final String TAG = BatchSwitchView.class.getSimpleName();

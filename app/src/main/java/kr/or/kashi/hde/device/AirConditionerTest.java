@@ -20,10 +20,9 @@ package kr.or.kashi.hde.device;
 import static kr.or.kashi.hde.device.AirConditioner.*;
 
 import kr.or.kashi.hde.HomeDevice;
-import kr.or.kashi.hde.ksx4506.KSUtils;
-import kr.or.kashi.hde.test.DeviceTestCase;
+import kr.or.kashi.hde.test.HomeDeviceTestCase;
 
-public class AirConditionerTest extends DeviceTestCase {
+public class AirConditionerTest extends HomeDeviceTestCase {
     private static final float EPSILON = 0.005f;
 
     public void test_OnOff() throws Exception {

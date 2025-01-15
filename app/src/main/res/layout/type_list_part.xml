@@ -18,7 +18,7 @@
  */
 -->
 
-<LinearLayout
+<kr.or.kashi.hde.view.TypeListPartView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -246,4 +246,4 @@
 
     </LinearLayout>
 
-</LinearLayout>
+</kr.or.kashi.hde.view.TypeListPartView>

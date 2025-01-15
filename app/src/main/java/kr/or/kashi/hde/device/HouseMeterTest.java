@@ -17,9 +17,9 @@
 
 package kr.or.kashi.hde.device;
 
-import kr.or.kashi.hde.test.DeviceTestCase;
+import kr.or.kashi.hde.test.HomeDeviceTestCase;
 
-public class HouseMeterTest extends DeviceTestCase {
+public class HouseMeterTest extends HomeDeviceTestCase {
     public void test_OnOff() throws Exception {
         throw new UnsupportedOperationException();
     }

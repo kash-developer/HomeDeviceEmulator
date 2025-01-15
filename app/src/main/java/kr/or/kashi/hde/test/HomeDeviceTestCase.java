@@ -17,16 +17,13 @@
 
 package kr.or.kashi.hde.test;
 
-import android.util.Log;
-
 import junit.framework.TestCase;
 
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.base.PropertyMap;
-import kr.or.kashi.hde.device.LightView;
 
-public class DeviceTestCase<T> extends TestCase implements HomeDevice.Callback {
-    private static final String TAG = DeviceTestCase.class.getSimpleName();
+public class HomeDeviceTestCase<T> extends TestCase implements HomeDevice.Callback {
+    private static final String TAG = HomeDeviceTestCase.class.getSimpleName();
     private final Object mLock = new Object();
     private HomeDevice mDevice;
 

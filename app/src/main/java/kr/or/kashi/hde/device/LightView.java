@@ -20,24 +20,19 @@ package kr.or.kashi.hde.device;
 import androidx.annotation.Nullable;
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import java.util.logging.Handler;
-
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.util.Utils;
-import kr.or.kashi.hde.widget.HomeDeviceView;
+import kr.or.kashi.hde.view.HomeDeviceView;
 
 public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBarChangeListener {
     private static final String TAG = LightView.class.getSimpleName();

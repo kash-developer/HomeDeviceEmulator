@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
-package kr.or.kashi.hde.widget;
+package kr.or.kashi.hde.view;
 
 import static android.os.Build.VERSION.SDK_INT;
 
 import android.app.Dialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -58,10 +56,10 @@ import java.util.Collections;
 
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.R;
-import kr.or.kashi.hde.test.DeviceTestCallback;
+import kr.or.kashi.hde.test.HomeDeviceTestCallback;
 
-public class DeviceTestReportDialog extends Dialog implements DeviceTestCallback {
-    private static final String TAG = DeviceTestReportDialog.class.getSimpleName();
+public class AutoTestReportDialog extends Dialog implements HomeDeviceTestCallback {
+    private static final String TAG = AutoTestReportDialog.class.getSimpleName();
     private static final float DIALOG_WIDTH_RATIO = 0.9f;
     private static final float DIALOG_HEIGHT_RATIO = 0.9f;
 
@@ -77,7 +75,7 @@ public class DeviceTestReportDialog extends Dialog implements DeviceTestCallback
     private WebView mReportWebView;
     private ProgressBar mReportProgress;
 
-    public DeviceTestReportDialog(Context context) {
+    public AutoTestReportDialog(Context context) {
         super(context);
         mContext = context;
         mHandler = new Handler(Looper.getMainLooper());
@@ -93,7 +91,7 @@ public class DeviceTestReportDialog extends Dialog implements DeviceTestCallback
             });
         }
 
-        setContentView(R.layout.device_test_report);
+        setContentView(R.layout.auto_test_report);
 
         mSaveButton = findViewById(R.id.save_button);
         mSaveButton.setOnClickListener(view -> onSaveHtml());

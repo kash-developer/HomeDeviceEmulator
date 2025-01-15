@@ -18,9 +18,9 @@
 package kr.or.kashi.hde.device;
 
 import kr.or.kashi.hde.HomeDevice;
-import kr.or.kashi.hde.test.DeviceTestCase;
+import kr.or.kashi.hde.test.HomeDeviceTestCase;
 
-public class GasValveTest extends DeviceTestCase {
+public class GasValveTest extends HomeDeviceTestCase {
     public void test_OnOff() throws Exception {
         final long supports = device().getProperty(GasValve.PROP_SUPPORTED_STATES, Long.class);
         if ((supports & GasValve.State.GAS_VALVE) == 0L && (supports & GasValve.State.INDUCTION) == 0L) {

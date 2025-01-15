@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package kr.or.kashi.hde.widget;
+package kr.or.kashi.hde.view;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -22,7 +22,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.method.ScrollingMovementMethod;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -37,17 +36,18 @@ import java.util.Collections;
 
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.R;
-import kr.or.kashi.hde.test.DeviceTestCallback;
+import kr.or.kashi.hde.test.HomeDeviceTestCallback;
+import kr.or.kashi.hde.widget.MySpannableStringBuilder;
 
-public class TestResultView extends ScrollView implements DeviceTestCallback  {
-    private static final String TAG = TestResultView.class.getSimpleName();
+public class AutoTestResultView extends ScrollView implements HomeDeviceTestCallback {
+    private static final String TAG = AutoTestResultView.class.getSimpleName();
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private final Runnable mScrollRunnable = this::scrollToLast;
     private TextView mTestResultText;
     private long mScrollDelay = 200;
 
-    public TestResultView(Context context, @Nullable AttributeSet attrs) {
+    public AutoTestResultView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
     }
 

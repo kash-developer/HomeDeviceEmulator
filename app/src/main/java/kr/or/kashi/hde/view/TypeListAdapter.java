@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-package kr.or.kashi.hde.widget;
+package kr.or.kashi.hde.view;
 
 import android.content.Context;
 import android.graphics.Color;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,10 +35,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.R;
 
-public class DeviceTypeListAdapter extends BaseAdapter {
+public class TypeListAdapter extends BaseAdapter {
     private Context mContext;
     private Set<String> mSelectedTypes;
     private List<String> mAllTypes;
@@ -51,7 +49,7 @@ public class DeviceTypeListAdapter extends BaseAdapter {
         default void onAddButtonClicked(String item) {}
     }
 
-    public DeviceTypeListAdapter(Context context, List<String> allItems, Set<String> selectedItemsRef) {
+    public TypeListAdapter(Context context, List<String> allItems, Set<String> selectedItemsRef) {
         mContext = context;
         mAllTypes = allItems;
         mAddresses = new ArrayList<>(allItems.size());
@@ -114,7 +112,7 @@ public class DeviceTypeListAdapter extends BaseAdapter {
         final ViewHolder holder;
         if (convertView == null ) {
             LayoutInflater layoutInflator = LayoutInflater.from(mContext);
-            convertView = layoutInflator.inflate(R.layout.device_type_list_item, parent, false);
+            convertView = layoutInflator.inflate(R.layout.type_list_item, parent, false);
 
             holder = new ViewHolder();
             holder.mTextView = convertView.findViewById(R.id.text);

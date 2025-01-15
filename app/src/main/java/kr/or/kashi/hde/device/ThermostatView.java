@@ -20,10 +20,8 @@ package kr.or.kashi.hde.device;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.RadioButton;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -32,7 +30,7 @@ import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyValue;
 import kr.or.kashi.hde.util.Utils;
-import kr.or.kashi.hde.widget.HomeDeviceView;
+import kr.or.kashi.hde.view.HomeDeviceView;
 
 public class ThermostatView extends HomeDeviceView<Thermostat> {
     private static final String TAG = ThermostatView.class.getSimpleName();

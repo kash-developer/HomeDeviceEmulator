@@ -28,9 +28,9 @@ import static kr.or.kashi.hde.device.Curtain.PROP_STATE;
 import static kr.or.kashi.hde.device.Curtain.PROP_SUPPORTS;
 
 import kr.or.kashi.hde.HomeDevice;
-import kr.or.kashi.hde.test.DeviceTestCase;
+import kr.or.kashi.hde.test.HomeDeviceTestCase;
 
-public class CurtainTest extends DeviceTestCase {
+public class CurtainTest extends HomeDeviceTestCase {
     public void test_OnOff() throws Exception {
         assertPropertyChanaged(HomeDevice.PROP_ONOFF, Boolean.class, false, true);
     }

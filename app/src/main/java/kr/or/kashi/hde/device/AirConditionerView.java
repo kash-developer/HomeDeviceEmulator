@@ -19,9 +19,7 @@ package kr.or.kashi.hde.device;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.CheckBox;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -33,7 +31,7 @@ import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.util.Utils;
-import kr.or.kashi.hde.widget.HomeDeviceView;
+import kr.or.kashi.hde.view.HomeDeviceView;
 
 public class AirConditionerView extends HomeDeviceView<AirConditioner>
         implements RadioGroup.OnCheckedChangeListener, SeekBar.OnSeekBarChangeListener {

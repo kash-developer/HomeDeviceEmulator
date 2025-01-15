@@ -22,7 +22,7 @@ import android.util.AttributeSet;
 
 import androidx.annotation.Nullable;
 
-import kr.or.kashi.hde.widget.HomeDeviceView;
+import kr.or.kashi.hde.view.HomeDeviceView;
 
 public class BinarySensorsView extends HomeDeviceView<BinarySensors> {
     private static final String TAG = BinarySensorsView.class.getSimpleName();

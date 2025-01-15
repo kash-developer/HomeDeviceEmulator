@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package kr.or.kashi.hde.widget;
+package kr.or.kashi.hde.view;
 
 import android.content.Context;
 import android.os.Handler;
@@ -36,35 +36,32 @@ import java.util.List;
 
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.R;
-import kr.or.kashi.hde.test.DeviceTestCallback;
-import kr.or.kashi.hde.test.DeviceTestRunner;
+import kr.or.kashi.hde.test.HomeDeviceTestCallback;
+import kr.or.kashi.hde.test.HomeDeviceTestRunner;
 import kr.or.kashi.hde.util.DebugLog;
 
-public class DeviceTestPartView extends LinearLayout implements DeviceTestCallback {
-    private static final String TAG = DeviceTestPartView.class.getSimpleName();
+public class AutoTestPartView extends LinearLayout implements HomeDeviceTestCallback {
+    private static final String TAG = AutoTestPartView.class.getSimpleName();
     private final Context mContext;
     private final Handler mHandler;
-    private final DeviceTestRunner mDeviceTestRunner;
-    private final DeviceTestReportDialog mReportDialog;
+    private final HomeDeviceTestRunner mDeviceTestRunner;
+    private final AutoTestReportDialog mReportDialog;
 
     private TextView mTestStateText;
     private TextView mTestProgressText;
     private Button mReportButton;
-    private TestResultView mTestResultView;
+    private AutoTestResultView mTestResultView;
     private ProgressBar mTestProgress;
 
-    public DeviceTestPartView(Context context, @Nullable AttributeSet attrs) {
+    public AutoTestPartView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
         mHandler = new Handler(Looper.getMainLooper());
-        mDeviceTestRunner = new DeviceTestRunner(mHandler);
-        mReportDialog = new DeviceTestReportDialog(context);
+        mDeviceTestRunner = new HomeDeviceTestRunner(mHandler);
+        mReportDialog = new AutoTestReportDialog(context);
     }
 
-    @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-
+    public void init() {
         mTestStateText = findViewById(R.id.test_state_text);
         mTestProgressText = findViewById(R.id.test_progress_text);
 
@@ -80,7 +77,7 @@ public class DeviceTestPartView extends LinearLayout implements DeviceTestCallba
         mDeviceTestRunner.addCallback(mReportDialog);
     }
 
-    public DeviceTestRunner getTestRunner() {
+    public HomeDeviceTestRunner getTestRunner() {
         return mDeviceTestRunner;
     }
 

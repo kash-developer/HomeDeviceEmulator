@@ -33,18 +33,20 @@
         android:orientation="horizontal">
 
         <include
+            android:id="@+id/type_list_part"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="50"
             android:layout_margin="2dp"
-            layout="@layout/device_type_part"/>
+            layout="@layout/type_list_part"/>
 
         <include
+            android:id="@+id/device_log_part"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="50"
             android:layout_margin="2dp"
-            layout="@layout/device_debug_part"/>
+            layout="@layout/debug_log_part"/>
 
     </LinearLayout>
 
@@ -56,6 +58,7 @@
         android:orientation="horizontal">
 
         <include
+            android:id="@+id/device_list_part"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="50"
@@ -72,14 +75,14 @@
                 android:id="@+id/device_detail_part"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                layout="@layout/device_detail_part"/>
+                layout="@layout/controls_part"/>
 
             <include
                 android:id="@+id/device_test_part"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:visibility="gone"
-                layout="@layout/device_test_part"/>
+                layout="@layout/auto_test_part"/>
 
         </FrameLayout>
 

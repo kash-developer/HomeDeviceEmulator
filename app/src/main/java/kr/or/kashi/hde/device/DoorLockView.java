@@ -23,14 +23,12 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.ToggleButton;
 
-import androidx.annotation.IdRes;
 import androidx.annotation.Nullable;
 
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
-import kr.or.kashi.hde.widget.HomeDeviceView;
+import kr.or.kashi.hde.view.HomeDeviceView;
 
 public class DoorLockView extends HomeDeviceView<DoorLock> implements View.OnClickListener {
     private static final String TAG = DoorLockView.class.getSimpleName();

@@ -31,7 +31,7 @@ import androidx.annotation.Nullable;
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyValue;
-import kr.or.kashi.hde.widget.HomeDeviceView;
+import kr.or.kashi.hde.view.HomeDeviceView;
 
 public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.OnClickListener {
     private static final String TAG = PowerSaverView.class.getSimpleName();

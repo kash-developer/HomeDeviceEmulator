@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
-package kr.or.kashi.hde.widget;
+package kr.or.kashi.hde.view;
 
 import android.content.Context;
 import android.graphics.Color;
 import android.os.SystemClock;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,7 +36,6 @@ import java.util.List;
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
-import kr.or.kashi.hde.base.PropertyValue;
 
 public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Holder> {
     private static final String TAG = "DeviceListAdapter";

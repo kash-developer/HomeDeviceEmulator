@@ -27,7 +27,7 @@ import androidx.annotation.Nullable;
 
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
-import kr.or.kashi.hde.widget.HomeDeviceView;
+import kr.or.kashi.hde.view.HomeDeviceView;
 
 public class GasValveView extends HomeDeviceView<GasValve> {
     private static final String TAG = GasValveView.class.getSimpleName();

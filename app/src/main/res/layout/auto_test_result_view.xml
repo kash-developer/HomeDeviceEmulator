@@ -18,7 +18,7 @@
  */
 -->
 
-<kr.or.kashi.hde.widget.TestResultView
+<kr.or.kashi.hde.view.AutoTestResultView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -39,4 +39,4 @@
         android:text=""
         android:typeface="monospace"/>
 
-</kr.or.kashi.hde.widget.TestResultView>
+</kr.or.kashi.hde.view.AutoTestResultView>

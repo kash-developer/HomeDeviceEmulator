@@ -22,7 +22,7 @@ import junit.framework.TestResult;
 
 import kr.or.kashi.hde.HomeDevice;
 
-public interface DeviceTestCallback {
+public interface HomeDeviceTestCallback {
     default void onTestRunnerStarted() {}
     default void onTestRunnerFinished() {}
     default void onDeviceTestStarted(HomeDevice device) {}
