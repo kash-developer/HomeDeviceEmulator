@@ -71,6 +71,10 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Ho
         notifyDataSetChanged();
     }
 
+    public int indexOf(HomeDevice device) {
+        return mDeviceList.indexOf(device);
+    }
+
     @Override
     public Holder onCreateViewHolder(ViewGroup parent, int viewType) {
         View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.device_list_item, parent, false);

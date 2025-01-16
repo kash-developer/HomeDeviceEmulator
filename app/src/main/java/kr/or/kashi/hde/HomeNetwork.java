@@ -292,6 +292,8 @@ public class HomeNetwork {
     }
 
     public boolean loadDevicesFrom(InputStream is) {
+        List<HomeDevice> devices = new ArrayList<>();
+
         try {
             ObjectInputStream ois = new ObjectInputStream(is);
             List<List<PropertyValue>> propsList = (List) ois.readObject();
@@ -303,13 +305,14 @@ public class HomeNetwork {
             for (List<PropertyValue> props: propsList) {
                 PropertyMap propMap = new BasicPropertyMap();
                 propMap.putAll(props);
-                addDevice(createDevice(propMap));
+                devices.add(createDevice(propMap));
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
             return false;
         }
 
+        addDevice(devices);
         return true;
     }
 

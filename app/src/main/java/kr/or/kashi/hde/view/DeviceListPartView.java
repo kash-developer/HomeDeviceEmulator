@@ -34,6 +34,7 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.FileInputStream;
@@ -151,7 +152,12 @@ public class DeviceListPartView extends LinearLayout {
         mAutoTestPart = deviceTestPartView;
 
         mNetwork.addCallback(new HomeNetwork.Callback() {
-            @Override public void onDeviceAdded(List<HomeDevice> devices) { updateDeviceList(); }
+            @Override public void onDeviceAdded(List<HomeDevice> devices) {
+                updateDeviceList();
+                if (devices.size() == 1) {
+                    scrollToDevice(devices.get(0));
+                }
+            }
             @Override public void onDeviceRemoved(List<HomeDevice> devices) { updateDeviceList(); }
         });
 
@@ -211,7 +217,7 @@ public class DeviceListPartView extends LinearLayout {
         mDeviceCountText = findViewById(R.id.device_count_text);
 
         mDeviceListView = findViewById(R.id.device_list);
-        mDeviceListView.setLayoutManager(new CustomLayoutManager(mContext));
+        mDeviceListView.setLayoutManager(new LinearLayoutManager(mContext));
         mDeviceListView.setAdapter(mDeviceListAdapter);
 
         mDiscoveryProgress = findViewById(R.id.discovery_progress);
@@ -282,6 +288,11 @@ public class DeviceListPartView extends LinearLayout {
         selectDevice(null);
         mDeviceListAdapter.update(getCurrentDevices());
         mDeviceCountText.setText("" + mDeviceListAdapter.getItemCount());
+    }
+
+    private void scrollToDevice(HomeDevice device) {
+        final int index = mDeviceListAdapter.indexOf(device);
+        if (index != -1) mDeviceListView.smoothScrollToPosition(index);
     }
 
     private void selectDevice(HomeDevice device) {
