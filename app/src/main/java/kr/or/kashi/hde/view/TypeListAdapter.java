@@ -48,7 +48,7 @@ public class TypeListAdapter extends BaseAdapter {
         default void onAddressClicked(String item) {}
         default void onPrevButtonClicked(String item) {}
         default void onNextButtonClicked(String item) {}
-        default void onAddButtonClicked(String item) {}
+        default void onAddButtonClicked(String item, boolean longClick) {}
     }
 
     public TypeListAdapter(Context context, List<String> allItems, Set<String> selectedItemsRef) {
@@ -184,8 +184,16 @@ public class TypeListAdapter extends BaseAdapter {
 
         holder.mAddButton.setOnClickListener(view -> {
             if (mCallback != null) {
-                mCallback.onAddButtonClicked(item);
+                mCallback.onAddButtonClicked(item, false);
             }
+        });
+
+        holder.mAddButton.setOnLongClickListener(view -> {
+            if (mCallback != null) {
+                mCallback.onAddButtonClicked(item, true);
+                return true;
+            }
+            return false;
         });
 
         return convertView;

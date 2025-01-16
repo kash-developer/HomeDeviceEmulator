@@ -180,6 +180,10 @@ public class HomeNetwork {
         }
     }
 
+    public HomeDevice getDevice(String address) {
+        return mMainContext.getDevice(address);
+    }
+
     public List<HomeDevice> getAllDevices() {
         return new ArrayList(mMainContext.getAllDevices());
     }

@@ -81,6 +81,8 @@ public class TypeListPartView extends LinearLayout {
         }
     };
 
+    private TypeListAdapter mDeviceTypeListAdapter;
+
     public TypeListPartView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
@@ -122,9 +124,9 @@ public class TypeListPartView extends LinearLayout {
         mDiscoveryToggle.setEnabled(!mNetwork.isSlaveMode());
         mDiscoveryToggle.setOnClickListener(view -> setDiscoveryOn(((Checkable)view).isChecked()));
 
-        final TypeListAdapter deviceTypeListAdapter = new TypeListAdapter(
+        mDeviceTypeListAdapter = new TypeListAdapter(
                 mContext, new ArrayList(mDeviceToKsIdMap.keySet()), mSelectedDeviceTypes);
-        deviceTypeListAdapter.setCallback(new TypeListAdapter.Callback() {
+        mDeviceTypeListAdapter.setCallback(new TypeListAdapter.Callback() {
             @Override
             public void onCheckedChanged(String item, boolean checked) {
                 LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
@@ -138,13 +140,17 @@ public class TypeListPartView extends LinearLayout {
                 updateGroupShiftedInAddress(item, false);
             }
             @Override
-            public void onAddButtonClicked(String item) {
-                addSingleDevice(item);
+            public void onAddButtonClicked(String item, boolean longClick) {
+                if (longClick) {
+                    addFullDeviceIf(item);
+                } else {
+                    addSingleDevice(item);
+                }
             }
         });
 
         mDeviceTypeListView = findViewById(R.id.device_types_list);
-        mDeviceTypeListView.setAdapter(deviceTypeListAdapter);
+        mDeviceTypeListView.setAdapter(mDeviceTypeListAdapter);
 
         final SeekBar.OnSeekBarChangeListener seekBarListener = new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { onRangeChanged(); }
@@ -193,20 +199,15 @@ public class TypeListPartView extends LinearLayout {
 
     private void selectAllTypes() {
         mSelectedDeviceTypes.addAll(mDeviceToKsIdMap.keySet());
-        final TypeListAdapter deviceTypeListAdapter =
-                (TypeListAdapter) mDeviceTypeListView.getAdapter();
-        deviceTypeListAdapter.setSelctedItemsRef(mSelectedDeviceTypes);
+        mDeviceTypeListAdapter.setSelctedItemsRef(mSelectedDeviceTypes);
         LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
     }
 
     private void deselectAllTypes() {
         mSelectedDeviceTypes.clear();
-        final TypeListAdapter deviceTypeListAdapter =
-                (TypeListAdapter) mDeviceTypeListView.getAdapter();
-        deviceTypeListAdapter.setSelctedItemsRef(mSelectedDeviceTypes);
+        mDeviceTypeListAdapter.setSelctedItemsRef(mSelectedDeviceTypes);
         LocalPreferences.putSelectedDeviceTypes(mSelectedDeviceTypes);
     }
-
 
     private void setDiscoveryOn(boolean on) {
         if (!mNetwork.isRunning()) {
@@ -351,6 +352,20 @@ public class TypeListPartView extends LinearLayout {
         }
     }
 
+    private void addFullDeviceIf(String type) {
+        String address = mDeviceTypeListAdapter.getAddress(type);
+        if (address.isEmpty()) return;
+
+        final int devId = Integer.parseInt(address.substring(2, 4), 16);
+        final int grpId = Integer.parseInt(address.substring(4, 5), 16);
+
+        if (mNetwork.getDevice(createKsAddress(devId, grpId, 0xF)) == null) {
+            mNetwork.addDevice(createKsDevice(type, devId, grpId, 0xF));
+        } else if (mNetwork.getDevice(createKsAddress(devId, 0xFF)) == null) {
+            mNetwork.addDevice(createKsDevice(type, devId, 0xF, 0xF));
+        }
+    }
+
     private void addSelectedDevices() {
         mNetwork.addDevice(createSelectedDevices());
     }
@@ -360,10 +375,7 @@ public class TypeListPartView extends LinearLayout {
     }
 
     private HomeDevice createSingleDeviceOfType(String type) {
-        final TypeListAdapter deviceTypeListAdapter =
-                (TypeListAdapter) mDeviceTypeListView.getAdapter();
-
-        String address = deviceTypeListAdapter.getAddress(type);
+        String address = mDeviceTypeListAdapter.getAddress(type);
         if (address != null && !address.isEmpty()) {
             try {
                 int deviceId = Integer.parseInt(address.substring(2, 4), 16);
@@ -438,8 +450,12 @@ public class TypeListPartView extends LinearLayout {
         return devices;
     }
 
-    private String createKsAddress(int deviceId, int groupId, int singleId) {
-        return String.format("::%02X%1X%1X", deviceId, groupId, singleId);
+    private static String createKsAddress(int devId, int subId) {
+        return String.format("::%02X%02X", devId, subId);
+    }
+
+    private static String createKsAddress(int devId, int grpId, int sglId) {
+        return String.format("::%02X%1X%1X", devId, grpId, sglId);
     }
 
     private HomeDevice createKsDevice(String typeName, int deviceId, int groupId, int singleId) {
@@ -481,13 +497,11 @@ public class TypeListPartView extends LinearLayout {
     }
 
     private void updateCandidateAddresses() {
-        final TypeListAdapter listAdapter = (TypeListAdapter) mDeviceTypeListView.getAdapter();
         final List<Integer> devIdList = new ArrayList<>(mDeviceToKsIdMap.values());
-
         final String[] addresses = new String[devIdList.size()];
 
         for (int i=0; i<devIdList.size(); i++) {
-            String addr = listAdapter.getAddress(i);
+            String addr = mDeviceTypeListAdapter.getAddress(i);
             if (addr.length() < 6) addr = getInitialAddress(devIdList.get(i));
 
             final int devId = Integer.parseInt(addr.substring(2, 4), 16);
@@ -499,13 +513,13 @@ public class TypeListPartView extends LinearLayout {
             final int sglId = ids[grpId] + 1;
 
             if (sglId < 0xF) {
-                addresses[i] = idToAddress(devId, grpId, sglId);
+                addresses[i] = createKsAddress(devId, grpId, sglId);
             } else {
                 addresses[i] = getNextAddress(devId, grpId, sglId);
             }
         }
 
-        listAdapter.setAddresses(addresses);
+        mDeviceTypeListAdapter.setAddresses(addresses);
     }
 
     private String getNextAddress(String address) {
@@ -527,14 +541,14 @@ public class TypeListPartView extends LinearLayout {
         int newSglId = sglId + 1;
 
         if (newSglId < 0xF) {
-            return idToAddress(devId, newGrpId, newSglId);
+            return createKsAddress(devId, newGrpId, newSglId);
         }
 
         for (int i=0; i<0xF; i++) {
             if (++newGrpId >= 0xF) newGrpId = 0;
             newSglId = ids[newGrpId] + 1;
             if (newSglId < 0xF) {
-                return idToAddress(devId, newGrpId, newSglId);
+                return createKsAddress(devId, newGrpId, newSglId);
             }
         }
 
@@ -546,8 +560,7 @@ public class TypeListPartView extends LinearLayout {
         final int index = keyList.indexOf(type);
         if (index < 0) return;
 
-        final TypeListAdapter deviceTypeListAdapter = (TypeListAdapter) mDeviceTypeListView.getAdapter();
-        final String address = deviceTypeListAdapter.getAddress(type);
+        final String address = mDeviceTypeListAdapter.getAddress(type);
         if (address == null || address.length() < 6) return;
 
         final int devId = Integer.parseInt(address.substring(2, 4), 16);
@@ -577,16 +590,8 @@ public class TypeListPartView extends LinearLayout {
 
         if (newSglId > 0) {
             final String newAddr = String.format("::%02X%01X%01X", devId, newGrpId, newSglId);
-            deviceTypeListAdapter.setAddress(index, newAddr);
+            mDeviceTypeListAdapter.setAddress(index, newAddr);
         }
-    }
-
-    private static String idToAddress(int devId, int grpId, int sglId) {
-        return idToAddress(devId, ((grpId & 0x0F) << 4) | (sglId & 0x0F));
-    }
-
-    private static String idToAddress(int devId, int subId) {
-        return String.format("::%02X%02X", devId, subId);
     }
 
     private String getInitialAddress(int devId) {
@@ -594,6 +599,6 @@ public class TypeListPartView extends LinearLayout {
         if (devId == 0x0E || devId == 0x39 || devId == 0x36) {
             subId += 0x10;
         }
-        return idToAddress(devId, subId);
+        return createKsAddress(devId, subId);
     }
 }
