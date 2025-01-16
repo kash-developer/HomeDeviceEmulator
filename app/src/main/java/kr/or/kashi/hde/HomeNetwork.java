@@ -22,25 +22,20 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.ArraySet;
 import android.util.Log;
-import android.util.Pair;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executor;
 
 import kr.or.kashi.hde.base.BasicPropertyMap;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyValue;
-import kr.or.kashi.hde.base.ReadOnlyPropertyMap;
 import kr.or.kashi.hde.session.NetworkSession;
 import kr.or.kashi.hde.ksx4506_kd.KDMainContext;
 import kr.or.kashi.hde.stream.StreamProcessor;
@@ -297,16 +292,24 @@ public class HomeNetwork {
         try {
             ObjectInputStream ois = new ObjectInputStream(is);
             List<List<PropertyValue>> propsList = (List) ois.readObject();
-            if (propsList == null || propsList.isEmpty()) {
+            if (propsList == null) {
                 return false;
             }
 
             removeAllDevices();
+
+            if (propsList.isEmpty()) {
+                return true;
+            }
+
             for (List<PropertyValue> props: propsList) {
                 PropertyMap propMap = new BasicPropertyMap();
                 propMap.putAll(props);
                 devices.add(createDevice(propMap));
             }
+        } catch (EOFException e) {
+            removeAllDevices();
+            return true;
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
             return false;
@@ -318,7 +321,7 @@ public class HomeNetwork {
 
     public boolean saveDevicesTo(OutputStream os) {
         List<HomeDevice> devices = mMainContext.getAllDevices();
-        if (devices.isEmpty()) return false;
+        if (devices.isEmpty()) return true;
 
         List<List<PropertyValue>> propsList = new ArrayList<>(devices.size());
         for (HomeDevice d: devices) {

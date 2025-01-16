@@ -18,11 +18,13 @@
 package kr.or.kashi.hde.view;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -37,9 +39,11 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,12 +55,10 @@ import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.test.HomeDeviceTestCallback;
 import kr.or.kashi.hde.util.DebugLog;
 import kr.or.kashi.hde.util.LocalPreferences;
-import kr.or.kashi.hde.widget.CustomLayoutManager;
-import kr.or.kashi.hde.widget.NullRecyclerViewAdapter;
 
 public class DeviceListPartView extends LinearLayout {
     private static final String TAG = DeviceListPartView.class.getSimpleName();
-    private static final String SAVED_DEVICES_FILENAME = "saved_devices";
+    private static final String SAVED_DEVICES_FILENAME_PREFIX = "saved_devices_";
 
     private final Context mContext;
     private final Handler mHandler;
@@ -174,8 +176,15 @@ public class DeviceListPartView extends LinearLayout {
 
         findViewById(R.id.remove_all_button).setOnClickListener(view -> removeAllDevices());
         findViewById(R.id.remove_all_button).setOnLongClickListener(view -> removeAllDisconnectedDevices());
-        findViewById(R.id.load_button).setOnClickListener(view -> loadDeviceList());
-        findViewById(R.id.save_button).setOnClickListener(view -> saveDeviceList());
+
+        final ViewGroup presetGroup = findViewById(R.id.preset_group);
+        for (int i=0; i<presetGroup.getChildCount(); i++) {
+            final Button button = (Button) presetGroup.getChildAt(i);
+            final String presetName = button.getText().toString();
+            button.setOnClickListener(view -> loadDeviceList(presetName));
+            button.setOnLongClickListener(view -> { saveDeviceList(presetName); return true; });
+        }
+        updateAllPresetStates();
 
         findViewById(R.id.polling_interval_group).setVisibility(mNetwork.isSlaveMode() ? View.GONE : View.VISIBLE);
         final List<String> intervalTexts = new ArrayList<>();
@@ -251,36 +260,61 @@ public class DeviceListPartView extends LinearLayout {
         return true;
     }
 
-    private void loadDeviceList() {
+    private void loadDeviceList(String presetName) {
         FileInputStream fis = null;
         try {
-            fis = mContext.openFileInput(SAVED_DEVICES_FILENAME);
+            final String fileName = SAVED_DEVICES_FILENAME_PREFIX + presetName;
+            fis = mContext.openFileInput(fileName);
+            if (mNetwork.loadDevicesFrom(fis)) {
+                debug("Device list has been successfully loaded from the preset " + presetName);
+                updateDeviceList();
+            } else {
+                debug("Can't load the saved device list");
+            }
         } catch (FileNotFoundException e) {
-            debug("No saved list");
-            return;
+            debug("No saved devices in the preset " + presetName);
+        } finally {
+            if (fis != null) {
+                try { fis.close(); } catch (IOException e) { }
+            }
         }
-
-        if (mNetwork.loadDevicesFrom(fis)) {
-            debug("Device list has been loaded successfully");
-            updateDeviceList();
-        } else {
-            debug("Can't load the saved device list");
-        }
+        updateAllPresetStates();
     }
 
-    private void saveDeviceList() {
+    private void saveDeviceList(String presetName) {
         FileOutputStream fos = null;
         try {
-            fos = mContext.openFileOutput(SAVED_DEVICES_FILENAME, Context.MODE_PRIVATE);
+            final String fileName = SAVED_DEVICES_FILENAME_PREFIX + presetName;
+            fos = mContext.openFileOutput(fileName, Context.MODE_PRIVATE);
+            if (mNetwork.saveDevicesTo(fos)) {
+                debug("Device list has been successfully saved to the preset " + presetName);
+            } else {
+                debug("Can't save the device list");
+            }
         } catch (FileNotFoundException e) {
-            debug("Can't open file to save");
-            return;
+            debug("Can't open file to save device list to the preset " + presetName);
+        } finally {
+            if (fos != null) {
+                try { fos.close(); } catch (IOException e) { }
+            }
         }
+        updateAllPresetStates();
+    }
 
-        if (mNetwork.saveDevicesTo(fos)) {
-            debug("Device list has benn saved successfully");
-        } else {
-            debug("Can't save the device list");
+    private boolean hasSavedPreset(String presetName) {
+        final String fileName = SAVED_DEVICES_FILENAME_PREFIX + presetName;
+        final File file = mContext.getFileStreamPath(fileName);
+        return (file != null && file.length() > 0);
+    }
+
+    private void updateAllPresetStates() {
+        final ViewGroup presetGroup = findViewById(R.id.preset_group);
+        for (int i=0; i<presetGroup.getChildCount(); i++) {
+            final Button button = (Button) presetGroup.getChildAt(i);
+            final String presetName = button.getText().toString();
+            boolean hasPreset = hasSavedPreset(presetName);
+            button.setTextColor(hasPreset ? 0xFF006666 : 0xFF000000);
+            button.setTypeface(null, hasPreset ? Typeface.BOLD : Typeface.NORMAL);
         }
     }
 

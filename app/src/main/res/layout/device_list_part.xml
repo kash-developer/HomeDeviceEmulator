@@ -26,27 +26,105 @@
     style="@style/Area">
 
     <LinearLayout
-        android:layout_height="wrap_content"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/remove_all_button"
-            android:layout_height="wrap_content"
             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Remove All" />
 
-        <Button
-            android:id="@+id/load_button"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:text="Load" />
+        <Space
+            android:layout_width="5dp"
+            android:layout_height="wrap_content" />
 
-        <Button
-            android:id="@+id/save_button"
-            android:layout_height="wrap_content"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:text="Save" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="5dp"
+                    android:paddingLeft="3dp"
+                    android:textStyle="bold"
+                    android:textSize="7sp"
+                    android:text="PRESETS:" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:paddingTop="5dp"
+                    android:paddingRight="7dp"
+                    android:textSize="6sp"
+                    android:textColor="#FF222222"
+                    android:text="( short to load, long to save )" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/preset_group"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="35dp"
+                    android:minHeight="0dp"
+                    android:textSize="13dp"
+                    android:text="1" />
+
+                <Button
+                     android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="35dp"
+                    android:minHeight="0dp"
+                    android:textSize="13dp"
+                    android:text="2" />
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="35dp"
+                    android:minHeight="0dp"
+                    android:textSize="13dp"
+                    android:text="3" />
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:textSize="13dp"
+                    android:text="4" />
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="35dp"
+                    android:minHeight="0dp"
+                    android:textSize="13dp"
+                    android:text="5" />
+
+            </LinearLayout>
+
+        </LinearLayout>
 
         <Space
             android:layout_width="0dp"
@@ -55,8 +133,8 @@
 
         <ToggleButton
             android:id="@+id/auto_test_toggle"
-            android:layout_height="wrap_content"
             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:textColor="@color/button_text_color"
             android:checked="false"
             android:textOn="Auto Test"
@@ -65,8 +143,8 @@
     </LinearLayout>
 
     <LinearLayout
-        android:layout_height="wrap_content"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="horizontal">
 
         <TextView
