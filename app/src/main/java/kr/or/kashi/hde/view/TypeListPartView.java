@@ -23,6 +23,7 @@ import android.os.Looper;
 import android.util.ArrayMap;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.View;
 import android.widget.CheckBox;
 import android.widget.Checkable;
 import android.widget.LinearLayout;
@@ -71,13 +72,34 @@ public class TypeListPartView extends LinearLayout {
     private Map<Integer, int[]> mMaxSingleIdsMap = new ArrayMap<>();
     private Set<String> mSelectedDeviceTypes = new HashSet<>();
 
-    private DeviceDiscovery.Callback mDiscoveryCallback = new DeviceDiscovery.Callback() {
+    private final DeviceDiscovery.Callback mDiscoveryCallback = new DeviceDiscovery.Callback() {
+        final List<HomeDevice> mStagedDevices = new ArrayList<>();
+
+        @Override
+        public void onDiscoveryStarted() {
+            debug("onDiscoveryStarted ");
+            mStagedDevices.clear();
+        }
+
         @Override
         public void onDiscoveryFinished() {
+            debug("onDiscoveryFinished ");
+            if (mStagedDevices.size() > 0) {
+                mNetwork.addDevice(mStagedDevices);
+                mStagedDevices.clear();
+            }
+
             // Wait for a while until new devices are up to date by polling its state
             new Handler().postDelayed(() -> {
                 mDiscoveryToggle.setChecked(false);
             }, 1000);
+        }
+
+        @Override
+        public void onDeviceDiscovered(HomeDevice device) {
+            final String clsName = device.getClass().getSimpleName();
+            debug("onDeviceDiscovered " + clsName + " " + device.getAddress());
+            mStagedDevices.add(device);
         }
     };
 

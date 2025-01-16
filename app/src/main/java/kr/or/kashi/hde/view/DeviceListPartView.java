@@ -58,7 +58,7 @@ import kr.or.kashi.hde.util.LocalPreferences;
 
 public class DeviceListPartView extends LinearLayout {
     private static final String TAG = DeviceListPartView.class.getSimpleName();
-    private static final String SAVED_DEVICES_FILENAME_PREFIX = "saved_devices_";
+    private static final String SAVED_DEVICES_FILENAME = "saved_devices";
 
     private final Context mContext;
     private final Handler mHandler;
@@ -74,38 +74,23 @@ public class DeviceListPartView extends LinearLayout {
     private RecyclerView mDeviceListView;
     private ProgressBar mDiscoveryProgress;
 
-    private final DeviceDiscovery.Callback mDiscoveryCallback = new DeviceDiscovery.Callback() {
-        List<HomeDevice> mStagedDevices = new ArrayList<>();
+    private final Runnable mBackDevicesRunnable = () -> {
+        backupCurrentDevices(true);
+    };
 
+    private final DeviceDiscovery.Callback mDiscoveryCallback = new DeviceDiscovery.Callback() {
         @Override
         public void onDiscoveryStarted() {
-            debug("onDiscoveryStarted ");
             mDiscoveryProgress.setVisibility(View.VISIBLE);
-            mStagedDevices.clear();
         }
 
         @Override
         public void onDiscoveryFinished() {
             debug("onDiscoveryFinished ");
-            if (mStagedDevices.size() > 0) {
-                for (HomeDevice device: mStagedDevices) {
-                    mNetwork.addDevice(device);
-                }
-                mStagedDevices.clear();
-            }
-
             // Wait for a while until new devices are up to date by polling its state
             new Handler().postDelayed(() -> {
-                updateDeviceList();
                 mDiscoveryProgress.setVisibility(View.GONE);
             }, 1000);
-        }
-
-        @Override
-        public void onDeviceDiscovered(HomeDevice device) {
-            final String clsName = device.getClass().getSimpleName();
-            debug("onDeviceDiscovered " + clsName + " " + device.getAddress());
-            mStagedDevices.add(device);
         }
     };
 
@@ -137,7 +122,6 @@ public class DeviceListPartView extends LinearLayout {
         public void onItemRemoveClicked(DeviceListAdapter.Holder holder) {
             if (holder.device != null && mNetwork != null) {
                 mNetwork.removeDevice(holder.device);
-                updateDeviceList();
             }
         }
     });
@@ -159,8 +143,12 @@ public class DeviceListPartView extends LinearLayout {
                 if (devices.size() == 1) {
                     scrollToDevice(devices.get(0));
                 }
+                backupCurrentDevices();
             }
-            @Override public void onDeviceRemoved(List<HomeDevice> devices) { updateDeviceList(); }
+            @Override public void onDeviceRemoved(List<HomeDevice> devices) {
+                updateDeviceList();
+                backupCurrentDevices();
+            }
         });
 
         mNetwork.getDeviceDiscovery().addCallback(mDiscoveryCallback);
@@ -181,8 +169,8 @@ public class DeviceListPartView extends LinearLayout {
         for (int i=0; i<presetGroup.getChildCount(); i++) {
             final Button button = (Button) presetGroup.getChildAt(i);
             final String presetName = button.getText().toString();
-            button.setOnClickListener(view -> loadDeviceList(presetName));
-            button.setOnLongClickListener(view -> { saveDeviceList(presetName); return true; });
+            button.setOnClickListener(view -> loadPresetDevices(presetName));
+            button.setOnLongClickListener(view -> { savePresetDevices(presetName); return true; });
         }
         updateAllPresetStates();
 
@@ -230,6 +218,8 @@ public class DeviceListPartView extends LinearLayout {
         mDeviceListView.setAdapter(mDeviceListAdapter);
 
         mDiscoveryProgress = findViewById(R.id.discovery_progress);
+
+        restoreLastDevices();
     }
 
     private void debug(String text) {
@@ -246,7 +236,6 @@ public class DeviceListPartView extends LinearLayout {
             return;
         }
         mNetwork.removeAllDevices();
-        updateDeviceList();
     }
 
     private boolean removeAllDisconnectedDevices() {
@@ -256,55 +245,78 @@ public class DeviceListPartView extends LinearLayout {
         for (HomeDevice device: mNetwork.getAllDevices()) {
             if (!device.isConnected()) mNetwork.removeDevice(device);
         }
-        updateDeviceList();
         return true;
     }
 
-    private void loadDeviceList(String presetName) {
-        FileInputStream fis = null;
-        try {
-            final String fileName = SAVED_DEVICES_FILENAME_PREFIX + presetName;
-            fis = mContext.openFileInput(fileName);
-            if (mNetwork.loadDevicesFrom(fis)) {
-                debug("Device list has been successfully loaded from the preset " + presetName);
-                updateDeviceList();
-            } else {
-                debug("Can't load the saved device list");
+    private void restoreLastDevices() {
+        loadDeviceList(SAVED_DEVICES_FILENAME);
+    }
+
+    private void backupCurrentDevices() {
+        backupCurrentDevices(false);
+    }
+
+    private void backupCurrentDevices(boolean now) {
+        if (now) {
+            mHandler.removeCallbacks(mBackDevicesRunnable);
+            if (!saveDeviceList(SAVED_DEVICES_FILENAME)) {
+                debug("Can't backup current devices");
             }
+        } else {
+            if (!mHandler.hasCallbacks(mBackDevicesRunnable)) {
+                mHandler.postDelayed(mBackDevicesRunnable, 1000L);
+            }
+        }
+    }
+
+    private void loadPresetDevices(String presetName) {
+        if (loadDeviceList(SAVED_DEVICES_FILENAME + "_" + presetName)) {
+            debug("Device list has been successfully loaded from the preset " + presetName);
+        } else {
+            debug("Can't load the saved device list from the preset " + presetName);
+        }
+        updateAllPresetStates();
+    }
+
+    private void savePresetDevices(String presetName) {
+        if (saveDeviceList(SAVED_DEVICES_FILENAME + "_" + presetName)) {
+            debug("Device list has been successfully saved to the preset " + presetName);
+        } else {
+            debug("Can't save current devices to the preset " + presetName);
+        }
+        updateAllPresetStates();
+    }
+
+    private boolean loadDeviceList(String fileName) {
+        FileInputStream fis = null;
+        boolean result = false;
+        try {
+            fis = mContext.openFileInput(fileName);
+            result = mNetwork.loadDevicesFrom(fis);
         } catch (FileNotFoundException e) {
-            debug("No saved devices in the preset " + presetName);
+            debug("No saved devices in the file:" + fileName);
         } finally {
             if (fis != null) {
                 try { fis.close(); } catch (IOException e) { }
             }
         }
-        updateAllPresetStates();
+        return result;
     }
 
-    private void saveDeviceList(String presetName) {
+    private boolean saveDeviceList(String fileName) {
         FileOutputStream fos = null;
+        boolean result = false;
         try {
-            final String fileName = SAVED_DEVICES_FILENAME_PREFIX + presetName;
             fos = mContext.openFileOutput(fileName, Context.MODE_PRIVATE);
-            if (mNetwork.saveDevicesTo(fos)) {
-                debug("Device list has been successfully saved to the preset " + presetName);
-            } else {
-                debug("Can't save the device list");
-            }
+            result = mNetwork.saveDevicesTo(fos);
         } catch (FileNotFoundException e) {
-            debug("Can't open file to save device list to the preset " + presetName);
+            debug("Can't save device list to the file " + fileName);
         } finally {
             if (fos != null) {
                 try { fos.close(); } catch (IOException e) { }
             }
         }
-        updateAllPresetStates();
-    }
-
-    private boolean hasSavedPreset(String presetName) {
-        final String fileName = SAVED_DEVICES_FILENAME_PREFIX + presetName;
-        final File file = mContext.getFileStreamPath(fileName);
-        return (file != null && file.length() > 0);
+        return result;
     }
 
     private void updateAllPresetStates() {
@@ -312,9 +324,16 @@ public class DeviceListPartView extends LinearLayout {
         for (int i=0; i<presetGroup.getChildCount(); i++) {
             final Button button = (Button) presetGroup.getChildAt(i);
             final String presetName = button.getText().toString();
-            boolean hasPreset = hasSavedPreset(presetName);
-            button.setTextColor(hasPreset ? 0xFF006666 : 0xFF000000);
-            button.setTypeface(null, hasPreset ? Typeface.BOLD : Typeface.NORMAL);
+
+            final String fileName = SAVED_DEVICES_FILENAME + "_" + presetName;
+            final File file = mContext.getFileStreamPath(fileName);
+            if (file != null && file.length() > 0) {
+                button.setTextColor(0xFF006666);
+                button.setTypeface(null, Typeface.BOLD);
+            } else {
+                button.setTextColor(0xFF000000);
+                button.setTypeface(null, Typeface.NORMAL);
+            }
         }
     }
 
