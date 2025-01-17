@@ -75,7 +75,7 @@ public class DeviceListPartView extends LinearLayout {
     private ProgressBar mDiscoveryProgress;
 
     private final Runnable mBackDevicesRunnable = () -> {
-        backupCurrentDevices(true);
+        backupCurrentDevices(0L);
     };
 
     private final DeviceDiscovery.Callback mDiscoveryCallback = new DeviceDiscovery.Callback() {
@@ -99,6 +99,7 @@ public class DeviceListPartView extends LinearLayout {
             for (String name : props.toMap().keySet()) {
                 debug("onPropertyChanged - " + name + " : " + device.dc().getProperty(name).getValue());
             }
+            backupCurrentDevices(1000L);
         }
 
         public void onErrorOccurred(HomeDevice device, int error) {
@@ -143,11 +144,11 @@ public class DeviceListPartView extends LinearLayout {
                 if (devices.size() == 1) {
                     scrollToDevice(devices.get(0));
                 }
-                backupCurrentDevices();
+                backupCurrentDevices(1000L);
             }
             @Override public void onDeviceRemoved(List<HomeDevice> devices) {
                 updateDeviceList();
-                backupCurrentDevices();
+                backupCurrentDevices(1000L);
             }
         });
 
@@ -252,19 +253,15 @@ public class DeviceListPartView extends LinearLayout {
         loadDeviceList(SAVED_DEVICES_FILENAME);
     }
 
-    private void backupCurrentDevices() {
-        backupCurrentDevices(false);
-    }
-
-    private void backupCurrentDevices(boolean now) {
-        if (now) {
+    private void backupCurrentDevices(long delay) {
+        if (delay == 0L) {
             mHandler.removeCallbacks(mBackDevicesRunnable);
             if (!saveDeviceList(SAVED_DEVICES_FILENAME)) {
                 debug("Can't backup current devices");
             }
         } else {
             if (!mHandler.hasCallbacks(mBackDevicesRunnable)) {
-                mHandler.postDelayed(mBackDevicesRunnable, 1000L);
+                mHandler.postDelayed(mBackDevicesRunnable, delay);
             }
         }
     }
