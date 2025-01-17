@@ -23,16 +23,13 @@ import android.widget.SeekBar;
 import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyTask;
-import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
-import kr.or.kashi.hde.base.PropertyValue;
 import kr.or.kashi.hde.device.Light;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 import kr.or.kashi.hde.ksx4506.KSLight;
 import kr.or.kashi.hde.ksx4506.KSPacket;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,6 +48,14 @@ public class KSLight2 extends KSLight {
         if (isMaster()) {
             // Register the tasks to be performed when specific property changes.
             setPropertyTask(Light.PROP_CUR_TONE_LEVEL, mSingleToneControlTask);
+        } else {
+            final PropertyTask onDimAndColorCharacsTaskForSlave = this::onDimAndColorCharacsTaskForSlave;
+            setPropertyTask(Light.PROP_DIM_SUPPORTED, onDimAndColorCharacsTaskForSlave);
+            setPropertyTask(Light.PROP_MIN_DIM_LEVEL, onDimAndColorCharacsTaskForSlave);
+            setPropertyTask(Light.PROP_MAX_DIM_LEVEL, onDimAndColorCharacsTaskForSlave);
+            setPropertyTask(Light.PROP_TONE_SUPPORTED, onDimAndColorCharacsTaskForSlave);
+            setPropertyTask(Light.PROP_MIN_TONE_LEVEL, onDimAndColorCharacsTaskForSlave);
+            setPropertyTask(Light.PROP_MAX_TONE_LEVEL, onDimAndColorCharacsTaskForSlave);
         }
     }
 
@@ -129,6 +134,31 @@ public class KSLight2 extends KSLight {
         return PARSE_OK_STATE_UPDATED;
     }
 
+    private boolean onDimAndColorCharacsTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {
+
+
+
+        final KSLight2 parent = (KSLight2) ((getParent() != null) ? (getParent()) : (this));
+        parent.syncDimAndColorCharacs(reqProps, parent.mRxPropertyMap);
+        parent.commitPropertyChanges(parent.mRxPropertyMap);
+
+        for (KSLight2 child: parent.getChildren(KSLight2.class)) {
+            child.syncDimAndColorCharacs(reqProps, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        return true;
+    }
+
+    protected void syncDimAndColorCharacs(PropertyMap reqProps, PropertyMap outProps) {
+        outProps.put(reqProps.get(Light.PROP_DIM_SUPPORTED));
+        outProps.put(reqProps.get(Light.PROP_MIN_DIM_LEVEL));
+        outProps.put(reqProps.get(Light.PROP_MAX_DIM_LEVEL));
+        outProps.put(reqProps.get(Light.PROP_TONE_SUPPORTED));
+        outProps.put(reqProps.get(Light.PROP_MIN_TONE_LEVEL));
+        outProps.put(reqProps.get(Light.PROP_MAX_TONE_LEVEL));
+    }
+
     @Override
     protected int makeCharacteristicRsp(KSPacket reqPacket, PropertyMap outProps, ByteArrayBuffer outData) {
         @ParseResult int res = super.makeCharacteristicRsp(reqPacket, outProps, outData);
@@ -141,28 +171,21 @@ public class KSLight2 extends KSLight {
         int maxToneLevel = 0;
         int toneFlags = 0;
 
-        if (getDeviceSubId().isSingle() || getDeviceSubId().isSingleOfGroup()) {
-            final PropertyMap thisProps = getReadPropertyMap();
-            if (thisProps.get(Light.PROP_IS_3WAY_SWITCH, Boolean.class)) {
-                threeWaySubId = getDeviceSubId().value();
-            }
-            if (thisProps.get(Light.PROP_DIM_SUPPORTED, Boolean.class)) {
-                maxDimLevel = thisProps.get(Light.PROP_MAX_DIM_LEVEL, Integer.class);
-            }
-            if (thisProps.get(Light.PROP_TONE_SUPPORTED, Boolean.class)) {
-                maxToneLevel = thisProps.get(Light.PROP_MAX_TONE_LEVEL, Integer.class);
-            }
-        } else if (getDeviceSubId().isFull() || getDeviceSubId().isFullOfGroup()) {
+        final PropertyMap thisProps = getReadPropertyMap();
+        if (thisProps.get(Light.PROP_IS_3WAY_SWITCH, Boolean.class)) {
+            threeWaySubId = getDeviceSubId().value();
+        }
+        if (thisProps.get(Light.PROP_DIM_SUPPORTED, Boolean.class)) {
+            maxDimLevel = thisProps.get(Light.PROP_MAX_DIM_LEVEL, Integer.class);
+        }
+        if (thisProps.get(Light.PROP_TONE_SUPPORTED, Boolean.class)) {
+            maxToneLevel = thisProps.get(Light.PROP_MAX_TONE_LEVEL, Integer.class);
+        }
+
+        if (getDeviceSubId().isFull() || getDeviceSubId().isFullOfGroup()) {
             for (KSLight2 child: getChildren(KSLight2.class)) {
                 final PropertyMap childProps = child.getReadPropertyMap();
-                if (childProps.get(Light.PROP_IS_3WAY_SWITCH, Boolean.class)) {
-                    threeWaySubId = child.getDeviceSubId().singleId();
-                }
-                if (childProps.get(Light.PROP_DIM_SUPPORTED, Boolean.class)) {
-                    maxDimLevel = Math.max(maxDimLevel, childProps.get(Light.PROP_MAX_DIM_LEVEL, Integer.class));
-                }
                 if (childProps.get(Light.PROP_TONE_SUPPORTED, Boolean.class)) {
-                    maxToneLevel = Math.max(maxToneLevel, childProps.get(Light.PROP_MAX_TONE_LEVEL, Integer.class));
                     int index = child.getDeviceSubId().singleId() - 1; // TODO: Check range (1~14)
                     toneFlags |= (1 << index);
                 }
