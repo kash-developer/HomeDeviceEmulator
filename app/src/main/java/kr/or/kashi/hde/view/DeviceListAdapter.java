@@ -51,16 +51,12 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Ho
     }
 
     public void update(List<HomeDevice> deviceList) {
+        if (mSelectedHolder != null) {
+            setSelectedItem(null);
+        }
+
         mDeviceList.clear();
         mDeviceList.addAll(deviceList);
-
-        if (mSelectedDevice != null && !mDeviceList.contains(mSelectedDevice)) {
-            mSelectedDevice = null;
-            if (mSelectedHolder != null) {
-                mSelectedHolder.setSelected(false);
-                mSelectedHolder = null;
-            }
-        }
 
         Collections.sort(mDeviceList, (Object o1, Object o2) -> {
             HomeDevice d1 = (HomeDevice) o1;
@@ -99,9 +95,12 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Ho
         }
         if (holder != null) {
             holder.setSelected(true);
+            mSelectedHolder = holder;
+            mSelectedDevice = holder.device;
+        } else {
+            mSelectedHolder = null;
+            mSelectedDevice = null;
         }
-        mSelectedHolder = holder;
-        mSelectedDevice = holder.device;
     }
 
     public interface Listener {
