@@ -53,11 +53,6 @@ public class KSGasValve extends KSDeviceContextBase {
             setPropertyTask(GasValve.PROP_SUPPORTED_STATES, this::onSetSupportedStateTaskForSlave);
             setPropertyTask(GasValve.PROP_CURRENT_STATES, onSetCurrentStateTaskForSlave);
             setPropertyTask(HomeDevice.PROP_ONOFF, onSetCurrentStateTaskForSlave);
-
-            // Initialize just as all supported.
-            mRxPropertyMap.put(GasValve.PROP_SUPPORTED_STATES, GasValve.State.GAS_VALVE);
-            mRxPropertyMap.put(GasValve.PROP_SUPPORTED_ALARMS, GasValve.Alarm.EXTINGUISHER_BUZZING | GasValve.Alarm.GAS_LEAKAGE_DETECTED);
-            mRxPropertyMap.commit();
         }
     }
 

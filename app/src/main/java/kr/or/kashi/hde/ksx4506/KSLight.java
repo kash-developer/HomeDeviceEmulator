@@ -56,10 +56,6 @@ public class KSLight extends KSDeviceContextBase {
             // Register the tasks to be performed when specific property changes.
             setPropertyTask(HomeDevice.PROP_ONOFF, mSingleControlTask);
             setPropertyTask(Light.PROP_CUR_DIM_LEVEL, mSingleControlTask);
-        } else {
-            // Initialize some properties in slave mode
-            mRxPropertyMap.put(Light.PROP_DIM_SUPPORTED, true);
-            mRxPropertyMap.commit();
         }
     }
 

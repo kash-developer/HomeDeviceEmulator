@@ -68,20 +68,6 @@ public class KSThermostat extends KSDeviceContextBase {
             setPropertyTask(Thermostat.PROP_FUNCTION_STATES, this::onFunctionControlTask);
             setPropertyTask(Thermostat.PROP_SETTING_TEMPERATURE, this::onTemperatureControlTask);
         } else {
-            // TEMP: Initialize some properties as specific values in slave mode.
-            long supportedFunctions = 0;
-            supportedFunctions |= Thermostat.Function.HEATING;
-            supportedFunctions |= Thermostat.Function.OUTING_SETTING;
-            supportedFunctions |= Thermostat.Function.HOTWATER_ONLY;
-            supportedFunctions |= Thermostat.Function.RESERVED_MODE;
-            mRxPropertyMap.put(Thermostat.PROP_SUPPORTED_FUNCTIONS, supportedFunctions);
-            mRxPropertyMap.put(Thermostat.PROP_MIN_TEMPERATURE, mMinTemperature);
-            mRxPropertyMap.put(Thermostat.PROP_MAX_TEMPERATURE, mMaxTemperature);
-            mRxPropertyMap.put(Thermostat.PROP_TEMP_RESOLUTION, mSupportHalfDegree ? 0.5f : 1.0f);
-            mRxPropertyMap.put(Thermostat.PROP_SETTING_TEMPERATURE, 10.0f);
-            mRxPropertyMap.put(Thermostat.PROP_CURRENT_TEMPERATURE, 10.0f);
-            mRxPropertyMap.commit();
-
             setPropertyTask(HomeDevice.PROP_ONOFF, this::onPowerControlTaskInSlave);
             setPropertyTask(Thermostat.PROP_FUNCTION_STATES, this::onFunctionControlTaskInSlave);
         }

@@ -38,12 +38,6 @@ public class KSGasValve2 extends KSGasValve {
 
     public KSGasValve2(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps);
-
-        if (isSlave()) {
-            // Initialize just as all supported.
-            mRxPropertyMap.putBit(GasValve.PROP_SUPPORTED_STATES, GasValve.State.INDUCTION, true);
-            mRxPropertyMap.commit();
-        }
     }
 
     @Override

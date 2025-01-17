@@ -57,29 +57,6 @@ public class KSVentilation extends KSDeviceContextBase {
             setPropertyTask(Ventilation.PROP_CUR_FAN_SPEED, this::onFanSpeedControlTask);
             setPropertyTask(Ventilation.PROP_OPERATION_MODE, this::onModeControlTask);
             setPropertyTask(Ventilation.PROP_OPERATION_ALARM, this::onAlarmControlTask);
-        } else {
-            // TEMP: Initialize some properties as specific values in slave mode.
-            long supportedModes = 0;
-            supportedModes |= Ventilation.Mode.NORMAL;
-            supportedModes |= Ventilation.Mode.SLEEP;
-            supportedModes |= Ventilation.Mode.RECYCLE;
-            supportedModes |= Ventilation.Mode.AUTO;
-            supportedModes |= Ventilation.Mode.SAVING;
-            supportedModes |= Ventilation.Mode.CLEANAIR;
-            supportedModes |= Ventilation.Mode.INTERNAL;
-            mRxPropertyMap.put(Ventilation.PROP_SUPPORTED_MODES, supportedModes);
-
-            long supportedSensors = 0;
-            supportedSensors |= Ventilation.Sensor.CO2;
-            mRxPropertyMap.put(Ventilation.PROP_SUPPORTED_SENSORS, supportedSensors);
-
-            mRxPropertyMap.put(Ventilation.PROP_OPERATION_MODE, Ventilation.Mode.NORMAL);
-            mRxPropertyMap.put(Ventilation.PROP_OPERATION_ALARM, 0);
-            mRxPropertyMap.put(Ventilation.PROP_CUR_FAN_SPEED, mMinFanSpeedLevel);
-            mRxPropertyMap.put(Ventilation.PROP_MIN_FAN_SPEED, mMinFanSpeedLevel);
-            mRxPropertyMap.put(Ventilation.PROP_MAX_FAN_SPEED, mMaxFanSpeedLevel);
-
-            mRxPropertyMap.commit();
         }
     }
 

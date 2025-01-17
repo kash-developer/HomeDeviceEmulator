@@ -26,6 +26,7 @@ import kr.or.kashi.hde.base.PropertyTask;
 import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.base.PropertyValue;
 import kr.or.kashi.hde.device.Light;
 import kr.or.kashi.hde.ksx4506.KSAddress;
 import kr.or.kashi.hde.ksx4506.KSLight;
@@ -50,10 +51,6 @@ public class KSLight2 extends KSLight {
         if (isMaster()) {
             // Register the tasks to be performed when specific property changes.
             setPropertyTask(Light.PROP_CUR_TONE_LEVEL, mSingleToneControlTask);
-        } else {
-            // Initialize some properties in slave mode
-            mRxPropertyMap.put(Light.PROP_TONE_SUPPORTED, true);
-            mRxPropertyMap.commit();
         }
     }
 

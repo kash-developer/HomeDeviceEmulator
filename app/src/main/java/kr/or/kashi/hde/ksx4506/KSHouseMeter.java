@@ -98,12 +98,6 @@ public class KSHouseMeter extends KSDeviceContextBase {
         mRxPropertyMap.put(HouseMeter.PROP_METER_TYPE, mtrType);
         mRxPropertyMap.put(HouseMeter.PROP_CURRENT_METER_UNIT, curUnit);
         mRxPropertyMap.put(HouseMeter.PROP_TOTAL_METER_UNIT, totUnit);
-
-        if (isSlave()) {
-            mRxPropertyMap.put(HouseMeter.PROP_METER_ENABLED, true);
-            mRxPropertyMap.put(HomeDevice.PROP_ONOFF, true);
-        }
-
         mRxPropertyMap.commit();
     }
 

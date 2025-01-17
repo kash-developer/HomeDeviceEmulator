@@ -54,14 +54,6 @@ public class KSCurtain extends KSDeviceContextBase {
             final PropertyTask propTask = this::onCurtainStateUpdateTaskForSlave;
             setPropertyTask(HomeDevice.PROP_ONOFF, propTask);
             setPropertyTask(Curtain.PROP_STATE, propTask);
-
-            // Initialize some properties as specific values in slave mode.
-            int supportedFunctions = 0;
-            supportedFunctions |= Curtain.Support.STATE;
-            supportedFunctions |= Curtain.Support.OPEN_LEVEL;
-            supportedFunctions |= Curtain.Support.OPEN_ANGLE;
-            mRxPropertyMap.put(Curtain.PROP_SUPPORTS, supportedFunctions);
-            mRxPropertyMap.commit();
         }
     }
 

@@ -56,14 +56,6 @@ public class KSPowerSaver extends KSDeviceContextBase {
             setPropertyTask(HomeDevice.PROP_ONOFF, onChannelControlTask);
             setPropertyTask(PowerSaver.PROP_CURRENT_SETTINGS, onChannelControlTask);
             setPropertyTask(PowerSaver.PROP_STANDBY_CONSUMPTION, this::onStandbyPowerSettingTask);
-        } else {
-            // HACK: Initialize just as all supported.
-            long supportedState = 0;
-            supportedState |= PowerSaver.State.OVERLOAD_DETECTED;
-            supportedState |= PowerSaver.State.STANDBY_DETECTED;
-            mRxPropertyMap.put(PowerSaver.PROP_SUPPORTED_STATES, supportedState);
-            mRxPropertyMap.put(PowerSaver.PROP_SUPPORTED_SETTINGS, PowerSaver.Setting.STANDBY_BLOCKING_ON);
-            mRxPropertyMap.commit();
         }
     }
 
