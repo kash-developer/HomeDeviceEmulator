@@ -69,30 +69,39 @@
             style="@style/TitleCheckStyle" />
 
         <TextView
-            android:id="@+id/light_dimming_text"
+            android:id="@+id/light_cur_dimming_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="70dp"
+            android:minWidth="30dp"
+            android:textSize="16sp"
             android:text="" />
 
         <SeekBar
-            android:id="@+id/light_dimming_seekbar"
+            android:id="@+id/light_cur_dimming_seekbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_gravity="center"/>
 
-        <EditText
-            android:id="@+id/light_dimming_edit"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"
+            android:text="( 1 ~" />
+
+        <EditText
+            android:id="@+id/light_max_dimming_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:gravity="center"
-            android:minWidth="30dp"
             android:singleLine="true"
             android:inputType="number"
-            android:textSize="10sp"
-            android:text="255" />
+            android:textSize="14sp"
+            android:text="15" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=")" />
 
     </LinearLayout>
 
@@ -108,30 +117,39 @@
             style="@style/TitleCheckStyle" />
 
         <TextView
-            android:id="@+id/light_color_text"
+            android:id="@+id/light_cur_color_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="70dp"
+            android:minWidth="30dp"
+            android:textSize="16sp"
             android:text="" />
 
         <SeekBar
-            android:id="@+id/light_color_seekbar"
+            android:id="@+id/light_cur_color_seekbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_gravity="center"/>
 
-        <EditText
-            android:id="@+id/light_color_edit"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"
+            android:text="( 1 ~" />
+
+        <EditText
+            android:id="@+id/light_max_color_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:gravity="center"
-            android:minWidth="30dp"
             android:singleLine="true"
             android:inputType="number"
-            android:textSize="10sp"
-            android:text="255" />
+            android:textSize="14sp"
+            android:text="15" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=")" />
 
     </LinearLayout>
 

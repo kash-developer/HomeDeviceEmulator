@@ -21,6 +21,7 @@ import androidx.annotation.Nullable;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -42,13 +43,13 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
     private RadioButton mLightOffRadio;
     private RadioButton mLightOnRadio;
     private CheckBox mLightDimmingCheck;
-    private TextView mLightDimmingText;
-    private SeekBar mLightDimmingSeekBar;
-    private EditText mLightDimmingEdit;
+    private TextView mLightCurDimmingText;
+    private SeekBar mLightCurDimmingSeek;
+    private EditText mLightMaxDimmingEdit;
     private CheckBox mLightColorCheck;
-    private TextView mLightColorText;
-    private SeekBar mLightColorSeekBar;
-    private EditText mLightColorEdit;
+    private TextView mLightCurColorText;
+    private SeekBar mLightCurColorSeek;
+    private EditText mLightMaxColorEdit;
 
     public LightView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -70,59 +71,41 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
         mLightDimmingCheck = findViewById(R.id.light_dimming_check);
         mLightDimmingCheck.setEnabled(isSlave());
         mLightDimmingCheck.setOnClickListener(v -> device().setProperty(Light.PROP_DIM_SUPPORTED, Boolean.class, mLightDimmingCheck.isChecked()));
-        mLightDimmingText = findViewById(R.id.light_dimming_text);
-        mLightDimmingSeekBar = findViewById(R.id.light_dimming_seekbar);
-        mLightDimmingSeekBar.setOnSeekBarChangeListener(this);
-        mLightDimmingEdit = findViewById(R.id.light_dimming_edit);
-        mLightDimmingEdit.setOnKeyListener((view, keyCode, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_UP && keyCode == 5482) {
-                setMaxDimLevel(Integer.parseInt(mLightDimmingEdit.getText().toString(), 10));
-                Utils.hideKeyboard(mContext, view);
-                return true;
-            }
+        mLightCurDimmingText = findViewById(R.id.light_cur_dimming_text);
+        mLightCurDimmingSeek = findViewById(R.id.light_cur_dimming_seekbar);
+        mLightCurDimmingSeek.setOnSeekBarChangeListener(this);
+        mLightMaxDimmingEdit = findViewById(R.id.light_max_dimming_edit);
+        mLightMaxDimmingEdit.setOnEditorActionListener((view, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) onUpdateMaxDimEdit((EditText)view);
             return false;
         });
-        mLightDimmingEdit.setOnEditorActionListener((view, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEND || actionId == EditorInfo.IME_ACTION_DONE) {
-                setMaxDimLevel(Integer.parseInt(view.getText().toString(), 10));
-                Utils.hideKeyboard(mContext, view);
-                return true;
-            }
-            return false;
+        mLightMaxDimmingEdit.setOnFocusChangeListener((view, hasFocus) -> {
+            if (!hasFocus) onUpdateMaxDimEdit((EditText)view);
         });
 
         mLightColorCheck = findViewById(R.id.light_color_check);
         mLightColorCheck.setEnabled(isSlave());
         mLightColorCheck.setOnClickListener(v -> device().setProperty(Light.PROP_TONE_SUPPORTED, Boolean.class, mLightColorCheck.isChecked()));
-        mLightColorText = findViewById(R.id.light_color_text);
-        mLightColorSeekBar = findViewById(R.id.light_color_seekbar);
-        mLightColorSeekBar.setOnSeekBarChangeListener(this);
-        mLightColorEdit = findViewById(R.id.light_color_edit);
-        mLightColorEdit.setOnKeyListener((view, keyCode, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_UP && keyCode == 5482) {
-                setMaxToneLevel(Integer.parseInt(mLightColorEdit.getText().toString(), 10));
-                Utils.hideKeyboard(mContext, view);
-                return true;
-            }
+        mLightCurColorText = findViewById(R.id.light_cur_color_text);
+        mLightCurColorSeek = findViewById(R.id.light_cur_color_seekbar);
+        mLightCurColorSeek.setOnSeekBarChangeListener(this);
+        mLightMaxColorEdit = findViewById(R.id.light_max_color_edit);
+        mLightMaxColorEdit.setOnEditorActionListener((view, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) onUpdateMaxToneEdit((EditText)view);
             return false;
         });
-        mLightColorEdit.setOnEditorActionListener((view, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEND || actionId == EditorInfo.IME_ACTION_DONE) {
-                setMaxToneLevel(Integer.parseInt(view.getText().toString(), 10));
-                Utils.hideKeyboard(mContext, view);
-                return true;
-            }
-            return false;
+        mLightMaxColorEdit.setOnFocusChangeListener((view, hasFocus) -> {
+            if (!hasFocus) onUpdateMaxToneEdit((EditText)view);
         });
     }
 
     @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
     @Override public void onStartTrackingTouch(SeekBar seekBar) { }
     @Override public void onStopTrackingTouch(SeekBar seekBar) {
-        if (seekBar == mLightDimmingSeekBar) {
-            device().setCurDimLevel(mLightDimmingSeekBar.getProgress());
-        } else if (seekBar == mLightColorSeekBar) {
-            device().setCurToneLevel(mLightColorSeekBar.getProgress());
+        if (seekBar == mLightCurDimmingSeek) {
+            device().setCurDimLevel(mLightCurDimmingSeek.getProgress());
+        } else if (seekBar == mLightCurColorSeek) {
+            device().setCurToneLevel(mLightCurColorSeek.getProgress());
         }
     }
 
@@ -134,36 +117,52 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
 
         final boolean dimSupported = props.get(Light.PROP_DIM_SUPPORTED, Boolean.class);
         mLightDimmingCheck.setChecked(dimSupported);
-        mLightDimmingSeekBar.setEnabled(dimSupported && onoff);
+        mLightCurDimmingSeek.setEnabled(dimSupported && onoff);
+        mLightMaxDimmingEdit.setEnabled(dimSupported && isSlave());
         if (dimSupported) {
             final int min = props.get(Light.PROP_MIN_DIM_LEVEL, Integer.class);
             final int max = props.get(Light.PROP_MAX_DIM_LEVEL, Integer.class);
             final int cur = device().getCurDimLevel();
-            mLightDimmingSeekBar.setMin(min);
-            mLightDimmingSeekBar.setMax(max);
-            mLightDimmingSeekBar.setProgress(cur, true);
-            mLightDimmingText.setText("(" + min + "~" + max + ", " + cur + ")");
+            mLightCurDimmingSeek.setMin(min);
+            mLightCurDimmingSeek.setMax(max);
+            mLightCurDimmingSeek.setProgress(cur, true);
+            mLightCurDimmingText.setText("" + cur);
+            mLightMaxDimmingEdit.setText("" + max);
         } else {
-            mLightDimmingText.setText("");
+            mLightCurDimmingText.setText("");
         }
 
         final boolean toneSupported = props.get(Light.PROP_TONE_SUPPORTED, Boolean.class);
         mLightColorCheck.setChecked(toneSupported);
-        mLightColorSeekBar.setEnabled(toneSupported && onoff);
+        mLightCurColorSeek.setEnabled(toneSupported && onoff);
+        mLightMaxColorEdit.setEnabled(dimSupported && isSlave());
         if (toneSupported) {
             final int min = props.get(Light.PROP_MIN_TONE_LEVEL, Integer.class);
             final int max = props.get(Light.PROP_MAX_TONE_LEVEL, Integer.class);
             final int cur = device().getCurToneLevel();
-            mLightColorSeekBar.setMin(min);
-            mLightColorSeekBar.setMax(max);
-            mLightColorSeekBar.setProgress(cur, true);
-            mLightColorText.setText("(" + min + "~" + max + ", " + cur + ")");
+            mLightCurColorSeek.setMin(min);
+            mLightCurColorSeek.setMax(max);
+            mLightCurColorSeek.setProgress(cur, true);
+            mLightCurColorText.setText("" + cur);
+            mLightMaxColorEdit.setText("" + max);
         } else {
-            mLightColorText.setText("");
+            mLightCurColorText.setText("");
         }
     }
 
-    private void setMaxDimLevel(int value) {
+    private void onUpdateMaxDimEdit(EditText editText) {
+        Utils.hideKeyboard(mContext, editText);
+        int max = setMaxDimLevel(Integer.parseInt(editText.getText().toString()));
+        editText.setText("" + max);
+    }
+
+    private void onUpdateMaxToneEdit(EditText editText) {
+        Utils.hideKeyboard(mContext, editText);
+        int max = setMaxToneLevel(Integer.parseInt(editText.getText().toString()));
+        editText.setText("" + max);
+    }
+
+    private int setMaxDimLevel(int value) {
         int min = device().getProperty(Light.PROP_MIN_DIM_LEVEL, Integer.class);
         int max = Math.max(min, Math.min(value, 15));
         int cur = device().getCurDimLevel();
@@ -174,9 +173,11 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
         device().setProperty(Light.PROP_MIN_DIM_LEVEL, Integer.class, min);
         device().setProperty(Light.PROP_MAX_DIM_LEVEL, Integer.class, max);
         device().setCurDimLevel(cur);
+
+        return max;
     }
 
-    private void setMaxToneLevel(int value) {
+    private int setMaxToneLevel(int value) {
         int min = device().getProperty(Light.PROP_MIN_TONE_LEVEL, Integer.class);
         int max = Math.max(min, Math.min(value, 15));
         int cur = device().getCurToneLevel();
@@ -187,5 +188,7 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
         device().setProperty(Light.PROP_MIN_TONE_LEVEL, Integer.class, min);
         device().setProperty(Light.PROP_MAX_TONE_LEVEL, Integer.class, max);
         device().setCurToneLevel(cur);
+
+        return max;
     }
 }

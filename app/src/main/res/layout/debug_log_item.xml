@@ -27,7 +27,7 @@
 
     <TextView
         android:id="@+id/time_text"
-        android:layout_width="60dp"
+        android:layout_width="62dp"
         android:layout_height="wrap_content"
         android:textColor="#ffaaaaaa"
         android:textSize="14sp" />
