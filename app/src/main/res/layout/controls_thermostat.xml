@@ -120,34 +120,42 @@
             android:layout_width="10dp"
             android:layout_height="wrap_content"/>
 
-        <EditText
-            android:id="@+id/current_temp_edit"
+        <LinearLayout
+            android:id="@+id/current_temp_edit_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:singleLine="true"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:inputType="number"
-            android:textSize="14dp"
-            android:text="0.0" />
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/current_temp_set_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="\u23CE" />
+            <EditText
+                android:id="@+id/current_temp_edit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="0.0"
+                style="@style/SmallMarginEditText" />
 
-        <Button
-            android:id="@+id/current_temp_plus_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="+" />
+            <Button
+                android:id="@+id/current_temp_set_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="\u23CE"
+                style="@style/SmallMarginButton" />
 
-        <Button
-            android:id="@+id/current_temp_minus_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="-" />
+            <Button
+                android:id="@+id/current_temp_plus_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="+"
+                style="@style/SmallMarginButton" />
+
+            <Button
+                android:id="@+id/current_temp_minus_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="-"
+                style="@style/SmallMarginButton" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
@@ -166,6 +174,7 @@
             android:id="@+id/setting_temp_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textSize="16dp"
             android:text="" />
 
         <TextView
@@ -177,34 +186,42 @@
             android:layout_width="10dp"
             android:layout_height="wrap_content"/>
 
-        <EditText
-            android:id="@+id/setting_temp_edit"
+        <LinearLayout
+            android:id="@+id/setting_temp_edit_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:singleLine="true"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:inputType="number"
-            android:textSize="14dp"
-            android:text="0.0" />
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/setting_temp_set_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="\u23CE" />
+            <EditText
+                android:id="@+id/setting_temp_edit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="0.0"
+                style="@style/SmallMarginEditText" />
 
-        <Button
-            android:id="@+id/setting_temp_plus_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="+" />
+            <Button
+                android:id="@+id/setting_temp_set_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="\u23CE"
+                style="@style/SmallMarginButton" />
 
-        <Button
-            android:id="@+id/setting_temp_minus_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="-" />
+            <Button
+                android:id="@+id/setting_temp_plus_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="+"
+                style="@style/SmallMarginButton" />
+
+            <Button
+                android:id="@+id/setting_temp_minus_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="-"
+                style="@style/SmallMarginButton" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

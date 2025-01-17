@@ -72,8 +72,8 @@
             android:id="@+id/light_cur_dimming_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:minWidth="30dp"
-            android:textSize="16sp"
             android:text="" />
 
         <SeekBar
@@ -86,22 +86,38 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="( 1 ~" />
+            android:text="( " />
+
+        <TextView
+            android:id="@+id/light_min_dimming_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="15" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" ~ " />
+
+        <TextView
+            android:id="@+id/light_max_dimming_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="15" />
 
         <EditText
             android:id="@+id/light_max_dimming_edit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:singleLine="true"
             android:inputType="number"
-            android:textSize="14sp"
-            android:text="15" />
+            android:text="15"
+            style="@style/SmallMarginEditText" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=")" />
+            android:text=" )" />
 
     </LinearLayout>
 
@@ -120,8 +136,8 @@
             android:id="@+id/light_cur_color_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:minWidth="30dp"
-            android:textSize="16sp"
             android:text="" />
 
         <SeekBar
@@ -134,22 +150,38 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="( 1 ~" />
+            android:text="( " />
+
+        <TextView
+            android:id="@+id/light_min_color_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" ~ " />
+
+        <TextView
+            android:id="@+id/light_max_color_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="15" />
 
         <EditText
             android:id="@+id/light_max_color_edit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:singleLine="true"
             android:inputType="number"
-            android:textSize="14sp"
-            android:text="15" />
+            android:text="15"
+            style="@style/SmallMarginEditText" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=")" />
+            android:text=" )" />
 
     </LinearLayout>
 

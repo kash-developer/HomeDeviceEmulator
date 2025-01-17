@@ -45,10 +45,14 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
     private CheckBox mLightDimmingCheck;
     private TextView mLightCurDimmingText;
     private SeekBar mLightCurDimmingSeek;
+    private TextView mLightMinDimmingText;
+    private TextView mLightMaxDimmingText;
     private EditText mLightMaxDimmingEdit;
     private CheckBox mLightColorCheck;
     private TextView mLightCurColorText;
     private SeekBar mLightCurColorSeek;
+    private TextView mLightMinColorText;
+    private TextView mLightMaxColorText;
     private EditText mLightMaxColorEdit;
 
     public LightView(Context context, @Nullable AttributeSet attrs) {
@@ -74,6 +78,8 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
         mLightCurDimmingText = findViewById(R.id.light_cur_dimming_text);
         mLightCurDimmingSeek = findViewById(R.id.light_cur_dimming_seekbar);
         mLightCurDimmingSeek.setOnSeekBarChangeListener(this);
+        mLightMinDimmingText = findViewById(R.id.light_min_dimming_text);
+        mLightMaxDimmingText = findViewById(R.id.light_max_dimming_text);
         mLightMaxDimmingEdit = findViewById(R.id.light_max_dimming_edit);
         mLightMaxDimmingEdit.setOnEditorActionListener((view, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) onUpdateMaxDimEdit((EditText)view);
@@ -89,6 +95,8 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
         mLightCurColorText = findViewById(R.id.light_cur_color_text);
         mLightCurColorSeek = findViewById(R.id.light_cur_color_seekbar);
         mLightCurColorSeek.setOnSeekBarChangeListener(this);
+        mLightMinColorText = findViewById(R.id.light_min_color_text);
+        mLightMaxColorText = findViewById(R.id.light_max_color_text);
         mLightMaxColorEdit = findViewById(R.id.light_max_color_edit);
         mLightMaxColorEdit.setOnEditorActionListener((view, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) onUpdateMaxToneEdit((EditText)view);
@@ -118,7 +126,10 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
         final boolean dimSupported = props.get(Light.PROP_DIM_SUPPORTED, Boolean.class);
         mLightDimmingCheck.setChecked(dimSupported);
         mLightCurDimmingSeek.setEnabled(dimSupported && onoff);
-        mLightMaxDimmingEdit.setEnabled(dimSupported && isSlave());
+
+        final boolean dimmingMaxEditable = (dimSupported && isSlave());
+        mLightMaxDimmingText.setVisibility(dimmingMaxEditable ? View.GONE : View.VISIBLE);
+        mLightMaxDimmingEdit.setVisibility(dimmingMaxEditable ? View.VISIBLE : View.GONE);
         if (dimSupported) {
             final int min = props.get(Light.PROP_MIN_DIM_LEVEL, Integer.class);
             final int max = props.get(Light.PROP_MAX_DIM_LEVEL, Integer.class);
@@ -127,15 +138,22 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
             mLightCurDimmingSeek.setMax(max);
             mLightCurDimmingSeek.setProgress(cur, true);
             mLightCurDimmingText.setText("" + cur);
+            mLightMinDimmingText.setText("" + min);
+            mLightMaxDimmingText.setText("" + max);
             mLightMaxDimmingEdit.setText("" + max);
         } else {
-            mLightCurDimmingText.setText("");
+            mLightMinDimmingText.setText("0");
+            mLightCurDimmingText.setText("0");
+            mLightMaxDimmingText.setText("0");
         }
 
         final boolean toneSupported = props.get(Light.PROP_TONE_SUPPORTED, Boolean.class);
         mLightColorCheck.setChecked(toneSupported);
         mLightCurColorSeek.setEnabled(toneSupported && onoff);
-        mLightMaxColorEdit.setEnabled(dimSupported && isSlave());
+
+        final boolean colorMaxEditable = (toneSupported && isSlave());
+        mLightMaxColorText.setVisibility(colorMaxEditable ? View.GONE : View.VISIBLE);
+        mLightMaxColorEdit.setVisibility(colorMaxEditable ? View.VISIBLE : View.GONE);
         if (toneSupported) {
             final int min = props.get(Light.PROP_MIN_TONE_LEVEL, Integer.class);
             final int max = props.get(Light.PROP_MAX_TONE_LEVEL, Integer.class);
@@ -144,9 +162,13 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
             mLightCurColorSeek.setMax(max);
             mLightCurColorSeek.setProgress(cur, true);
             mLightCurColorText.setText("" + cur);
+            mLightMinColorText.setText("" + min);
+            mLightMaxColorText.setText("" + max);
             mLightMaxColorEdit.setText("" + max);
         } else {
-            mLightCurColorText.setText("");
+            mLightCurColorText.setText("0");
+            mLightMinColorText.setText("0");
+            mLightMaxColorText.setText("0");
         }
     }
 

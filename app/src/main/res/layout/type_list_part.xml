@@ -80,6 +80,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingTop="10dp"
+                android:textSize="14dp"
                 android:text="Device Types:" />
 
             <ListView
@@ -101,6 +102,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingTop="10dp"
+                android:textSize="14dp"
                 android:text="Device Range:" />
 
             <LinearLayout

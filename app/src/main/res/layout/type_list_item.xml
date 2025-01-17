@@ -33,7 +33,7 @@
         android:id="@+id/text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="14dp"/>
+        android:textSize="14dp" />
 
     <Space
         android:layout_width="0dp"

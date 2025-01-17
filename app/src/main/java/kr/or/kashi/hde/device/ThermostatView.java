@@ -82,24 +82,18 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
         mCurrentTempCheck = findViewById(R.id.current_temp_check);
         mCurrentTempText = findViewById(R.id.current_temp_text);
         mCurrentTempEdit = findViewById(R.id.current_temp_edit);
-        mCurrentTempEdit.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
+        findViewById(R.id.current_temp_edit_group).setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         findViewById(R.id.current_temp_set_button).setOnClickListener(v -> setCurrentTemperature());
-        findViewById(R.id.current_temp_set_button).setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         findViewById(R.id.current_temp_plus_button).setOnClickListener(v -> incCurrentTemperature());
-        findViewById(R.id.current_temp_plus_button).setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         findViewById(R.id.current_temp_minus_button).setOnClickListener(v -> decCurrentTemperature());
-        findViewById(R.id.current_temp_minus_button).setVisibility(isSlave() ? View.VISIBLE : View.GONE);
 
         mSettingTempCheck = findViewById(R.id.setting_temp_check);
         mSettingTempText = findViewById(R.id.setting_temp_text);
         mSettingTempEdit = findViewById(R.id.setting_temp_edit);
-        mSettingTempEdit.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
+        findViewById(R.id.setting_temp_edit_group).setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         findViewById(R.id.setting_temp_set_button).setOnClickListener(v -> setSettingTemperature());
-        findViewById(R.id.setting_temp_set_button).setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         findViewById(R.id.setting_temp_plus_button).setOnClickListener(v -> incSettingTemperature());
-        findViewById(R.id.setting_temp_plus_button).setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         findViewById(R.id.setting_temp_minus_button).setOnClickListener(v -> decSettingTemperature());
-        findViewById(R.id.setting_temp_minus_button).setVisibility(isMaster() ? View.VISIBLE : View.GONE);
     }
 
     @Override
