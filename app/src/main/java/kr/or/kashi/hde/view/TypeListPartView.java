@@ -46,6 +46,17 @@ import kr.or.kashi.hde.DeviceDiscovery;
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.HomeNetwork;
 import kr.or.kashi.hde.R;
+import kr.or.kashi.hde.base.BasicPropertyMap;
+import kr.or.kashi.hde.base.PropertyMap;
+import kr.or.kashi.hde.device.BatchSwitch;
+import kr.or.kashi.hde.device.Curtain;
+import kr.or.kashi.hde.device.DoorLock;
+import kr.or.kashi.hde.device.GasValve;
+import kr.or.kashi.hde.device.HouseMeter;
+import kr.or.kashi.hde.device.Light;
+import kr.or.kashi.hde.device.PowerSaver;
+import kr.or.kashi.hde.device.Thermostat;
+import kr.or.kashi.hde.device.Ventilation;
 import kr.or.kashi.hde.util.DebugLog;
 import kr.or.kashi.hde.util.LocalPreferences;
 
@@ -488,7 +499,104 @@ public class TypeListPartView extends LinearLayout {
         String singleStr =  (singleId == 0x0F) ? "F" : Integer.valueOf(singleId).toString();
         String name = typeName + " (" + groupStr + "-" + singleStr + ")";
 
-        return mNetwork.createDevice(address, area, name);
+        final PropertyMap defaultProps = new BasicPropertyMap();
+        defaultProps.put(HomeDevice.PROP_ADDR, address.toUpperCase());
+        defaultProps.put(HomeDevice.PROP_AREA, area);
+        defaultProps.put(HomeDevice.PROP_NAME, name);
+
+        if (mNetwork.isSlaveMode()) {
+            switch (typeName) {
+                case "AirConditioner":
+                    break;
+                case "BatchSwitch": {
+                    long supportedSwitches = 0;
+                    supportedSwitches |= BatchSwitch.Switch.GAS_LOCKING;
+                    supportedSwitches |= BatchSwitch.Switch.OUTING_SETTING;
+                    supportedSwitches |= BatchSwitch.Switch.BATCH_LIGHT_OFF;
+                    supportedSwitches |= BatchSwitch.Switch.POWER_SAVING;
+                    supportedSwitches |= BatchSwitch.Switch.ELEVATOR_UP_CALL;
+                    supportedSwitches |= BatchSwitch.Switch.ELEVATOR_DOWN_CALL;
+                    supportedSwitches |= BatchSwitch.Switch.THREEWAY_LIGHT;
+                    supportedSwitches |= BatchSwitch.Switch.COOKTOP_OFF;
+                    supportedSwitches |= BatchSwitch.Switch.HEATER_SAVING;
+                    defaultProps.put(BatchSwitch.PROP_SUPPORTED_SWITCHES, supportedSwitches);
+                    break;
+                }
+                case "Curtain": {
+                    int supportedFunctions = 0;
+                    supportedFunctions |= Curtain.Support.STATE;
+                    supportedFunctions |= Curtain.Support.OPEN_LEVEL;
+                    supportedFunctions |= Curtain.Support.OPEN_ANGLE;
+                    defaultProps.put(Curtain.PROP_SUPPORTS, supportedFunctions);
+                    break;
+                }
+                case "DoorLock": {
+                    defaultProps.put(DoorLock.PROP_SUPPORTED_STATES, DoorLock.State.DOOR_OPENED | DoorLock.State.EMERGENCY_ALARMED);
+                    break;
+                }
+                case "GasValve": {
+                    defaultProps.put(GasValve.PROP_SUPPORTED_STATES, GasValve.State.GAS_VALVE | GasValve.State.INDUCTION);
+                    defaultProps.put(GasValve.PROP_SUPPORTED_ALARMS, GasValve.Alarm.EXTINGUISHER_BUZZING | GasValve.Alarm.GAS_LEAKAGE_DETECTED);
+                    break;
+                }
+                case "HouseMeter": {
+                    defaultProps.put(HouseMeter.PROP_METER_ENABLED, true);
+                    defaultProps.put(HomeDevice.PROP_ONOFF, true);
+                    break;
+                }
+                case "Light": {
+                    defaultProps.put(Light.PROP_DIM_SUPPORTED, true);
+                    defaultProps.put(Light.PROP_TONE_SUPPORTED, true);
+                    break;
+                }
+                case "PowerSaver": {
+                    long supportedState = 0;
+                    supportedState |= PowerSaver.State.OVERLOAD_DETECTED;
+                    supportedState |= PowerSaver.State.STANDBY_DETECTED;
+                    defaultProps.put(PowerSaver.PROP_SUPPORTED_STATES, supportedState);
+                    defaultProps.put(PowerSaver.PROP_SUPPORTED_SETTINGS, PowerSaver.Setting.STANDBY_BLOCKING_ON);
+                    break;
+                }
+                case "Thermostat": {
+                    long supportedFunctions = 0;
+                    supportedFunctions |= Thermostat.Function.HEATING;
+                    supportedFunctions |= Thermostat.Function.OUTING_SETTING;
+                    supportedFunctions |= Thermostat.Function.HOTWATER_ONLY;
+                    supportedFunctions |= Thermostat.Function.RESERVED_MODE;
+                    defaultProps.put(Thermostat.PROP_SUPPORTED_FUNCTIONS, supportedFunctions);
+                    defaultProps.put(Thermostat.PROP_MIN_TEMPERATURE, 0.0f);
+                    defaultProps.put(Thermostat.PROP_MAX_TEMPERATURE, 40.0f);
+                    defaultProps.put(Thermostat.PROP_TEMP_RESOLUTION, 0.5f);    // TODO:
+                    defaultProps.put(Thermostat.PROP_SETTING_TEMPERATURE, 10.0f);
+                    defaultProps.put(Thermostat.PROP_CURRENT_TEMPERATURE, 10.0f);
+                    break;
+                }
+                case "Ventilation": {
+                    long supportedModes = 0;
+                    supportedModes |= Ventilation.Mode.NORMAL;
+                    supportedModes |= Ventilation.Mode.SLEEP;
+                    supportedModes |= Ventilation.Mode.RECYCLE;
+                    supportedModes |= Ventilation.Mode.AUTO;
+                    supportedModes |= Ventilation.Mode.SAVING;
+                    supportedModes |= Ventilation.Mode.CLEANAIR;
+                    supportedModes |= Ventilation.Mode.INTERNAL;
+                    defaultProps.put(Ventilation.PROP_SUPPORTED_MODES, supportedModes);
+
+                    long supportedSensors = 0;
+                    supportedSensors |= Ventilation.Sensor.CO2;
+                    defaultProps.put(Ventilation.PROP_SUPPORTED_SENSORS, supportedSensors);
+
+                    defaultProps.put(Ventilation.PROP_OPERATION_MODE, Ventilation.Mode.NORMAL);
+                    defaultProps.put(Ventilation.PROP_OPERATION_ALARM, 0);
+                    defaultProps.put(Ventilation.PROP_CUR_FAN_SPEED, 0);
+                    defaultProps.put(Ventilation.PROP_MIN_FAN_SPEED, 0);
+                    defaultProps.put(Ventilation.PROP_MAX_FAN_SPEED, 5);
+                    break;
+                }
+            }
+        }
+
+        return mNetwork.createDevice(defaultProps);
     }
 
     private void updateMaxSingleIdsMap() {
