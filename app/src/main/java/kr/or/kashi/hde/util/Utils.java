@@ -127,6 +127,10 @@ public final class Utils {
         return Math.round(value / multiple) * multiple;
     }
 
+    public static boolean floatEquals(float a, float b) {
+        return Math.abs(a - b) < 0.005f;
+    }
+
     public static Point getDisplaySize(Context context) {
         Point size = new Point(0, 0);
         DisplayManager dm = (DisplayManager)context.getSystemService(Context.DISPLAY_SERVICE);
