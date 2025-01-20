@@ -21,17 +21,13 @@ import android.util.Log;
 
 import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
-import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.DeviceContextBase;
 import kr.or.kashi.hde.HomeDevice;
-import kr.or.kashi.hde.base.ReadOnlyPropertyMap;
+import kr.or.kashi.hde.base.PropertyTask;
 import kr.or.kashi.hde.device.AirConditioner;
 import kr.or.kashi.hde.device.Light;
-import kr.or.kashi.hde.ksx4506.KSAddress;
-import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
-import kr.or.kashi.hde.ksx4506.KSPacket;
-import kr.or.kashi.hde.ksx4506.KSUtils;
+import kr.or.kashi.hde.util.Utils;
 
 import java.util.Map;
 
@@ -86,6 +82,13 @@ public class KSAirConditioner extends KSDeviceContextBase {
             setPropertyTask(AirConditioner.PROP_FLOW_DIRECTION, this::onFlowDirectionControlTask);
             setPropertyTask(AirConditioner.PROP_FAN_MODE, this::onFanSpeedControlTask);
             setPropertyTask(AirConditioner.PROP_CUR_FAN_SPEED, this::onFanSpeedControlTask);
+        } else {
+            final PropertyTask onRangeCharacsTaskForSlave = this::onRangeCharacsTaskForSlave;
+            setPropertyTask(AirConditioner.PROP_MIN_FAN_SPEED, onRangeCharacsTaskForSlave);
+            setPropertyTask(AirConditioner.PROP_MAX_FAN_SPEED, onRangeCharacsTaskForSlave);
+            setPropertyTask(AirConditioner.PROP_TEMP_RESOLUTION, onRangeCharacsTaskForSlave);
+            setPropertyTask(AirConditioner.PROP_MIN_TEMPERATURE, onRangeCharacsTaskForSlave);
+            setPropertyTask(AirConditioner.PROP_MAX_TEMPERATURE, onRangeCharacsTaskForSlave);
         }
     }
 
@@ -298,6 +301,9 @@ public class KSAirConditioner extends KSDeviceContextBase {
         mSupportsHeating = (supportedModes | AirConditioner.OpMode.HEATING) != 0;
         mSupportsReservedMode = (supportedModes | AirConditioner.OpMode.RESERVED) != 0;
 
+        final float tempRes = props.get(AirConditioner.PROP_TEMP_RESOLUTION, Float.class);
+        mSupportsHalfDegree = Utils.floatEquals(tempRes, 0.5f);
+
         int data1 = 0;
         if (mSupportsNaturalWind)   data1 |= (1 << 0);
         if (mSupportsCooling)       data1 |= (1 << 1);
@@ -312,7 +318,6 @@ public class KSAirConditioner extends KSDeviceContextBase {
 
         final float maxTemp = props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class);
         final float minTemp = props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class);
-        final float tempRes = props.get(AirConditioner.PROP_TEMP_RESOLUTION, Float.class);
         final byte maxTempByte = KSUtils.makeTemperatureByte(maxTemp, maxTemp, maxTemp, tempRes);
         final byte minTempByte = KSUtils.makeTemperatureByte(minTemp, minTemp, minTemp, tempRes);
         mMaxCoolingTemp = mMaxHeatingTemp = maxTemp; // TODO:
@@ -623,5 +628,25 @@ public class KSAirConditioner extends KSDeviceContextBase {
         sendPacket(packet, repeatCount);
         return true;
     }
-}
 
+    private boolean onRangeCharacsTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {
+        final KSAirConditioner parent = (KSAirConditioner) ((getParent() != null) ? (getParent()) : (this));
+        parent.syncRangeCharacs(reqProps, parent.mRxPropertyMap);
+        parent.commitPropertyChanges(parent.mRxPropertyMap);
+
+        for (KSAirConditioner child: parent.getChildren(KSAirConditioner.class)) {
+            child.syncRangeCharacs(reqProps, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+
+        return true;
+    }
+
+    protected void syncRangeCharacs(PropertyMap reqProps, PropertyMap outProps) {
+        outProps.put(reqProps.get(AirConditioner.PROP_MIN_FAN_SPEED));
+        outProps.put(reqProps.get(AirConditioner.PROP_MAX_FAN_SPEED));
+        outProps.put(reqProps.get(AirConditioner.PROP_TEMP_RESOLUTION));
+        outProps.put(reqProps.get(AirConditioner.PROP_MIN_TEMPERATURE));
+        outProps.put(reqProps.get(AirConditioner.PROP_MAX_TEMPERATURE));
+    }
+}
