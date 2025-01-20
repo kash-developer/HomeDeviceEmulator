@@ -198,18 +198,58 @@
             android:text="Fan Speed"
             style="@style/TitleCheckStyle" />
 
-        <SeekBar
+        <kr.or.kashi.hde.widget.FloatSeekBar
             android:id="@+id/fan_speed_seek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_gravity="center" />
 
-        <TextView
+        <kr.or.kashi.hde.widget.FloatRangeView
             android:id="@+id/fan_speed_text"
-            android:layout_width="130dp"
+            android:layout_width="160dp"
             android:layout_height="wrap_content"
             android:text="" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|center_vertical"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/temp_res_check"
+            android:text="Temp. Res."
+            style="@style/TitleCheckStyle" />
+
+        <TextView
+            android:id="@+id/temp_res_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="" />
+
+        <RadioGroup
+            android:id="@+id/temp_res_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/temp_res_0d5_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.5" />
+
+            <RadioButton
+                android:id="@+id/temp_res_1d0_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1.0" />
+
+        </RadioGroup>
 
     </LinearLayout>
 
@@ -224,16 +264,16 @@
             android:text="Req. Temp."
             style="@style/TitleCheckStyle" />
 
-        <SeekBar
+        <kr.or.kashi.hde.widget.FloatSeekBar
             android:id="@+id/req_temp_seek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_gravity="center" />
 
-        <TextView
+        <kr.or.kashi.hde.widget.FloatRangeView
             android:id="@+id/req_temp_text"
-            android:layout_width="130dp"
+            android:layout_width="160dp"
             android:layout_height="wrap_content"
             android:text="" />
 
@@ -250,16 +290,16 @@
             android:text="Cur. Temp."
             style="@style/TitleCheckStyle" />
 
-        <SeekBar
+        <kr.or.kashi.hde.widget.FloatSeekBar
             android:id="@+id/cur_temp_seek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_gravity="center" />
 
-        <TextView
+        <kr.or.kashi.hde.widget.FloatRangeView
             android:id="@+id/cur_temp_text"
-            android:layout_width="130dp"
+            android:layout_width="160dp"
             android:layout_height="wrap_content"
             android:text="" />
 

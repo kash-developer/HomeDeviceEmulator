@@ -19,6 +19,8 @@ package kr.or.kashi.hde.device;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.View;
 import android.widget.CheckBox;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
@@ -32,9 +34,13 @@ import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.util.Utils;
 import kr.or.kashi.hde.view.HomeDeviceView;
+import kr.or.kashi.hde.widget.FloatRangeView;
+import kr.or.kashi.hde.widget.FloatSeekBar;
 
 public class AirConditionerView extends HomeDeviceView<AirConditioner>
-        implements RadioGroup.OnCheckedChangeListener, SeekBar.OnSeekBarChangeListener {
+        implements  RadioGroup.OnCheckedChangeListener,
+                    FloatSeekBar.OnSeekBarChangeListener,
+                    FloatRangeView.OnValueEditedListener {
 
     private static final String TAG = AirConditionerView.class.getSimpleName();
     private final Context mContext;
@@ -48,20 +54,18 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
     private CheckBox mFlowModeCheck;
     private RadioGroup mFlowModeGroup;
     private CheckBox mFanSpeedCheck;
-    private TextView mFanSpeedText;
-    private SeekBar mFanSpeedSeek;
+    private FloatRangeView mFanSpeedText;
+    private FloatSeekBar mFanSpeedSeek;
+    private CheckBox mTempResCheck;
+    private TextView mTempResText;
+    private RadioGroup mTempResGroup;
     private CheckBox mReqTempCheck;
-    private TextView mReqTempText;
-    private SeekBar mReqTempSeek;
+    private FloatRangeView mReqTempText;
+    private FloatSeekBar mReqTempSeek;
     private CheckBox mCurTempCheck;
-    private TextView mCurTempText;
-    private SeekBar mCurTempSeek;
+    private FloatRangeView mCurTempText;
+    private FloatSeekBar mCurTempSeek;
 
-    private int mMinSpeed = 0;
-    private int mMaxSpeed = 0;
-    private float mMinTemp = 0.0f;
-    private float mMaxTemp = 0.0f;
-    private float mTempRes = 0.0f;
 
     public AirConditionerView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -86,21 +90,33 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
         mFlowModeGroup = findViewById(R.id.fan_mode_group);
 
         mFanSpeedCheck = findViewById(R.id.fan_speed_check);
-        mFanSpeedText = findViewById(R.id.fan_speed_text);
         mFanSpeedSeek = findViewById(R.id.fan_speed_seek);
-        mFanSpeedSeek.setOnSeekBarChangeListener(this);
+        mFanSpeedSeek.setOnFloatSeekBarChangeListener(this);
+        mFanSpeedText = findViewById(R.id.fan_speed_text);
+        mFanSpeedText.setOnValueEditedListener(this);
+        mFanSpeedText.setEditable(isSlave());
+
+        mTempResCheck = findViewById(R.id.temp_res_check);
+        mTempResText = findViewById(R.id.temp_res_text);
+        mTempResText.setVisibility(isSlave() ? View.GONE : View.VISIBLE);
+        mTempResGroup = findViewById(R.id.temp_res_group);
+        mTempResGroup.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
 
         mReqTempCheck = findViewById(R.id.req_temp_check);
-        mReqTempText = findViewById(R.id.req_temp_text);
         mReqTempSeek = findViewById(R.id.req_temp_seek);
-        mReqTempSeek.setOnSeekBarChangeListener(this);
+        mReqTempSeek.setOnFloatSeekBarChangeListener(this);
         mReqTempSeek.setEnabled(!isSlave());
+        mReqTempText = findViewById(R.id.req_temp_text);
+        mReqTempText.setOnValueEditedListener(this);
+        mReqTempText.setEditable(!isSlave());
 
         mCurTempCheck = findViewById(R.id.cur_temp_check);
-        mCurTempText = findViewById(R.id.cur_temp_text);
         mCurTempSeek = findViewById(R.id.cur_temp_seek);
-        mCurTempSeek.setOnSeekBarChangeListener(this);
+        mCurTempSeek.setOnFloatSeekBarChangeListener(this);
         mCurTempSeek.setEnabled(isSlave());
+        mCurTempText = findViewById(R.id.cur_temp_text);
+        mCurTempText.setOnValueEditedListener(this);
+        mCurTempText.setEditable(isSlave());
     }
 
     @Override
@@ -139,26 +155,39 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
         mFlowModeGroup.check(fanModeId);
         mFlowModeGroup.setOnCheckedChangeListener(this);
 
-        mMinSpeed = props.get(AirConditioner.PROP_MIN_FAN_SPEED, Integer.class);
-        mMaxSpeed = props.get(AirConditioner.PROP_MAX_FAN_SPEED, Integer.class);
-        mFanSpeedSeek.setMin(mMinSpeed);
-        mFanSpeedSeek.setMax(mMaxSpeed);
-        mFanSpeedSeek.setProgress(props.get(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class));
-        updateSeekbarProgressText(mFanSpeedSeek);
+        mFanSpeedSeek.setResolution(1.0f);
+        mFanSpeedSeek.setMinF((float)props.get(AirConditioner.PROP_MIN_FAN_SPEED, Integer.class));
+        mFanSpeedSeek.setMaxF((float)props.get(AirConditioner.PROP_MAX_FAN_SPEED, Integer.class));
+        mFanSpeedSeek.setProgressF((float)props.get(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class));
+        mFanSpeedText.setRes(1.0f);
+        mFanSpeedText.setCur((float)props.get(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class));
+        mFanSpeedText.setMin((float)props.get(AirConditioner.PROP_MIN_FAN_SPEED, Integer.class));
+        mFanSpeedText.setMax((float)props.get(AirConditioner.PROP_MAX_FAN_SPEED, Integer.class));
 
-        mMinTemp = props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class);
-        mMaxTemp = props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class);
-        mTempRes = props.get(AirConditioner.PROP_TEMP_RESOLUTION, Float.class);
-        int reqTemp = Math.round(props.get(AirConditioner.PROP_REQ_TEMPERATURE, Float.class));
-        int curTemp = Math.round(props.get(AirConditioner.PROP_CUR_TEMPERATURE, Float.class));
-        mReqTempSeek.setMin(tempToStep(mMinTemp));
-        mReqTempSeek.setMax(tempToStep(mMaxTemp));
-        mReqTempSeek.setProgress(tempToStep(reqTemp));
-        mCurTempSeek.setMin(tempToStep(mMinTemp));
-        mCurTempSeek.setMax(tempToStep(mMaxTemp));
-        mCurTempSeek.setProgress(tempToStep(curTemp));
-        updateSeekbarProgressText(mReqTempSeek);
-        updateSeekbarProgressText(mCurTempSeek);
+        final float tempRes = props.get(AirConditioner.PROP_TEMP_RESOLUTION, Float.class);
+        mTempResText.setText("" + tempRes);
+        final int tempResId = Utils.floatEquals(tempRes, 0.5f) ? R.id.temp_res_0d5_radio : R.id.temp_res_1d0_radio;
+        mTempResGroup.setOnCheckedChangeListener(null);
+        mTempResGroup.check(tempResId);
+        mTempResGroup.setOnCheckedChangeListener(this);
+
+        mReqTempSeek.setResolution(tempRes);
+        mReqTempSeek.setMinF(props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class));
+        mReqTempSeek.setMaxF(props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class));
+        mReqTempSeek.setProgressF(props.get(AirConditioner.PROP_REQ_TEMPERATURE, Float.class));
+        mReqTempText.setRes(tempRes);
+        mReqTempText.setCur(props.get(AirConditioner.PROP_REQ_TEMPERATURE, Float.class));
+        mReqTempText.setMin(props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class));
+        mReqTempText.setMax(props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class));
+
+        mCurTempSeek.setResolution(tempRes);
+        mCurTempSeek.setMinF(props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class));
+        mCurTempSeek.setMaxF(props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class));
+        mCurTempSeek.setProgressF(props.get(AirConditioner.PROP_CUR_TEMPERATURE, Float.class));
+        mCurTempText.setRes(tempRes);
+        mCurTempText.setCur(props.get(AirConditioner.PROP_CUR_TEMPERATURE, Float.class));
+        mCurTempText.setMin(props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class));
+        mCurTempText.setMax(props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class));
     }
 
     @Override
@@ -186,47 +215,54 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
             else if (checkedId == R.id.fan_mode_auto_radio) fanMode = AirConditioner.FanMode.AUTO;
             else if (checkedId == R.id.fan_mode_natural_radio) fanMode = AirConditioner.FanMode.NATURAL;
             device().setProperty(AirConditioner.PROP_FAN_MODE, Integer.class, fanMode);
+        } else if (group == mTempResGroup) {
+            float tempRes = 1.0f;
+            if (checkedId == R.id.temp_res_0d5_radio) tempRes = 0.5f;
+            else if (checkedId == R.id.temp_res_1d0_radio) tempRes = 1.0f;
+            device().setProperty(AirConditioner.PROP_TEMP_RESOLUTION, Float.class, tempRes);
         }
     }
 
     @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        updateSeekbarProgressText(seekBar);
+    public void onProgressChanged(FloatSeekBar seekBar, float progress, boolean fromUser) {
+        if (seekBar == mFanSpeedSeek) {
+            device().setProperty(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class, (int)progress);
+        } else if (seekBar == mReqTempSeek) {
+            device().setProperty(AirConditioner.PROP_REQ_TEMPERATURE, Float.class, progress);
+        } else if (seekBar == mCurTempSeek) {
+            device().setProperty(AirConditioner.PROP_CUR_TEMPERATURE, Float.class, progress);
+        }
     }
 
     @Override
-    public void onStartTrackingTouch(SeekBar seekBar) { }
+    public void onStartTrackingTouch(FloatSeekBar seekBar) { }
 
     @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {
+    public void onStopTrackingTouch(FloatSeekBar seekBar) {
         if (seekBar == mFanSpeedSeek) {
-            int fanSpeed = seekBar.getProgress();
             device().setProperty(AirConditioner.PROP_FAN_MODE, Integer.class, AirConditioner.FanMode.MANUAL);
-            device().setProperty(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class, fanSpeed);
+            device().setProperty(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class, (int) seekBar.getProgressF());
         } else if (seekBar == mReqTempSeek) {
-            float degree = stepToTemp(seekBar.getProgress());
-            device().setProperty(AirConditioner.PROP_REQ_TEMPERATURE, Float.class, degree);
+            device().setProperty(AirConditioner.PROP_REQ_TEMPERATURE, Float.class, seekBar.getProgressF());
         } else if (seekBar == mCurTempSeek) {
-            float degree = stepToTemp(seekBar.getProgress());
-            device().setProperty(AirConditioner.PROP_CUR_TEMPERATURE, Float.class, degree);
+            device().setProperty(AirConditioner.PROP_CUR_TEMPERATURE, Float.class, seekBar.getProgressF());
         }
     }
 
-    private void updateSeekbarProgressText(SeekBar seekBar) {
-        if (seekBar == mFanSpeedSeek) {
-            mFanSpeedText.setText(seekBar.getProgress() + " [" + mMinSpeed + "~" + mMaxSpeed + "]");
-        } else if (seekBar == mReqTempSeek) {
-            mReqTempText.setText(stepToTemp(seekBar.getProgress()) + " [" + mMinTemp + "~" + mMaxTemp + "]");
-        } else if (seekBar == mCurTempSeek) {
-            mCurTempText.setText(stepToTemp(seekBar.getProgress()) + " [" + mMinTemp + "~" + mMaxTemp + "]");
+    @Override
+    public void onRangeValueEdited(FloatRangeView view, float cur, float min, float max) {
+        if (view == mFanSpeedText) {
+            device().setProperty(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class, (int)cur);
+            device().setProperty(AirConditioner.PROP_MIN_FAN_SPEED, Integer.class, (int)min);
+            device().setProperty(AirConditioner.PROP_MAX_FAN_SPEED, Integer.class, (int)max);
+        } else if (view == mReqTempText) {
+            device().setProperty(AirConditioner.PROP_REQ_TEMPERATURE, Float.class, cur);
+            device().setProperty(AirConditioner.PROP_MIN_TEMPERATURE, Float.class, min);
+            device().setProperty(AirConditioner.PROP_MAX_TEMPERATURE, Float.class, max);
+        } else if (view == mCurTempText) {
+            device().setProperty(AirConditioner.PROP_CUR_TEMPERATURE, Float.class, cur);
+            device().setProperty(AirConditioner.PROP_MIN_TEMPERATURE, Float.class, min);
+            device().setProperty(AirConditioner.PROP_MAX_TEMPERATURE, Float.class, max);
         }
-    }
-
-    private int tempToStep(float temp) {
-        return (int) (temp / mTempRes);
-    }
-
-    private float stepToTemp(int step) {
-        return Utils.roundToNearest(((float)step * mTempRes), mTempRes);
     }
 }
