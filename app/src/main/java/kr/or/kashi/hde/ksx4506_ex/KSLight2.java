@@ -18,7 +18,6 @@
 package kr.or.kashi.hde.ksx4506_ex;
 
 import android.util.Log;
-import android.widget.SeekBar;
 
 import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
@@ -49,13 +48,12 @@ public class KSLight2 extends KSLight {
             // Register the tasks to be performed when specific property changes.
             setPropertyTask(Light.PROP_CUR_TONE_LEVEL, mSingleToneControlTask);
         } else {
-            final PropertyTask onDimAndColorCharacsTaskForSlave = this::onDimAndColorCharacsTaskForSlave;
-            setPropertyTask(Light.PROP_DIM_SUPPORTED, onDimAndColorCharacsTaskForSlave);
-            setPropertyTask(Light.PROP_MIN_DIM_LEVEL, onDimAndColorCharacsTaskForSlave);
-            setPropertyTask(Light.PROP_MAX_DIM_LEVEL, onDimAndColorCharacsTaskForSlave);
-            setPropertyTask(Light.PROP_TONE_SUPPORTED, onDimAndColorCharacsTaskForSlave);
-            setPropertyTask(Light.PROP_MIN_TONE_LEVEL, onDimAndColorCharacsTaskForSlave);
-            setPropertyTask(Light.PROP_MAX_TONE_LEVEL, onDimAndColorCharacsTaskForSlave);
+            setPropertyTask(Light.PROP_DIM_SUPPORTED, new PropagationTask(Light.PROP_DIM_SUPPORTED));
+            setPropertyTask(Light.PROP_MIN_DIM_LEVEL, new PropagationTask(Light.PROP_MIN_DIM_LEVEL));
+            setPropertyTask(Light.PROP_MAX_DIM_LEVEL, new PropagationTask(Light.PROP_MAX_DIM_LEVEL));
+            setPropertyTask(Light.PROP_TONE_SUPPORTED, new PropagationTask(Light.PROP_TONE_SUPPORTED));
+            setPropertyTask(Light.PROP_MIN_TONE_LEVEL, new PropagationTask(Light.PROP_MIN_TONE_LEVEL));
+            setPropertyTask(Light.PROP_MAX_TONE_LEVEL, new PropagationTask(Light.PROP_MAX_TONE_LEVEL));
         }
     }
 
@@ -132,31 +130,6 @@ public class KSLight2 extends KSLight {
         }
 
         return PARSE_OK_STATE_UPDATED;
-    }
-
-    private boolean onDimAndColorCharacsTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {
-
-
-
-        final KSLight2 parent = (KSLight2) ((getParent() != null) ? (getParent()) : (this));
-        parent.syncDimAndColorCharacs(reqProps, parent.mRxPropertyMap);
-        parent.commitPropertyChanges(parent.mRxPropertyMap);
-
-        for (KSLight2 child: parent.getChildren(KSLight2.class)) {
-            child.syncDimAndColorCharacs(reqProps, child.mRxPropertyMap);
-            child.commitPropertyChanges(child.mRxPropertyMap);
-        }
-
-        return true;
-    }
-
-    protected void syncDimAndColorCharacs(PropertyMap reqProps, PropertyMap outProps) {
-        outProps.put(reqProps.get(Light.PROP_DIM_SUPPORTED));
-        outProps.put(reqProps.get(Light.PROP_MIN_DIM_LEVEL));
-        outProps.put(reqProps.get(Light.PROP_MAX_DIM_LEVEL));
-        outProps.put(reqProps.get(Light.PROP_TONE_SUPPORTED));
-        outProps.put(reqProps.get(Light.PROP_MIN_TONE_LEVEL));
-        outProps.put(reqProps.get(Light.PROP_MAX_TONE_LEVEL));
     }
 
     @Override

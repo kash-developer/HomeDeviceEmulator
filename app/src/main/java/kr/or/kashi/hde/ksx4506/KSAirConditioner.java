@@ -24,7 +24,6 @@ import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.DeviceContextBase;
 import kr.or.kashi.hde.HomeDevice;
-import kr.or.kashi.hde.base.PropertyTask;
 import kr.or.kashi.hde.device.AirConditioner;
 import kr.or.kashi.hde.device.Light;
 import kr.or.kashi.hde.util.Utils;
@@ -83,12 +82,11 @@ public class KSAirConditioner extends KSDeviceContextBase {
             setPropertyTask(AirConditioner.PROP_FAN_MODE, this::onFanSpeedControlTask);
             setPropertyTask(AirConditioner.PROP_CUR_FAN_SPEED, this::onFanSpeedControlTask);
         } else {
-            final PropertyTask onRangeCharacsTaskForSlave = this::onRangeCharacsTaskForSlave;
-            setPropertyTask(AirConditioner.PROP_MIN_FAN_SPEED, onRangeCharacsTaskForSlave);
-            setPropertyTask(AirConditioner.PROP_MAX_FAN_SPEED, onRangeCharacsTaskForSlave);
-            setPropertyTask(AirConditioner.PROP_TEMP_RESOLUTION, onRangeCharacsTaskForSlave);
-            setPropertyTask(AirConditioner.PROP_MIN_TEMPERATURE, onRangeCharacsTaskForSlave);
-            setPropertyTask(AirConditioner.PROP_MAX_TEMPERATURE, onRangeCharacsTaskForSlave);
+            setPropertyTask(AirConditioner.PROP_MIN_FAN_SPEED, new PropagationTask(AirConditioner.PROP_MIN_FAN_SPEED));
+            setPropertyTask(AirConditioner.PROP_MAX_FAN_SPEED, new PropagationTask(AirConditioner.PROP_MAX_FAN_SPEED));
+            setPropertyTask(AirConditioner.PROP_TEMP_RESOLUTION, new PropagationTask(AirConditioner.PROP_TEMP_RESOLUTION));
+            setPropertyTask(AirConditioner.PROP_MIN_TEMPERATURE, new PropagationTask(AirConditioner.PROP_MIN_TEMPERATURE));
+            setPropertyTask(AirConditioner.PROP_MAX_TEMPERATURE, new PropagationTask(AirConditioner.PROP_MAX_TEMPERATURE));
         }
     }
 
@@ -627,26 +625,5 @@ public class KSAirConditioner extends KSDeviceContextBase {
         // WTF!!! Should send same packet 3 times if target is group (see. spec.)
         sendPacket(packet, repeatCount);
         return true;
-    }
-
-    private boolean onRangeCharacsTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {
-        final KSAirConditioner parent = (KSAirConditioner) ((getParent() != null) ? (getParent()) : (this));
-        parent.syncRangeCharacs(reqProps, parent.mRxPropertyMap);
-        parent.commitPropertyChanges(parent.mRxPropertyMap);
-
-        for (KSAirConditioner child: parent.getChildren(KSAirConditioner.class)) {
-            child.syncRangeCharacs(reqProps, child.mRxPropertyMap);
-            child.commitPropertyChanges(child.mRxPropertyMap);
-        }
-
-        return true;
-    }
-
-    protected void syncRangeCharacs(PropertyMap reqProps, PropertyMap outProps) {
-        outProps.put(reqProps.get(AirConditioner.PROP_MIN_FAN_SPEED));
-        outProps.put(reqProps.get(AirConditioner.PROP_MAX_FAN_SPEED));
-        outProps.put(reqProps.get(AirConditioner.PROP_TEMP_RESOLUTION));
-        outProps.put(reqProps.get(AirConditioner.PROP_MIN_TEMPERATURE));
-        outProps.put(reqProps.get(AirConditioner.PROP_MAX_TEMPERATURE));
     }
 }

@@ -36,6 +36,8 @@ import kr.or.kashi.hde.base.BasicPropertyMap;
 import kr.or.kashi.hde.base.PropertyInflater;
 import kr.or.kashi.hde.base.ReadOnlyPropertyMap;
 import kr.or.kashi.hde.base.StageablePropertyMap;
+import kr.or.kashi.hde.device.AirConditioner;
+import kr.or.kashi.hde.ksx4506.KSAirConditioner;
 import kr.or.kashi.hde.ksx4506.KSLight;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyTask;
@@ -242,6 +244,12 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
         return true; // TODO: Confirm the purpose of this return value, see DeviceContext
     }
 
+    public boolean updateProperty(PropertyValue prop) {
+        mRxPropertyMap.put(prop);
+        commitPropertyChanges(mRxPropertyMap);
+        return true;
+    }
+
     public boolean updateProperties(List<PropertyValue> props) {
         mRxPropertyMap.putAll(props);
         commitPropertyChanges(mRxPropertyMap);
@@ -366,4 +374,27 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
     public abstract void requestUpdate(PropertyMap props);
     public abstract HomeAddress createAddress(String deviceAddress);
     public abstract @ParseResult int parsePayload(HomePacket packet, PropertyMap outProps);
+
+
+    public class PropagationTask implements PropertyTask {
+        private final String mPropName;
+
+        public PropagationTask( String propName) {
+            mPropName = propName;
+        }
+
+        @Override
+        public boolean execTask(PropertyMap newProps, PropertyMap outProps) {
+            DeviceContextBase dc = DeviceContextBase.this;
+
+            final DeviceContextBase parent = ((dc.getParent() != null) ? (dc.getParent()) : (dc));
+            parent.updateProperty(newProps.get(mPropName));
+
+            for (DeviceContextBase child: parent.getChildren(DeviceContextBase.class)) {
+                child.updateProperty(newProps.get(mPropName));
+            }
+
+            return true;
+        }
+    }
 }
