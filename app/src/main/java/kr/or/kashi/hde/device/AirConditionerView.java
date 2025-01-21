@@ -250,7 +250,7 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
     }
 
     @Override
-    public void onRangeValueEdited(FloatRangeView view, float cur, float min, float max) {
+    public void onRangeValueEdited(FloatRangeView view, float cur, float min, float max, float res) {
         if (view == mFanSpeedText) {
             device().setProperty(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class, (int)cur);
             device().setProperty(AirConditioner.PROP_MIN_FAN_SPEED, Integer.class, (int)min);

@@ -3,6 +3,7 @@ package kr.or.kashi.hde.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -16,23 +17,27 @@ import kr.or.kashi.hde.util.Utils;
 public class FloatRangeView extends LinearLayout {
 
     public interface OnValueEditedListener {
-        void onRangeValueEdited(FloatRangeView view, float cur, float min, float max);
+        void onRangeValueEdited(FloatRangeView view, float cur, float min, float max, float res);
     }
 
     private final Context mContext;
     private OnValueEditedListener mOnValueEditedListener;
 
+    private ViewGroup mCurGroup;
     private TextView mCurText;
     private EditText mCurEdit;
     private TextView mMinText;
     private EditText mMinEdit;
     private TextView mMaxText;
     private EditText mMaxEdit;
+    private ViewGroup mResGroup;
+    private TextView mResText;
+    private EditText mResEdit;
 
-    private float mRes = 1.0f;
     private float mCur = 0.0f;
     private float mMin = 0.0f;
     private float mMax = 0.0f;
+    private float mRes = 1.0f;
 
     public FloatRangeView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -40,6 +45,7 @@ public class FloatRangeView extends LinearLayout {
 
         View.inflate(context, R.layout.float_range_view, this);
 
+        mCurGroup = findViewById(R.id.cur_group);
         mCurText = findViewById(R.id.cur_text);
         mCurEdit = findViewById(R.id.cur_edit);
         mCurEdit.setOnEditorActionListener((view, actionId, event) -> {
@@ -67,7 +73,17 @@ public class FloatRangeView extends LinearLayout {
             if (!hasFocus) onUpdateEdit((EditText)view, EditorInfo.IME_ACTION_DONE, mMax);
         });
 
-        setEditable(false, false, false);
+        mResGroup = findViewById(R.id.res_group);
+        mResText = findViewById(R.id.res_text);
+        mResEdit = findViewById(R.id.res_edit);
+        mResEdit.setOnEditorActionListener((view, actionId, event) -> {
+            return onUpdateEdit((EditText)view, actionId, mRes);
+        });
+        mResEdit.setOnFocusChangeListener((view, hasFocus) -> {
+            if (!hasFocus) onUpdateEdit((EditText)view, EditorInfo.IME_ACTION_DONE, mRes);
+        });
+
+        setEditable(false, false, false, false);
         refreshTextFormat();
     }
 
@@ -92,9 +108,10 @@ public class FloatRangeView extends LinearLayout {
              if (editText == mCurEdit) changed = setCurInternal(value, true);
         else if (editText == mMinEdit) changed = setMinInternal(value, true);
         else if (editText == mMaxEdit) changed = setMaxInternal(value, true);
+        else if (editText == mResEdit) changed = setResInternal(value, true, false);
 
         if (changed && mOnValueEditedListener != null) {
-            mOnValueEditedListener.onRangeValueEdited(this, mCur, mMin, mMax);
+            mOnValueEditedListener.onRangeValueEdited(this, mCur, mMin, mMax, mRes);
         }
 
         return true;
@@ -107,19 +124,28 @@ public class FloatRangeView extends LinearLayout {
         setNumberText(mMinEdit, mMin);
         setNumberText(mMaxText, mMax);
         setNumberText(mMaxEdit, mMax);
+        setNumberText(mResText, mRes);
+        setNumberText(mResEdit, mRes);
+    }
+
+    public void setVisible(boolean curVisible, boolean resVisible) {
+        mCurGroup.setVisibility(curVisible ? View.VISIBLE : View.GONE);
+        mResGroup.setVisibility(resVisible ? View.VISIBLE : View.GONE);
     }
 
     public void setEditable(boolean editable) {
-        setEditable(editable, editable, editable);
+        setEditable(editable, editable, editable, editable);
     }
 
-    public void setEditable(boolean curEditable, boolean minEditable, boolean maxEditable) {
+    public void setEditable(boolean curEditable, boolean minEditable, boolean maxEditable, boolean resEditable) {
         mCurText.setVisibility(curEditable ? View.GONE : View.VISIBLE);
         mCurEdit.setVisibility(curEditable ? View.VISIBLE : View.GONE);
         mMinText.setVisibility(minEditable ? View.GONE : View.VISIBLE);
         mMinEdit.setVisibility(minEditable ? View.VISIBLE : View.GONE);
         mMaxText.setVisibility(maxEditable ? View.GONE : View.VISIBLE);
         mMaxEdit.setVisibility(maxEditable ? View.VISIBLE : View.GONE);
+        mResText.setVisibility(resEditable ? View.GONE : View.VISIBLE);
+        mResEdit.setVisibility(resEditable ? View.VISIBLE : View.GONE);
     }
 
     private float round(float num) {
@@ -144,20 +170,30 @@ public class FloatRangeView extends LinearLayout {
     }
 
     public void setRes(float res) {
+        setResInternal(res, true, true);
+    }
+
+    public boolean setResInternal(float res, boolean ensureInRange, boolean callbackChanged) {
+        boolean changed = false;
+
         if (res != mRes) {
             mRes = res;
+            changed = true;
 
-            boolean changed = false;
-            changed |= setMinInternal(mMin, true);
-            changed |= setMaxInternal(mMax, true);
-            changed |= setCurInternal(mCur, true);
-
-            if (changed && mOnValueEditedListener != null) {
-                mOnValueEditedListener.onRangeValueEdited(this, mCur, mMin, mMax);
+            if (ensureInRange) {
+                changed |= setMinInternal(mMin, true);
+                changed |= setMaxInternal(mMax, true);
+                changed |= setCurInternal(mCur, true);
             }
 
             refreshTextFormat();
         }
+
+        if (changed && callbackChanged && mOnValueEditedListener != null) {
+            mOnValueEditedListener.onRangeValueEdited(this, mCur, mMin, mMax, mRes);
+        }
+
+        return changed;
     }
 
     public float getCur() {
