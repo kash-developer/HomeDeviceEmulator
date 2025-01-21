@@ -306,7 +306,10 @@ public class DeviceListPartView extends LinearLayout {
         try {
             fos = mContext.openFileOutput(fileName, Context.MODE_PRIVATE);
             result = mNetwork.saveDevicesTo(fos);
-        } catch (FileNotFoundException e) {
+            fos.flush();
+            fos.getFD().sync();
+        } catch (Exception e) {
+            e.printStackTrace();
             debug("Can't save device list to the file " + fileName);
         } finally {
             if (fos != null) {
