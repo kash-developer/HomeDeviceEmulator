@@ -70,6 +70,9 @@ public class KSThermostat extends KSDeviceContextBase {
         } else {
             setPropertyTask(HomeDevice.PROP_ONOFF, this::onPowerControlTaskInSlave);
             setPropertyTask(Thermostat.PROP_FUNCTION_STATES, this::onFunctionControlTaskInSlave);
+            setPropertyTask(Thermostat.PROP_MIN_TEMPERATURE, new PropagationTask(Thermostat.PROP_MIN_TEMPERATURE));
+            setPropertyTask(Thermostat.PROP_MAX_TEMPERATURE, new PropagationTask(Thermostat.PROP_MAX_TEMPERATURE));
+            setPropertyTask(Thermostat.PROP_TEMP_RESOLUTION, new PropagationTask(Thermostat.PROP_TEMP_RESOLUTION));
         }
     }
 
@@ -256,15 +259,15 @@ public class KSThermostat extends KSDeviceContextBase {
         final PropertyMap props = getReadPropertyMap();
         final float maxTemp = props.get(Thermostat.PROP_MAX_TEMPERATURE, Float.class);
         final float minTemp = props.get(Thermostat.PROP_MIN_TEMPERATURE, Float.class);
-        data.append((int)maxTemp);
-        data.append((int)minTemp);
+        final float tempRes = props.get(Thermostat.PROP_TEMP_RESOLUTION, Float.class);
+        data.append(KSUtils.makeTemperatureByte(maxTemp, maxTemp, maxTemp, tempRes));
+        data.append(KSUtils.makeTemperatureByte(minTemp, minTemp, minTemp, tempRes));
 
         int data5 = 0;
         final long supportedFunctions = props.get(Thermostat.PROP_SUPPORTED_FUNCTIONS, Long.class);
         if ((supportedFunctions & Thermostat.Function.OUTING_SETTING) != 0L) data5 |= (1 << 1);
         if ((supportedFunctions & Thermostat.Function.HOTWATER_ONLY) != 0L)  data5 |= (1 << 2);
         if ((supportedFunctions & Thermostat.Function.RESERVED_MODE) != 0L)  data5 |= (1 << 3);
-        final float tempRes = props.get(Thermostat.PROP_TEMP_RESOLUTION, Float.class);
         if (KSUtils.floatEquals(tempRes, 0.5f))                              data5 |= (1 << 4);
         data.append(data5);
         data.append(getChildCount()); // count of thermostats
@@ -309,7 +312,7 @@ public class KSThermostat extends KSDeviceContextBase {
         if ((data5 & (1 << 1)) != 0) supportedFunctions |= (Thermostat.Function.OUTING_SETTING);
         if ((data5 & (1 << 2)) != 0) supportedFunctions |= (Thermostat.Function.HOTWATER_ONLY);
         if ((data5 & (1 << 3)) != 0) supportedFunctions |= (Thermostat.Function.RESERVED_MODE);
-        if ((data5 & (1 << 4)) != 0) mSupportHalfDegree = true;
+        mSupportHalfDegree = ((data5 & (1 << 4)) != 0);
 
         outProps.put(Thermostat.PROP_SUPPORTED_FUNCTIONS, supportedFunctions);
         outProps.put(Thermostat.PROP_MIN_TEMPERATURE, mMinTemperature);

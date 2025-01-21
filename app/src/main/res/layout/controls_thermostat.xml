@@ -78,7 +78,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="left|top"
+        android:gravity="left|center_vertical"
         android:orientation="horizontal">
 
         <CheckBox
@@ -86,18 +86,50 @@
             android:text="Temp. Range:"
             style="@style/TitleCheckStyle2" />
 
-        <TextView
+        <kr.or.kashi.hde.widget.FloatRangeView
             android:id="@+id/temp_range_text"
-            android:layout_width="wrap_content"
+            android:layout_width="130dp"
             android:layout_height="wrap_content"
             android:text="" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="res:" />
+
+        <TextView
+            android:id="@+id/temp_res_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="30dp"
+            android:text="" />
+
+        <RadioGroup
+            android:id="@+id/temp_res_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/temp_res_0d5_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.5" />
+
+            <RadioButton
+                android:id="@+id/temp_res_1d0_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1.0" />
+
+        </RadioGroup>
 
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="left|top"
+        android:gravity="left|center_vertical"
         android:orientation="horizontal">
 
         <CheckBox
@@ -105,16 +137,25 @@
             android:text="Current Temp.:"
             style="@style/TitleCheckStyle2" />
 
-        <TextView
-            android:id="@+id/current_temp_text"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="" />
+            android:gravity="left"
+            android:minWidth="70dp"
+            android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="\u2103" />
+            <TextView
+                android:id="@+id/current_temp_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="\u2103" />
+
+        </LinearLayout>
 
         <Space
             android:layout_width="10dp"
@@ -130,6 +171,8 @@
                 android:id="@+id/current_temp_edit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:minWidth="50dp"
+                android:gravity="right"
                 android:inputType="number"
                 android:text="0.0"
                 style="@style/SmallMarginEditText" />
@@ -162,7 +205,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="left|top"
+        android:gravity="left|center_vertical"
         android:orientation="horizontal">
 
         <CheckBox
@@ -170,17 +213,26 @@
             android:text="Setting Temp.:"
             style="@style/TitleCheckStyle2" />
 
-        <TextView
-            android:id="@+id/setting_temp_text"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:text="" />
+            android:gravity="left"
+            android:minWidth="70dp"
+            android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="\u2103" />
+            <TextView
+                android:id="@+id/setting_temp_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16dp"
+                android:text="" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="\u2103" />
+
+        </LinearLayout>
 
         <Space
             android:layout_width="10dp"
@@ -196,6 +248,8 @@
                 android:id="@+id/setting_temp_edit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:minWidth="50dp"
+                android:gravity="right"
                 android:inputType="number"
                 android:text="0.0"
                 style="@style/SmallMarginEditText" />

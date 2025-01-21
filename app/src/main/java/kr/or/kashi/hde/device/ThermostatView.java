@@ -22,8 +22,10 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
+import androidx.annotation.IdRes;
 import androidx.annotation.Nullable;
 
 import kr.or.kashi.hde.R;
@@ -31,8 +33,12 @@ import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.base.PropertyValue;
 import kr.or.kashi.hde.util.Utils;
 import kr.or.kashi.hde.view.HomeDeviceView;
+import kr.or.kashi.hde.widget.FloatRangeView;
 
-public class ThermostatView extends HomeDeviceView<Thermostat> {
+public class ThermostatView extends HomeDeviceView<Thermostat>
+        implements  RadioGroup.OnCheckedChangeListener,
+                    FloatRangeView.OnValueEditedListener {
+
     private static final String TAG = ThermostatView.class.getSimpleName();
     private final Context mContext;
 
@@ -43,7 +49,9 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
     private CheckBox mHotwaterOnlyCheck;
     private CheckBox mReservedModeCheck;
     private CheckBox mTempRangeCheck;
-    private TextView mTempRangeText;
+    private FloatRangeView mTempRangeText;
+    private TextView mTempResText;
+    private RadioGroup mTempResGroup;
     private CheckBox mCurrentTempCheck;
     private TextView mCurrentTempText;
     private EditText mCurrentTempEdit;
@@ -78,6 +86,12 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
 
         mTempRangeCheck = findViewById(R.id.temp_range_check);
         mTempRangeText = findViewById(R.id.temp_range_text);
+        mTempRangeText.setOnValueEditedListener(this);
+        mTempRangeText.setEditable(isSlave());
+        mTempRangeText.setVisible(false, false);
+        mTempResText = findViewById(R.id.temp_res_text);
+        mTempResGroup = findViewById(R.id.temp_res_group);
+        mTempResGroup.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
 
         mCurrentTempCheck = findViewById(R.id.current_temp_check);
         mCurrentTempText = findViewById(R.id.current_temp_text);
@@ -112,18 +126,47 @@ public class ThermostatView extends HomeDeviceView<Thermostat> {
         mHotwaterOnlyCheck.setChecked((functionStates & Thermostat.Function.HOTWATER_ONLY) != 0);
         mReservedModeCheck.setChecked((functionStates & Thermostat.Function.RESERVED_MODE) != 0);
 
+        final float curTemp = props.get(Thermostat.PROP_CURRENT_TEMPERATURE, Float.class);
         mMinTemp = props.get(Thermostat.PROP_MIN_TEMPERATURE, Float.class);
         mMaxTemp = props.get(Thermostat.PROP_MAX_TEMPERATURE, Float.class);
         mTempRes = props.get(Thermostat.PROP_TEMP_RESOLUTION, Float.class);
-        mTempRangeText.setText("min:" + mMinTemp + ", max:" + mMaxTemp + ", res:" + mTempRes);
+        mTempRangeText.setCur(curTemp);
+        mTempRangeText.setMin(mMinTemp);
+        mTempRangeText.setMax(mMaxTemp);
+        mTempRangeText.setRes(mTempRes);
 
-        final float curTemp = props.get(Thermostat.PROP_CURRENT_TEMPERATURE, Float.class);
+        mTempResText.setText("" + mTempRes);
+        final int tempResId = Utils.floatEquals(mTempRes, 0.5f) ? R.id.temp_res_0d5_radio : R.id.temp_res_1d0_radio;
+        mTempResGroup.setOnCheckedChangeListener(null);
+        mTempResGroup.check(tempResId);
+        mTempResGroup.setOnCheckedChangeListener(this);
+
         mCurrentTempText.setText("" + curTemp);
         if (!mCurrentTempEdit.hasFocus()) mCurrentTempEdit.setText("" + curTemp);
 
         final float setTemp = props.get(Thermostat.PROP_SETTING_TEMPERATURE, Float.class);
         mSettingTempText.setText("" + setTemp);
         if (!mSettingTempEdit.hasFocus()) mSettingTempEdit.setText("" + setTemp);
+    }
+
+    @Override
+    public void onCheckedChanged(RadioGroup group, @IdRes int checkedId) {
+        if (group == mTempResGroup) {
+            float tempRes = 1.0f;
+            if (checkedId == R.id.temp_res_0d5_radio) tempRes = 0.5f;
+            else if (checkedId == R.id.temp_res_1d0_radio) tempRes = 1.0f;
+            device().setProperty(Thermostat.PROP_TEMP_RESOLUTION, Float.class, tempRes);
+        }
+    }
+
+    @Override
+    public void onRangeValueEdited(FloatRangeView view, float cur, float min, float max, float res) {
+        if (view == mTempRangeText) {
+            device().setProperty(Thermostat.PROP_CURRENT_TEMPERATURE, Float.class, cur);
+            device().setProperty(Thermostat.PROP_MIN_TEMPERATURE, Float.class, min);
+            device().setProperty(Thermostat.PROP_MAX_TEMPERATURE, Float.class, max);
+            device().setProperty(Thermostat.PROP_TEMP_RESOLUTION, Float.class, res);
+        }
     }
 
     private void setFunctions() {
