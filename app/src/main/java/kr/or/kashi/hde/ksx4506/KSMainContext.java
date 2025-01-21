@@ -106,6 +106,8 @@ public class KSMainContext extends MainContext {
                 parent = mVirtualDeviceMap.get(parentAddr);
                 if (parent == null) {
                     PropertyMap props = new BasicPropertyMap();
+                    props.putAll(dc.getReadPropertyMap());
+
                     props.put(HomeDevice.PROP_ADDR, parentAddr);
                     props.put(HomeDevice.PROP_AREA, HomeDevice.Area.UNKNOWN);
                     props.put(HomeDevice.PROP_NAME, "Virtual " + parentAddr);
