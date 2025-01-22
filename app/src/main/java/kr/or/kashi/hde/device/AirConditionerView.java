@@ -160,9 +160,9 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
         mFanSpeedSeek.setMaxF((float)props.get(AirConditioner.PROP_MAX_FAN_SPEED, Integer.class));
         mFanSpeedSeek.setProgressF((float)props.get(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class));
         mFanSpeedText.setRes(1.0f);
-        mFanSpeedText.setCur((float)props.get(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class));
         mFanSpeedText.setMin((float)props.get(AirConditioner.PROP_MIN_FAN_SPEED, Integer.class));
         mFanSpeedText.setMax((float)props.get(AirConditioner.PROP_MAX_FAN_SPEED, Integer.class));
+        mFanSpeedText.setCur((float)props.get(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class));
 
         final float tempRes = props.get(AirConditioner.PROP_TEMP_RESOLUTION, Float.class);
         mTempResText.setText("" + tempRes);
@@ -176,18 +176,18 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
         mReqTempSeek.setMaxF(props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class));
         mReqTempSeek.setProgressF(props.get(AirConditioner.PROP_REQ_TEMPERATURE, Float.class));
         mReqTempText.setRes(tempRes);
-        mReqTempText.setCur(props.get(AirConditioner.PROP_REQ_TEMPERATURE, Float.class));
         mReqTempText.setMin(props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class));
         mReqTempText.setMax(props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class));
+        mReqTempText.setCur(props.get(AirConditioner.PROP_REQ_TEMPERATURE, Float.class));
 
         mCurTempSeek.setResolution(tempRes);
         mCurTempSeek.setMinF(props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class));
         mCurTempSeek.setMaxF(props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class));
         mCurTempSeek.setProgressF(props.get(AirConditioner.PROP_CUR_TEMPERATURE, Float.class));
         mCurTempText.setRes(tempRes);
-        mCurTempText.setCur(props.get(AirConditioner.PROP_CUR_TEMPERATURE, Float.class));
         mCurTempText.setMin(props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class));
         mCurTempText.setMax(props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class));
+        mCurTempText.setCur(props.get(AirConditioner.PROP_CUR_TEMPERATURE, Float.class));
     }
 
     @Override
@@ -226,11 +226,11 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
     @Override
     public void onProgressChanged(FloatSeekBar seekBar, float progress, boolean fromUser) {
         if (seekBar == mFanSpeedSeek) {
-            device().setProperty(AirConditioner.PROP_CUR_FAN_SPEED, Integer.class, (int)progress);
+            mFanSpeedText.setCur(progress);
         } else if (seekBar == mReqTempSeek) {
-            device().setProperty(AirConditioner.PROP_REQ_TEMPERATURE, Float.class, progress);
+            mReqTempText.setCur(progress);
         } else if (seekBar == mCurTempSeek) {
-            device().setProperty(AirConditioner.PROP_CUR_TEMPERATURE, Float.class, progress);
+            mCurTempText.setCur(progress);
         }
     }
 
