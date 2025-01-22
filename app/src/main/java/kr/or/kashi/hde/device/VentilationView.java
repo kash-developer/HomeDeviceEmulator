@@ -29,6 +29,7 @@ import androidx.annotation.Nullable;
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.view.HomeDeviceView;
+import kr.or.kashi.hde.widget.FloatRangeView;
 
 public class VentilationView extends HomeDeviceView<Ventilation> {
     private static final String TAG = VentilationView.class.getSimpleName();
@@ -52,8 +53,8 @@ public class VentilationView extends HomeDeviceView<Ventilation> {
     private CheckBox mAlarmHighCo2LevelCheck;
     private CheckBox mAlarmHeaterRunningCheck;
     private CheckBox mFanSpeedCheck;
-    private TextView mFanSpeedText;
     private SeekBar mFanSpeedSeek;
+    private FloatRangeView mFanSpeedText;
 
     public VentilationView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -104,15 +105,23 @@ public class VentilationView extends HomeDeviceView<Ventilation> {
         mAlarmHeaterRunningCheck.setOnClickListener(v -> setOperationAlarms());
         mAlarmHeaterRunningCheck.setClickable(isSlave());
         mFanSpeedCheck = findViewById(R.id.fan_speed_check);
-        mFanSpeedText = findViewById(R.id.fan_speed_text);
         mFanSpeedSeek = findViewById(R.id.fan_speed_seek);
         mFanSpeedSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mFanSpeedText.setCur((float) progress);
+            }
             @Override public void onStartTrackingTouch(SeekBar seekBar) { }
             @Override public void onStopTrackingTouch(SeekBar seekBar) {
-                setFanSpeed();
+                device().setProperty(Ventilation.PROP_CUR_FAN_SPEED, Integer.class, seekBar.getProgress());
             }
         });
+        mFanSpeedText = findViewById(R.id.fan_speed_text);
+        mFanSpeedText.setOnValueEditedListener((v, cur, min, max, res) -> {
+            device().setProperty(Ventilation.PROP_CUR_FAN_SPEED, Integer.class, (int)cur);
+            device().setProperty(Ventilation.PROP_MIN_FAN_SPEED, Integer.class, (int)min);
+            device().setProperty(Ventilation.PROP_MAX_FAN_SPEED, Integer.class, (int)max);
+        });
+        mFanSpeedText.setEditable(isSlave(), false, isSlave(), false);
     }
 
     @Override
@@ -149,11 +158,12 @@ public class VentilationView extends HomeDeviceView<Ventilation> {
         final int curSpeed = props.get(Ventilation.PROP_CUR_FAN_SPEED, Integer.class);
         final int minSpeed = props.get(Ventilation.PROP_MIN_FAN_SPEED, Integer.class);
         final int maxSpeed = props.get(Ventilation.PROP_MAX_FAN_SPEED, Integer.class);
-        final String speedText = "min:" + minSpeed + " max:" + maxSpeed + " cur:" + curSpeed;
-        mFanSpeedText.setText(speedText);
         mFanSpeedSeek.setMin(minSpeed);
         mFanSpeedSeek.setMax(maxSpeed);
         mFanSpeedSeek.setProgress(curSpeed);
+        mFanSpeedText.setCur((float)curSpeed);
+        mFanSpeedText.setMin((float)minSpeed);
+        mFanSpeedText.setMax((float)maxSpeed);
     }
 
     private void setOperationMode() {
@@ -183,9 +193,5 @@ public class VentilationView extends HomeDeviceView<Ventilation> {
         if (mAlarmHighCo2LevelCheck.isChecked()) operationAlarms |= Ventilation.Alarm.HIGH_CO2_LEVEL;
         if (mAlarmHeaterRunningCheck.isChecked()) operationAlarms |= Ventilation.Alarm.HEATER_RUNNING;
         device().setProperty(Ventilation.PROP_OPERATION_ALARM, Long.class, operationAlarms);
-    }
-
-    private void setFanSpeed() {
-        device().setProperty(Ventilation.PROP_CUR_FAN_SPEED, Integer.class, mFanSpeedSeek.getProgress());
     }
 }

@@ -172,7 +172,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="left|top"
+        android:gravity="left|center_vertical"
         android:orientation="horizontal">
 
         <CheckBox
@@ -180,17 +180,18 @@
             android:text="Fan Speed:"
             style="@style/TitleCheckStyle" />
 
-        <TextView
-            android:id="@+id/fan_speed_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="" />
-
         <SeekBar
             android:id="@+id/fan_speed_seek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:layout_gravity="center"/>
+
+        <kr.or.kashi.hde.widget.FloatRangeView
+            android:id="@+id/fan_speed_text"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:text="" />
 
     </LinearLayout>
 

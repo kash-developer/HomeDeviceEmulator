@@ -24,6 +24,7 @@ import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.device.AirConditioner;
 import kr.or.kashi.hde.device.Thermostat;
 import kr.or.kashi.hde.device.Ventilation;
 import kr.or.kashi.hde.ksx4506.KSDeviceContextBase;
@@ -57,6 +58,11 @@ public class KSVentilation extends KSDeviceContextBase {
             setPropertyTask(Ventilation.PROP_CUR_FAN_SPEED, this::onFanSpeedControlTask);
             setPropertyTask(Ventilation.PROP_OPERATION_MODE, this::onModeControlTask);
             setPropertyTask(Ventilation.PROP_OPERATION_ALARM, this::onAlarmControlTask);
+        } else {
+            setPropertyTask(Ventilation.PROP_MIN_FAN_SPEED, new PropagationTask(Ventilation.PROP_MIN_FAN_SPEED));
+            setPropertyTask(Ventilation.PROP_MAX_FAN_SPEED, new PropagationTask(Ventilation.PROP_MAX_FAN_SPEED));
+            setPropertyTask(Ventilation.PROP_SUPPORTED_MODES, new PropagationTask(Ventilation.PROP_SUPPORTED_MODES));
+            setPropertyTask(Ventilation.PROP_SUPPORTED_SENSORS, new PropagationTask(Ventilation.PROP_SUPPORTED_SENSORS));
         }
     }
 
