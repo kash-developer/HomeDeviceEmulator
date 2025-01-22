@@ -1,6 +1,8 @@
 package kr.or.kashi.hde.widget;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +23,7 @@ public class FloatRangeView extends LinearLayout {
     }
 
     private final Context mContext;
+    private final Handler mCallckHandler;
     private OnValueEditedListener mOnValueEditedListener;
 
     private ViewGroup mCurGroup;
@@ -42,6 +45,7 @@ public class FloatRangeView extends LinearLayout {
     public FloatRangeView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
+        mCallckHandler = new Handler(Looper.getMainLooper());
 
         View.inflate(context, R.layout.float_range_view, this);
 
@@ -108,13 +112,23 @@ public class FloatRangeView extends LinearLayout {
              if (editText == mCurEdit) changed = setCurInternal(value, true);
         else if (editText == mMinEdit) changed = setMinInternal(value, true);
         else if (editText == mMaxEdit) changed = setMaxInternal(value, true);
-        else if (editText == mResEdit) changed = setResInternal(value, true, false);
+        else if (editText == mResEdit) changed = setResInternal(value, true);
 
-        if (changed && mOnValueEditedListener != null) {
-            mOnValueEditedListener.onRangeValueEdited(this, mCur, mMin, mMax, mRes);
+        if (changed) {
+            callbackRangeValueEditedIf();
         }
 
         return true;
+    }
+
+    private void callbackRangeValueEditedIf() {
+        if (mOnValueEditedListener == null) return;
+        mCallckHandler.removeCallbacksAndMessages(null);
+        mCallckHandler.post(() -> {
+            if (mOnValueEditedListener != null) {
+                mOnValueEditedListener.onRangeValueEdited(this, mCur, mMin, mMax, mRes);
+            }
+        });
     }
 
     private void refreshTextFormat() {
@@ -170,10 +184,12 @@ public class FloatRangeView extends LinearLayout {
     }
 
     public void setRes(float res) {
-        setResInternal(res, true, true);
+        if (setResInternal(res, true)) {
+            callbackRangeValueEditedIf();
+        }
     }
 
-    public boolean setResInternal(float res, boolean ensureInRange, boolean callbackChanged) {
+    public boolean setResInternal(float res, boolean ensureInRange) {
         boolean changed = false;
 
         if (res != mRes) {
@@ -187,10 +203,6 @@ public class FloatRangeView extends LinearLayout {
             }
 
             refreshTextFormat();
-        }
-
-        if (changed && callbackChanged && mOnValueEditedListener != null) {
-            mOnValueEditedListener.onRangeValueEdited(this, mCur, mMin, mMax, mRes);
         }
 
         return changed;
