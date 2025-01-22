@@ -48,6 +48,7 @@ import kr.or.kashi.hde.HomeNetwork;
 import kr.or.kashi.hde.R;
 import kr.or.kashi.hde.base.BasicPropertyMap;
 import kr.or.kashi.hde.base.PropertyMap;
+import kr.or.kashi.hde.device.AirConditioner;
 import kr.or.kashi.hde.device.BatchSwitch;
 import kr.or.kashi.hde.device.Curtain;
 import kr.or.kashi.hde.device.DoorLock;
@@ -506,8 +507,18 @@ public class TypeListPartView extends LinearLayout {
 
         if (mNetwork.isSlaveMode()) {
             switch (typeName) {
-                case "AirConditioner":
+                case "AirConditioner": {
+                    long supportedModes = 0;
+                    supportedModes |= AirConditioner.OpMode.AUTO;
+                    supportedModes |= AirConditioner.OpMode.COOLING;
+                    supportedModes |= AirConditioner.OpMode.HEATING;
+                    supportedModes |= AirConditioner.OpMode.BLOWING;
+                    supportedModes |= AirConditioner.OpMode.DEHUMID;
+                    supportedModes |= AirConditioner.OpMode.RESERVED;
+                    defaultProps.put(AirConditioner.PROP_SUPPORTED_MODES, supportedModes);
+                    defaultProps.put(HomeDevice.PROP_ONOFF, true);
                     break;
+                }
                 case "BatchSwitch": {
                     long supportedSwitches = 0;
                     supportedSwitches |= BatchSwitch.Switch.GAS_LOCKING;
@@ -566,7 +577,7 @@ public class TypeListPartView extends LinearLayout {
                     defaultProps.put(Thermostat.PROP_SUPPORTED_FUNCTIONS, supportedFunctions);
                     defaultProps.put(Thermostat.PROP_MIN_TEMPERATURE, 0.0f);
                     defaultProps.put(Thermostat.PROP_MAX_TEMPERATURE, 40.0f);
-                    defaultProps.put(Thermostat.PROP_TEMP_RESOLUTION, 0.5f);    // TODO:
+                    defaultProps.put(Thermostat.PROP_TEMP_RESOLUTION, 0.5f);
                     defaultProps.put(Thermostat.PROP_SETTING_TEMPERATURE, 10.0f);
                     defaultProps.put(Thermostat.PROP_CURRENT_TEMPERATURE, 10.0f);
                     break;

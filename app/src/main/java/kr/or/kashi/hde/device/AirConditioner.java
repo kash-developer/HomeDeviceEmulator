@@ -55,15 +55,15 @@ public class AirConditioner extends HomeDevice {
     public static final String PROP_SUPPORTED_MODES = PROP_PREFIX + "operation_mode.supports";
 
     /** Property: Current operation mode of {@link OpMode} */
-    @PropertyDef(valueClass=OpMode.class)
+    @PropertyDef(valueClass=OpMode.class, defValueI=OpMode.COOLING)
     public static final String PROP_OPERATION_MODE  = PROP_PREFIX + "operation_mode.current";
 
     /** Property: Direction {@link FlowDir} that air blows to */
-    @PropertyDef(valueClass=FlowDir.class)
+    @PropertyDef(valueClass=FlowDir.class, defValueI=FlowDir.MANUAL)
     public static final String PROP_FLOW_DIRECTION  = PROP_PREFIX + "flow_direction";
 
     /** Property: One of {@link FanMode} is set to this */
-    @PropertyDef(valueClass=FanMode.class)
+    @PropertyDef(valueClass=FanMode.class, defValueI=FanMode.MANUAL)
     public static final String PROP_FAN_MODE        = PROP_PREFIX + "fan_mode";
 
     /** Property: Minimum level of fan speed */
@@ -91,11 +91,11 @@ public class AirConditioner extends HomeDevice {
     public static final String PROP_MAX_TEMPERATURE = PROP_PREFIX + "temperature.maximum";
 
     /** Property: Last temperature that is requested */
-    @PropertyDef(valueClass=Float.class)
+    @PropertyDef(valueClass=Float.class, defValueF=18.5f)
     public static final String PROP_REQ_TEMPERATURE = PROP_PREFIX + "temperature.request";
 
     /** Property: Current temperature that has been retrieved from device */
-    @PropertyDef(valueClass=Float.class)
+    @PropertyDef(valueClass=Float.class, defValueF=18.5f)
     public static final String PROP_CUR_TEMPERATURE = PROP_PREFIX + "temperature.current";
 
     /**
