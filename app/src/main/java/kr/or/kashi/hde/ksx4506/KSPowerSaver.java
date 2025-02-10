@@ -112,8 +112,11 @@ public class KSPowerSaver extends KSDeviceContextBase {
             case CMD_GROUP_CONTROL_REQ:
                 return parseGroupControlReq(packet, outProps);
 
+            case CMD_STANDBY_POWER_GETTING_REQ:
+                return parseStandbyPowerGettingReq(packet, outProps);
+
             case CMD_STANDBY_POWER_SETTING_REQ:
-                return parseStandbyPowerReq(packet, outProps);
+                return parseStandbyPowerSettingReq(packet, outProps);
 
             case CMD_STANDBY_POWER_GETTING_RSP:
             case CMD_STANDBY_POWER_SETTING_RSP:
@@ -471,7 +474,23 @@ public class KSPowerSaver extends KSDeviceContextBase {
         return PARSE_OK_STATE_UPDATED;
     }
 
-    protected @ParseResult int parseStandbyPowerReq(KSPacket packet, PropertyMap outProps) {
+    protected @ParseResult int parseStandbyPowerGettingReq(KSPacket packet, PropertyMap outProps) {
+        final ByteArrayBuffer data = new ByteArrayBuffer();
+        data.append(0); // no error
+        if (isSingleDevice()) {
+            makeStandbyPowerData(outProps, data);
+        } else {
+            for (KSPowerSaver child: getChildren(KSPowerSaver.class)) {
+                child.makeStandbyPowerData(child.getReadPropertyMap(), data);
+            }
+        }
+
+        sendPacket(createPacket(CMD_STANDBY_POWER_GETTING_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseStandbyPowerSettingReq(KSPacket packet, PropertyMap outProps) {
         if (packet.data.length < 2) return PARSE_OK_NONE;
 
         if (isSingleDevice()) {
