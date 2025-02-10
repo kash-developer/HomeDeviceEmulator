@@ -81,30 +81,24 @@ public class PowerSaverView extends HomeDeviceView<PowerSaver> implements View.O
         mStandbyBlockingOnRadio.setOnClickListener(this);
         mCurrentPowerCheck = findViewById(R.id.current_power_check);
         mCurrentPowerText = findViewById(R.id.current_power_text);
+        findViewById(R.id.current_power_edit_group).setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         mCurrentPowerEdit = findViewById(R.id.current_power_edit);
-        mCurrentPowerEdit.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         mCurrentPowerSetButton = findViewById(R.id.current_power_set_button);
         mCurrentPowerSetButton.setOnClickListener(this);
-        mCurrentPowerSetButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         mCurrentPowerPlusButton = findViewById(R.id.current_power_plus_button);
         mCurrentPowerPlusButton.setOnClickListener(this);
-        mCurrentPowerPlusButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         mCurrentPowerMinusButton = findViewById(R.id.current_power_minus_button);
         mCurrentPowerMinusButton.setOnClickListener(this);
-        mCurrentPowerMinusButton.setVisibility(isSlave() ? View.VISIBLE : View.GONE);
         mStandbyPowerCheck = findViewById(R.id.standby_power_check);
         mStandbyPowerText = findViewById(R.id.standby_power_text);
+        findViewById(R.id.standby_power_edit_group).setVisibility(View.VISIBLE);
         mStandbyPowerEdit = findViewById(R.id.standby_power_edit);
-        mStandbyPowerEdit.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         mStandbyPowerSetButton = findViewById(R.id.standby_power_set_button);
         mStandbyPowerSetButton.setOnClickListener(this);
-        mStandbyPowerSetButton.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         mStandbyPowerPlusButton = findViewById(R.id.standby_power_plus_button);
         mStandbyPowerPlusButton.setOnClickListener(this);
-        mStandbyPowerPlusButton.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
         mStandbyPowerMinusButton = findViewById(R.id.standby_power_minus_button);
         mStandbyPowerMinusButton.setOnClickListener(this);
-        mStandbyPowerMinusButton.setVisibility(isMaster() ? View.VISIBLE : View.GONE);
     }
 
     @Override

@@ -92,7 +92,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="left|top"
+        android:gravity="left|center_vertical"
         android:orientation="horizontal">
 
         <CheckBox
@@ -111,50 +111,58 @@
             android:layout_height="wrap_content"
             android:text="W" />
 
-        <Space
-            android:layout_width="10dp"
-            android:layout_height="wrap_content"/>
-
-        <EditText
-            android:id="@+id/current_power_edit"
+        <LinearLayout
+            android:id="@+id/current_power_edit_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:singleLine="true"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:inputType="number"
-            android:textSize="14dp"
-            android:text="0.0" />
+            android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="W" />
+            <Space
+                android:layout_width="10dp"
+                android:layout_height="wrap_content"/>
 
-        <Button
-            android:id="@+id/current_power_set_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="\u23CE" />
+            <EditText
+                android:id="@+id/current_power_edit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:inputType="number"
+                android:textSize="14dp"
+                android:text="0.0" />
 
-        <Button
-            android:id="@+id/current_power_plus_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="+" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="W" />
 
-        <Button
-            android:id="@+id/current_power_minus_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="-" />
+            <Button
+                android:id="@+id/current_power_set_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="\u23CE" />
+
+            <Button
+                android:id="@+id/current_power_plus_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="+" />
+
+            <Button
+                android:id="@+id/current_power_minus_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="-" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="left|top"
+        android:gravity="left|center_vertical"
         android:orientation="horizontal">
 
         <CheckBox
@@ -173,43 +181,51 @@
             android:layout_height="wrap_content"
             android:text="W" />
 
-        <Space
-            android:layout_width="10dp"
-            android:layout_height="wrap_content"/>
-
-        <EditText
-            android:id="@+id/standby_power_edit"
+        <LinearLayout
+            android:id="@+id/standby_power_edit_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:singleLine="true"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:inputType="number"
-            android:textSize="14dp"
-            android:text="0.0" />
+            android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="W" />
+            <Space
+                android:layout_width="10dp"
+                android:layout_height="wrap_content"/>
 
-        <Button
-            android:id="@+id/standby_power_set_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="\u23CE" />
+            <EditText
+                android:id="@+id/standby_power_edit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:inputType="number"
+                android:textSize="14dp"
+                android:text="0.0" />
 
-        <Button
-            android:id="@+id/standby_power_plus_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="+" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="W" />
 
-        <Button
-            android:id="@+id/standby_power_minus_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="-" />
+            <Button
+                android:id="@+id/standby_power_set_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="\u23CE" />
+
+            <Button
+                android:id="@+id/standby_power_plus_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="+" />
+
+            <Button
+                android:id="@+id/standby_power_minus_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="-" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
