@@ -25,6 +25,7 @@ import kr.or.kashi.hde.base.ByteArrayBuffer;
 import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
+import kr.or.kashi.hde.base.PropertyTask;
 import kr.or.kashi.hde.device.GasValve;
 import kr.or.kashi.hde.device.Light;
 import kr.or.kashi.hde.ksx4506.KSAddress;
@@ -45,7 +46,7 @@ public class KSLight extends KSDeviceContextBase {
     private static final String TAG = "KSLight";
     private static final boolean DBG = true;
 
-    public static final int CMD_LIGHT_ALL_CONTROL_REQ = 0x43;
+    public static final int CMD_BATCH_LIGHT_OFF_REQ = 0x43;
 
     protected int mTotalCountInGroup = 0;
 
@@ -54,8 +55,10 @@ public class KSLight extends KSDeviceContextBase {
 
         if (isMaster()) {
             // Register the tasks to be performed when specific property changes.
-            setPropertyTask(HomeDevice.PROP_ONOFF, mSingleControlTask);
-            setPropertyTask(Light.PROP_CUR_DIM_LEVEL, mSingleControlTask);
+            final PropertyTask onLightControlTask = this::onLightControlTask;
+            setPropertyTask(HomeDevice.PROP_ONOFF, onLightControlTask);
+            setPropertyTask(Light.PROP_CUR_DIM_LEVEL, onLightControlTask);
+            setPropertyTask(Light.PROP_BATCH_LIGHT_OFF, this::onBatchLightOffTask);
         }
     }
 
@@ -298,32 +301,34 @@ public class KSLight extends KSDeviceContextBase {
         outProps.put(Light.PROP_CUR_DIM_LEVEL, dimLevel);
     }
 
-    @Override
-    protected KSPacket makeControlReq(PropertyMap props) {
-        KSAddress address = (KSAddress)getAddress();
-        if (address.getDeviceSubId().isAll())
-            return makeAllControlReq(props);
-        else if (address.getDeviceSubId().isFullOfGroup())
-            return makeGroupControlReq(props);
-        return makeSingleControlReq(props);
+    private boolean onLightControlTask(PropertyMap reqProps, PropertyMap outProps) {
+        final KSAddress.DeviceSubId subId = getDeviceSubId();
+        if (subId.isFullOfGroup() || subId.isAll()) {
+            sendPacket(makeGroupOrAllControlReq(reqProps), 3);
+        } else {
+            sendPacket(makeSingleControlReq(reqProps));
+        }
+        return true;
     }
 
-    private KSPacket makeAllControlReq(PropertyMap props) {
-        final boolean isOn = (Boolean) props.get(HomeDevice.PROP_ONOFF).getValue();
-        return createPacket(CMD_LIGHT_ALL_CONTROL_REQ, (byte)(isOn ? 0x01 : 0x00));
+    private boolean onBatchLightOffTask(PropertyMap reqProps, PropertyMap outProps) {
+        final boolean batchOff = reqProps.get(Light.PROP_BATCH_LIGHT_OFF, Boolean.class);
+        KSPacket packet = createPacket(CMD_BATCH_LIGHT_OFF_REQ, (byte)(batchOff ? 0x00 : 0x01));
+        sendPacket(packet, 3);
+        return true;
     }
 
-    private KSPacket makeGroupControlReq(PropertyMap props) {
+    private KSPacket makeGroupOrAllControlReq(PropertyMap props) {
         final boolean isOn = (Boolean) props.get(HomeDevice.PROP_ONOFF).getValue();
         return createPacket(CMD_GROUP_CONTROL_REQ, (byte)(isOn ? 0x01 : 0x00));
     }
 
-    private KSPacket makeSingleControlReq(PropertyMap props) {
-        final boolean isOn = (Boolean) props.get(HomeDevice.PROP_ONOFF).getValue();
-        final int dimLevel = (int) props.get(Light.PROP_CUR_DIM_LEVEL).getValue();
-        // TODO: check if the dimLevel is between min and max
-        // TODO: assert if dimLevel is within 0x0 ~ 0xF
-        return createPacket(CMD_SINGLE_CONTROL_REQ, makeLightControlData(isOn, dimLevel));
+    private KSPacket makeSingleControlReq(PropertyMap reqProps) {
+        final boolean reqOnOff = (Boolean) reqProps.get(HomeDevice.PROP_ONOFF).getValue();
+        final int curDimLevel = (Integer) getProperty(Light.PROP_CUR_DIM_LEVEL).getValue();
+        final int reqDimLevel = (Integer) reqProps.get(Light.PROP_CUR_DIM_LEVEL).getValue();
+        final int dimLevel = (curDimLevel != reqDimLevel) ? reqDimLevel : 0;
+        return createPacket(CMD_SINGLE_CONTROL_REQ, makeLightControlData(reqOnOff, dimLevel));
     }
 
     private byte[] makeLightControlData(boolean isOn, int dimLevel) {

@@ -88,6 +88,10 @@ public class Light extends HomeDevice {
     @PropertyDef(valueClass=Boolean.class)
     public static final String PROP_IS_3WAY_SWITCH  = PROP_PREFIX + "is_3way_switch";
 
+    /** Property: Enter to or exit from the batch-light-off state */
+    @PropertyDef(valueClass=Boolean.class)
+    public static final String PROP_BATCH_LIGHT_OFF = PROP_PREFIX + "batch_light_off";
+
     /**
      * Construct new instance. Don't call this directly.
      */
