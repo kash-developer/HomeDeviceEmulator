@@ -50,6 +50,7 @@ public class KSLight extends KSDeviceContextBase {
     public static final int CMD_BATCH_LIGHT_OFF_REQ = 0x43;
 
     protected int mTotalCountInGroup = 0;
+    protected boolean mBatchLighOffSaved = false;
 
     public KSLight(MainContext mainContext, Map defaultProps) {
         super(mainContext, defaultProps, Light.class);
@@ -68,6 +69,7 @@ public class KSLight extends KSDeviceContextBase {
     public @ParseResult int parsePayload(KSPacket packet, PropertyMap outProps) {
         switch (packet.commandType) {
             case CMD_GROUP_CONTROL_REQ: return parseGroupControlReq(packet, outProps);
+            case CMD_BATCH_LIGHT_OFF_REQ: return parseBatchLightOffReq(packet, outProps);
         }
         return super.parsePayload(packet, outProps);
     }
@@ -241,6 +243,7 @@ public class KSLight extends KSDeviceContextBase {
 
     protected @ParseResult int parseSingleControlReq(KSPacket packet, PropertyMap outProps) {
         parseLightControlData(packet.data, outProps);
+        clearBatchLightStateRecursivelyFromTop();
 
         // NOTE: Just use the output props for reading because uncommitted changes that is produced
         // by previous parsing could be staging in the output props and that should be reflect by
@@ -279,6 +282,7 @@ public class KSLight extends KSDeviceContextBase {
     protected @ParseResult int parseGroupControlReq(KSPacket packet, PropertyMap outProps) {
         final boolean isOn = ((packet.data[0] & 0xFF) == 0x01);
         outProps.put(HomeDevice.PROP_ONOFF, isOn);
+        clearBatchLightStateRecursivelyFromTop();
 
         for (KSLight child: getChildren(KSLight.class)) {
             child.parseGroupControlReq(packet, child.mRxPropertyMap);
@@ -286,6 +290,50 @@ public class KSLight extends KSDeviceContextBase {
         }
 
         return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected @ParseResult int parseBatchLightOffReq(KSPacket packet, PropertyMap outProps) {
+        final KSAddress.DeviceSubId subId = getDeviceSubId();
+        if (subId.isAll()) {
+            final boolean isBatchOff = ((packet.data[0] & 0xFF) == 0x00);
+            setBatchLightStateRecursively(isBatchOff, outProps, outProps);
+        }
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected void setBatchLightStateRecursively(boolean isBatchOff, PropertyMap curProps, PropertyMap outProps) {
+        final boolean isOn = curProps.get(HomeDevice.PROP_ONOFF, Boolean.class);
+        if (isBatchOff) {
+            if (isOn) {
+                outProps.put(Light.PROP_ONOFF, false);
+                mBatchLighOffSaved = true;
+            }
+        } else {
+            if (mBatchLighOffSaved) {
+                outProps.put(Light.PROP_ONOFF, true);
+                mBatchLighOffSaved = false;
+            }
+        }
+
+        for (KSLight child: getChildren(KSLight.class)) {
+            child.setBatchLightStateRecursively(isBatchOff, child.mRxPropertyMap, child.mRxPropertyMap);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+        }
+    }
+
+    protected void clearBatchLightStateRecursivelyFromTop() {
+        KSLight top = this;
+        while (top.getParent() != null) {
+            top = (KSLight) top.getParent();
+        }
+        top.clearBatchLightStateRecursively();
+    }
+
+    protected void clearBatchLightStateRecursively() {
+        mBatchLighOffSaved = false;
+        for (KSLight child: getChildren(KSLight.class)) {
+            child.clearBatchLightStateRecursively();
+        }
     }
 
     private int makeSingleLightStateByte(PropertyMap props) {
@@ -328,6 +376,7 @@ public class KSLight extends KSDeviceContextBase {
             updateChildrenPropertyRecursively(reqOnOff);
         }
         outProps.put(reqOnOff);
+        clearBatchLightStateRecursivelyFromTop();
         return true;
     }
 

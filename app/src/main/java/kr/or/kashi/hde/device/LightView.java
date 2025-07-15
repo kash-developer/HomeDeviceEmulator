@@ -23,6 +23,7 @@ import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -42,6 +43,8 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
     private CheckBox mLightStateCheck;
     private RadioButton mLightOffRadio;
     private RadioButton mLightOnRadio;
+    private Button mBatchOffButton;
+    private Button mRestoreButton;
     private CheckBox mLightDimmingCheck;
     private TextView mLightCurDimmingText;
     private SeekBar mLightCurDimmingSeek;
@@ -71,6 +74,16 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
         mLightOffRadio.setOnClickListener(v -> device().setOn(false));
         mLightOnRadio = findViewById(R.id.light_on_radio);
         mLightOnRadio.setOnClickListener(v -> device().setOn(true));
+
+        mBatchOffButton = findViewById(R.id.batch_off_button);
+        mBatchOffButton.setOnClickListener(v -> {
+            device().setProperty(Light.PROP_BATCH_LIGHT_OFF, Boolean.class, true);
+        });
+
+        mRestoreButton = findViewById(R.id.restore_button);
+        mRestoreButton.setOnClickListener(v -> {
+            device().setProperty(Light.PROP_BATCH_LIGHT_OFF, Boolean.class, false);
+        });
 
         mLightDimmingCheck = findViewById(R.id.light_dimming_check);
         mLightDimmingCheck.setEnabled(isSlave());
@@ -122,6 +135,10 @@ public class LightView extends HomeDeviceView<Light> implements SeekBar.OnSeekBa
         final boolean onoff = props.get(HomeDevice.PROP_ONOFF, Boolean.class);
         mLightOffRadio.setChecked(!onoff);
         mLightOnRadio.setChecked(onoff);
+
+        final boolean isAllAddr = device().getAddress().endsWith("FF");
+        mBatchOffButton.setVisibility(isAllAddr ? View.VISIBLE : View.GONE);
+        mRestoreButton.setVisibility(isAllAddr ? View.VISIBLE : View.GONE);
 
         final boolean dimSupported = props.get(Light.PROP_DIM_SUPPORTED, Boolean.class);
         mLightDimmingCheck.setChecked(dimSupported);
