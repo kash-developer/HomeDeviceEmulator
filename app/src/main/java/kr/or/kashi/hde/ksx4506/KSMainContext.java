@@ -76,12 +76,7 @@ public class KSMainContext extends MainContext {
 
     @Override
     public boolean addDevice(HomeDevice device) {
-        final String address = device.getAddress();
-
-        if (mVirtualDeviceMap.containsKey(address)) {
-            // Remove virtual device if it's real.
-            mVirtualDeviceMap.remove(address);
-        }
+        removeVirtualDeviceIf(device); // Remove virtual device if it was, since now it's real.
 
         boolean added = super.addDevice(device); // Call super
         if (!added) {
@@ -93,30 +88,33 @@ public class KSMainContext extends MainContext {
         final int subId = dc.getDeviceSubId().value();
         final int subIdUpper = (subId & 0xF0);
         final int subIdLower = (subId & 0x0F);
-        if (subIdLower == 0x0F) {
+
+        if (subId == 0xFF) {
+            for (int i = 1; i <= 0xE; i++) {
+                String childAddr = new KSAddress(devId, (i << 4) | 0x0F).toAddressString();
+                HomeDevice child = getDevice(childAddr);
+                if (child != null) device.dc().addChild(child.dc());
+            }
+        } else if (subIdLower == 0x0F) {
             for (int i = 1; i <= 0xE; i++) {
                 String childAddr = new KSAddress(devId, (subIdUpper | i)).toAddressString();
                 HomeDevice child = getDevice(childAddr);
                 if (child != null) device.dc().addChild(child.dc());
             }
+
+            String parentAddr = new KSAddress(devId, 0xFF).toAddressString();
+            HomeDevice parent = getDeviceOrVirtualDevice(parentAddr);
+            if (parent == null) {
+                parent = createVirtualDevice(parentAddr, dc.getReadPropertyMap());
+                mVirtualDeviceMap.put(parentAddr, parent);
+            }
+            parent.dc().addChild(device.dc());
         } else {
             String parentAddr = new KSAddress(devId, (subIdUpper | 0x0F)).toAddressString();
-            HomeDevice parent = getDevice(parentAddr);
+            HomeDevice parent = getDeviceOrVirtualDevice(parentAddr);
             if (parent == null) {
-                parent = mVirtualDeviceMap.get(parentAddr);
-                if (parent == null) {
-                    PropertyMap props = new BasicPropertyMap();
-                    props.putAll(dc.getReadPropertyMap());
-
-                    props.put(HomeDevice.PROP_ADDR, parentAddr);
-                    props.put(HomeDevice.PROP_AREA, HomeDevice.Area.UNKNOWN);
-                    props.put(HomeDevice.PROP_NAME, "Virtual " + parentAddr);
-                    props.put(HomeDevice.PROP_IS_SLAVE, device.getProperty(HomeDevice.PROP_IS_SLAVE, Boolean.class));
-
-                    // Create new virutal device as parent.
-                    parent = createDevice(props.toMap());
-                    mVirtualDeviceMap.put(parentAddr, parent);
-                }
+                parent = createVirtualDevice(parentAddr, dc.getReadPropertyMap());
+                mVirtualDeviceMap.put(parentAddr, parent);
             }
             parent.dc().addChild(device.dc());
         }
@@ -124,12 +122,39 @@ public class KSMainContext extends MainContext {
         return added;
     }
 
-    @Override
-    public void removeDevice(HomeDevice device) {
-        final String address = device.getAddress();
+    private HomeDevice getDeviceOrVirtualDevice(String address) {
+        HomeDevice device = getDevice(address);
+        if (device == null) {
+            device = mVirtualDeviceMap.get(address);
+        }
+        return device;
+    }
+
+    private HomeDevice createVirtualDevice(String address, PropertyMap baseProps) {
+        PropertyMap props = new BasicPropertyMap();
+        props.putAll(baseProps);
+
+        props.put(HomeDevice.PROP_ADDR, address);
+        props.put(HomeDevice.PROP_AREA, HomeDevice.Area.UNKNOWN);
+        props.put(HomeDevice.PROP_NAME, "Virtual " + address);
+        props.put(HomeDevice.PROP_IS_SLAVE, mIsSlaveMode);
+
+        return createDevice(props.toMap());
+    }
+
+    private void removeVirtualDeviceIf(HomeDevice device) {
+        removeVirtualDeviceIf(device.getAddress());
+    }
+
+    private void removeVirtualDeviceIf(String address) {
         if (mVirtualDeviceMap.containsKey(address)) {
             mVirtualDeviceMap.remove(address);
         }
+    }
+
+    @Override
+    public void removeDevice(HomeDevice device) {
+        removeVirtualDeviceIf(device);
 
         final KSDeviceContextBase dc = ((KSDeviceContextBase)device.dc());
         if (dc.getDeviceSubId().hasFull()) { // all devices in group(?F) or all device (FF)
@@ -140,8 +165,8 @@ public class KSMainContext extends MainContext {
                 parent.removeChild(dc);
 
                 final String parentAddress = parent.getAddress().getDeviceAddress();
-                if (!parent.hasChild() && mVirtualDeviceMap.containsKey(parentAddress)) {
-                    mVirtualDeviceMap.remove(parentAddress);
+                if (!parent.hasChild()) {
+                    removeVirtualDeviceIf(parentAddress);
                 }
             }
         }
@@ -274,14 +299,10 @@ public class KSMainContext extends MainContext {
     private void parsePacketInDeviceContexts(KSPacket packet) {
         final KSAddress address = new KSAddress(packet.deviceId, packet.deviceSubId);
         final String devAddr = address.getDeviceAddress();
-        HomeDevice device = getDevice(devAddr);
 
         @DeviceContextBase.ParseResult int res = DeviceContextBase.PARSE_OK_NONE;
 
-        if (device == null) {
-            // No device found, try to get from virtual.
-            device = mVirtualDeviceMap.get(devAddr);
-        }
+        final HomeDevice device = getDeviceOrVirtualDevice(devAddr);
         if (device != null) {
             res = device.dc().parsePacket(packet);
 
