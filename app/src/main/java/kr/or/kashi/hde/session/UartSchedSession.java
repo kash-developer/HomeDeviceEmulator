@@ -31,7 +31,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
+import kr.or.kashi.hde.HomePacket;
 import kr.or.kashi.hde.PacketSchedule;
+import kr.or.kashi.hde.util.Utils;
 
 public class UartSchedSession extends NetworkSessionAdapter {
     private static final String TAG = "UartSchedSession";
@@ -158,6 +160,16 @@ public class UartSchedSession extends NetworkSessionAdapter {
         mUartSchedPort.schedulePacket(b, 0, 0, false, false);
     }
 
+    private static byte[] toByteArray(HomePacket packet) {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+        packet.toBuffer(byteBuffer);
+        byteBuffer.flip();
+        byte[] buf = new byte[byteBuffer.remaining()];
+        byteBuffer.get(buf, 0, buf.length);
+        byteBuffer.compact();
+        return buf;
+    }
+
     public boolean schedulePacket(PacketSchedule schedule) {
         if (mUartSchedPort == null) return false;
 
@@ -185,12 +197,29 @@ public class UartSchedSession extends NetworkSessionAdapter {
             schedules.add(schedule);
         }
 
+        if (DBG) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("TX: ");
+            sb.append(Utils.toHexString(buf, buf.length) + " ");
+            sb.append("(schedule");
+            sb.append(":" + scheduleId);
+            sb.append("," + repeatCount);
+            sb.append("," + repeatIntervalMs);
+            sb.append(")");
+            Log.d(TAG, sb.toString());
+        }
+
         return true;
     }
 
     public void removeSchedule(PacketSchedule schedule) {
         if (schedule == null) return;
         if (mUartSchedPort == null) return;
+
+        if (DBG) {
+            final byte[] buf = toByteArray(schedule.getPacket());
+            Log.d(TAG, "TX: remove schedule for " + Utils.toHexString(buf, buf.length));
+        }
 
         synchronized (mPacketSchedules) {
             Iterator<Map.Entry<Long, ArraySet<PacketSchedule>>> iterator
