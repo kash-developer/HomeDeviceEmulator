@@ -26,6 +26,7 @@ import kr.or.kashi.hde.base.PropertyMap;
 import kr.or.kashi.hde.MainContext;
 import kr.or.kashi.hde.HomeDevice;
 import kr.or.kashi.hde.base.PropertyTask;
+import kr.or.kashi.hde.base.PropertyValue;
 import kr.or.kashi.hde.device.GasValve;
 import kr.or.kashi.hde.device.Light;
 import kr.or.kashi.hde.ksx4506.KSAddress;
@@ -59,6 +60,8 @@ public class KSLight extends KSDeviceContextBase {
             setPropertyTask(HomeDevice.PROP_ONOFF, onLightControlTask);
             setPropertyTask(Light.PROP_CUR_DIM_LEVEL, onLightControlTask);
             setPropertyTask(Light.PROP_BATCH_LIGHT_OFF, this::onBatchLightOffTask);
+        } else {
+            setPropertyTask(HomeDevice.PROP_ONOFF, this::onLightOnOffTaskForSlave);
         }
     }
 
@@ -116,12 +119,19 @@ public class KSLight extends KSDeviceContextBase {
         } else {
             KSAddress address = (KSAddress)getAddress();
             int index = address.getDeviceSubId().value() & 0x0F;
-            if (index != 0x00 && index != 0x0F) {
-                if (index < packet.data.length) {
-                    // Pick only one state related with this device
-                    final int state = packet.data[index] & 0xFF;
-                    parseSingleLightStateByte(state, outProps);
+            if (index == 0xF) {
+                boolean isOn = false;
+                for (int i=0; i<mTotalCountInGroup; i++) {
+                    if ((1+i) < packet.data.length) {
+                        final int state = packet.data[1 + i] & 0xFF;
+                        isOn |= ((state & 0x01) != 0);
+                    }
                 }
+                outProps.put(HomeDevice.PROP_ONOFF, isOn);
+            } else if (index != 0x00 && index < packet.data.length) {
+                // Pick only one state related with this device
+                final int state = packet.data[index] & 0xFF;
+                parseSingleLightStateByte(state, outProps);
             }
         }
 
@@ -309,6 +319,24 @@ public class KSLight extends KSDeviceContextBase {
             sendPacket(makeSingleControlReq(reqProps));
         }
         return true;
+    }
+
+    private boolean onLightOnOffTaskForSlave(PropertyMap reqProps, PropertyMap outProps) {
+        final PropertyValue reqOnOff = reqProps.get(HomeDevice.PROP_ONOFF);
+        final KSAddress.DeviceSubId subId = getDeviceSubId();
+        if (subId.isFullOfGroup() || subId.isAll()) {
+            updateChildrenPropertyRecursively(reqOnOff);
+        }
+        outProps.put(reqOnOff);
+        return true;
+    }
+
+    protected void updateChildrenPropertyRecursively(PropertyValue propValue) {
+        for (KSLight child: getChildren(KSLight.class)) {
+            child.mRxPropertyMap.put(propValue);
+            child.commitPropertyChanges(child.mRxPropertyMap);
+            child.updateChildrenPropertyRecursively(propValue);
+        }
     }
 
     private boolean onBatchLightOffTask(PropertyMap reqProps, PropertyMap outProps) {
