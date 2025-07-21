@@ -39,6 +39,7 @@ public class KSMainContext2 extends KSMainContext {
         super(context, isSlaveMode);
 
         // Override super's map with extended classes.
+        mAddressToClassMap.put(0x02, KSAirConditioner2.class);
         mAddressToClassMap.put(0x33, KSBatchSwitch2.class);
         mAddressToClassMap.put(0x12, KSGasValve2.class);
         mAddressToClassMap.put(0x30, KSHouseMeter2.class);

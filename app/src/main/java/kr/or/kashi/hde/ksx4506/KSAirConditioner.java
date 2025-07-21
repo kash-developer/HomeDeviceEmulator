@@ -293,6 +293,16 @@ public class KSAirConditioner extends KSDeviceContextBase {
         final PropertyMap props = getReadPropertyMap();
         final ByteArrayBuffer data = new ByteArrayBuffer();
 
+        // Encode response packet
+        encodeCharacteristicRsp(props, data);
+
+        // Send response packet.
+        sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
+
+        return PARSE_OK_STATE_UPDATED;
+    }
+
+    protected void encodeCharacteristicRsp(PropertyMap props, ByteArrayBuffer data) {
         data.append(0); // no error
 
         final int supportedModes = props.get(AirConditioner.PROP_SUPPORTED_MODES, Integer.class);
@@ -313,7 +323,7 @@ public class KSAirConditioner extends KSDeviceContextBase {
         if (mSupportsReservedBit6)  data1 |= (1 << 6);
         if (mSupportsReservedBit7)  data1 |= (1 << 7);
 
-        data.append(data1);
+        data.append(data1);             // DATA 1
 
         final float maxTemp = props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class);
         final float minTemp = props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class);
@@ -324,17 +334,12 @@ public class KSAirConditioner extends KSDeviceContextBase {
         mMaxFanSpeed = props.get(AirConditioner.PROP_MAX_FAN_SPEED, Integer.class);
         mNumberOfDevices = isSingleDevice() ? 1 : getChildCount();
 
-        data.append(maxTempByte);
-        data.append(minTempByte);
-        data.append(maxTempByte);
-        data.append(minTempByte);
-        data.append(mMaxFanSpeed);
-        data.append(mNumberOfDevices);
-
-        // Send response packet.
-        sendPacket(createPacket(CMD_CHARACTERISTIC_RSP, data.toArray()));
-
-        return PARSE_OK_STATE_UPDATED;
+        data.append(maxTempByte);       // DATA 2
+        data.append(minTempByte);       // DATA 3
+        data.append(maxTempByte);       // DATA 4
+        data.append(minTempByte);       // DATA 5
+        data.append(mMaxFanSpeed);      // DATA 6
+        data.append(mNumberOfDevices);  // DATA 7
     }
 
     @Override
