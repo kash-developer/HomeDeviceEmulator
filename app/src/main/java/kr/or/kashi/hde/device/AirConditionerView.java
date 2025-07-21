@@ -22,6 +22,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -39,6 +40,7 @@ import kr.or.kashi.hde.widget.FloatSeekBar;
 
 public class AirConditionerView extends HomeDeviceView<AirConditioner>
         implements  RadioGroup.OnCheckedChangeListener,
+                    View.OnLongClickListener,
                     FloatSeekBar.OnSeekBarChangeListener,
                     FloatRangeView.OnValueEditedListener {
 
@@ -49,6 +51,12 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
     private RadioGroup mOpStateGroup;
     private CheckBox mOpModeCheck;
     private RadioGroup mOpModeGroup;
+    private RadioButton mOpModeAutoRadio;
+    private RadioButton mOpModeCoolingRadio;
+    private RadioButton mOpModeHeatingRadio;
+    private RadioButton mOpModeBlowingRadio;
+    private RadioButton mOpModeDehumidRadio;
+    private RadioButton mOpModeReservedRadio;
     private CheckBox mFlowDirCheck;
     private RadioGroup mFlowDirGroup;
     private CheckBox mFlowModeCheck;
@@ -82,6 +90,18 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
 
         mOpModeCheck = findViewById(R.id.op_mode_check);
         mOpModeGroup = findViewById(R.id.op_mode_group);
+        mOpModeAutoRadio = findViewById(R.id.op_mode_auto_radio);
+        mOpModeAutoRadio.setOnLongClickListener(this);
+        mOpModeCoolingRadio = findViewById(R.id.op_mode_cooling_radio);
+        mOpModeCoolingRadio.setOnLongClickListener(this);
+        mOpModeHeatingRadio = findViewById(R.id.op_mode_heating_radio);
+        mOpModeHeatingRadio.setOnLongClickListener(this);
+        mOpModeBlowingRadio = findViewById(R.id.op_mode_blowing_radio);
+        mOpModeBlowingRadio.setOnLongClickListener(this);
+        mOpModeDehumidRadio = findViewById(R.id.op_mode_dehumid_radio);
+        mOpModeDehumidRadio.setOnLongClickListener(this);
+        mOpModeReservedRadio = findViewById(R.id.op_mode_reserved_radio);
+        mOpModeReservedRadio.setOnLongClickListener(this);
 
         mFlowDirCheck = findViewById(R.id.flow_dir_check);
         mFlowDirGroup = findViewById(R.id.flow_dir_group);
@@ -125,6 +145,14 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
         mOpStateGroup.setOnCheckedChangeListener(null);
         mOpStateGroup.check((onoff) ? R.id.op_state_on_radio : R.id.op_state_off_radio);
         mOpStateGroup.setOnCheckedChangeListener(this);
+
+        int opSupportedModes = props.get(AirConditioner.PROP_SUPPORTED_MODES, Integer.class);
+        mOpModeAutoRadio.setEnabled((opSupportedModes & AirConditioner.OpMode.AUTO) != 0);
+        mOpModeCoolingRadio.setEnabled((opSupportedModes & AirConditioner.OpMode.COOLING) != 0);
+        mOpModeHeatingRadio.setEnabled((opSupportedModes & AirConditioner.OpMode.HEATING) != 0);
+        mOpModeBlowingRadio.setEnabled((opSupportedModes & AirConditioner.OpMode.BLOWING) != 0);
+        mOpModeDehumidRadio.setEnabled((opSupportedModes & AirConditioner.OpMode.DEHUMID) != 0);
+        mOpModeReservedRadio.setEnabled((opSupportedModes & AirConditioner.OpMode.RESERVED) != 0);
 
         int opModeId = R.id.op_mode_auto_radio;
         int opMode = props.get(AirConditioner.PROP_OPERATION_MODE, Integer.class);
@@ -188,6 +216,23 @@ public class AirConditionerView extends HomeDeviceView<AirConditioner>
         mCurTempText.setMin(props.get(AirConditioner.PROP_MIN_TEMPERATURE, Float.class));
         mCurTempText.setMax(props.get(AirConditioner.PROP_MAX_TEMPERATURE, Float.class));
         mCurTempText.setCur(props.get(AirConditioner.PROP_CUR_TEMPERATURE, Float.class));
+    }
+
+    @Override
+    public boolean onLongClick(View v) {
+        if (v instanceof RadioButton && isSlave()) {
+            v.setEnabled(!v.isEnabled()); // toggle
+
+            int supportedOpModes = 0;
+            if (mOpModeAutoRadio.isEnabled()) supportedOpModes |= AirConditioner.OpMode.AUTO;
+            if (mOpModeCoolingRadio.isEnabled()) supportedOpModes |= AirConditioner.OpMode.COOLING;
+            if (mOpModeHeatingRadio.isEnabled()) supportedOpModes |= AirConditioner.OpMode.HEATING;
+            if (mOpModeBlowingRadio.isEnabled()) supportedOpModes |= AirConditioner.OpMode.BLOWING;
+            if (mOpModeDehumidRadio.isEnabled()) supportedOpModes |= AirConditioner.OpMode.DEHUMID;
+            if (mOpModeReservedRadio.isEnabled()) supportedOpModes |= AirConditioner.OpMode.RESERVED;
+            device().setProperty(AirConditioner.PROP_SUPPORTED_MODES, Integer.class, supportedOpModes);
+        }
+        return true;
     }
 
     @Override

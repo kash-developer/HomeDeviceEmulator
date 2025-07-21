@@ -82,6 +82,7 @@ public class KSAirConditioner extends KSDeviceContextBase {
             setPropertyTask(AirConditioner.PROP_FAN_MODE, this::onFanSpeedControlTask);
             setPropertyTask(AirConditioner.PROP_CUR_FAN_SPEED, this::onFanSpeedControlTask);
         } else {
+            setPropertyTask(AirConditioner.PROP_SUPPORTED_MODES, new PropagationTask(AirConditioner.PROP_SUPPORTED_MODES));
             setPropertyTask(AirConditioner.PROP_MIN_FAN_SPEED, new PropagationTask(AirConditioner.PROP_MIN_FAN_SPEED));
             setPropertyTask(AirConditioner.PROP_MAX_FAN_SPEED, new PropagationTask(AirConditioner.PROP_MAX_FAN_SPEED));
             setPropertyTask(AirConditioner.PROP_TEMP_RESOLUTION, new PropagationTask(AirConditioner.PROP_TEMP_RESOLUTION));
@@ -295,9 +296,9 @@ public class KSAirConditioner extends KSDeviceContextBase {
         data.append(0); // no error
 
         final int supportedModes = props.get(AirConditioner.PROP_SUPPORTED_MODES, Integer.class);
-        mSupportsCooling = (supportedModes | AirConditioner.OpMode.COOLING) != 0;
-        mSupportsHeating = (supportedModes | AirConditioner.OpMode.HEATING) != 0;
-        mSupportsReservedMode = (supportedModes | AirConditioner.OpMode.RESERVED) != 0;
+        mSupportsCooling = (supportedModes & AirConditioner.OpMode.COOLING) != 0;
+        mSupportsHeating = (supportedModes & AirConditioner.OpMode.HEATING) != 0;
+        mSupportsReservedMode = (supportedModes & AirConditioner.OpMode.RESERVED) != 0;
 
         final float tempRes = props.get(AirConditioner.PROP_TEMP_RESOLUTION, Float.class);
         mSupportsHalfDegree = Utils.floatEquals(tempRes, 0.5f);
