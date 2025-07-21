@@ -508,7 +508,7 @@ public class TypeListPartView extends LinearLayout {
         if (mNetwork.isSlaveMode()) {
             switch (typeName) {
                 case "AirConditioner": {
-                    long supportedModes = 0;
+                    @AirConditioner.OpMode int supportedModes = 0;
                     supportedModes |= AirConditioner.OpMode.AUTO;
                     supportedModes |= AirConditioner.OpMode.COOLING;
                     supportedModes |= AirConditioner.OpMode.HEATING;
