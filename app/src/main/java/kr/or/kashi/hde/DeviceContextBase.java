@@ -386,15 +386,16 @@ public abstract class DeviceContextBase implements DeviceStatePollee {
         @Override
         public boolean execTask(PropertyMap newProps, PropertyMap outProps) {
             DeviceContextBase dc = DeviceContextBase.this;
-
-            final DeviceContextBase parent = ((dc.getParent() != null) ? (dc.getParent()) : (dc));
-            parent.updateProperty(newProps.get(mPropName));
-
-            for (DeviceContextBase child: parent.getChildren(DeviceContextBase.class)) {
-                child.updateProperty(newProps.get(mPropName));
-            }
-
+            while (dc.getParent() != null) dc = dc.getParent();
+            syncPropRecursively(dc, newProps.get(mPropName));
             return true;
+        }
+
+        public void syncPropRecursively(DeviceContextBase dc, PropertyValue propValue) {
+            dc.updateProperty(propValue);
+            for (DeviceContextBase child: dc.getChildren(DeviceContextBase.class)) {
+                syncPropRecursively(child, propValue);
+            }
         }
     }
 }
